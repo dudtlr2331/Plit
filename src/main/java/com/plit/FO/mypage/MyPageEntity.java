@@ -1,4 +1,4 @@
 package com.plit.FO.mypage;
 
-public class MypageEntity {
+public class MyPageEntity {
 }
