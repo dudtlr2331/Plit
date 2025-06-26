@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>문의 답변 작성</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+<h2>문의 답변</h2>
+
+<p><strong>제목:</strong> <span th:text="${qna.title}"></span></p>
+<p><strong>내용:</strong> <span th:text="${qna.content}"></span></p>
+
+<form th:action="@{/bo/qna/answer/{id}(id=${qna.id})}" method="post">
+    <label for="answer">답변 내용:</label><br>
+    <textarea id="answer" name="answer" rows="6" cols="60" required th:text="${qna.answer}"></textarea><br><br>
+    <button type="submit">답변 저장</button>
+</form>
+
+<a th:href="@{/bo/qna/list}">
+    <button type="button">목록으로</button>
+</a>
+</body>
+</html>

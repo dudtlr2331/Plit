@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>문의 상세보기</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+<h2>문의 상세보기</h2>
+
+<p><strong>제목:</strong> <span th:text="${qna.title}"></span></p>
+<p><strong>내용:</strong> <span th:text="${qna.content}"></span></p>
+<p><strong>상태:</strong> <span th:text="${qna.status}"></span></p>
+
+<div th:if="${qna.answer}">
+    <p><strong>답변:</strong> <span th:text="${qna.answer}"></span></p>
+</div>
+<div th:unless="${qna.answer}">
+    <p><em>아직 답변이 등록되지 않았습니다.</em></p>
+</div>
+
+<a th:href="@{/fo/mypage/qna/list}">← 목록으로 돌아가기</a>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>실시간 문의</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chat {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        .me {
+            color: blue;
+        }
+        .admin {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+<h2>실시간 문의 채팅</h2>
+
+<div id="chat"></div>
+
+<input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
+<button id="sendBtn">전송</button>
+
+<script>
+    const roomId = [[${roomId}]];
+    const userId = [[${userId}]];
+    const socket = new WebSocket(`ws://localhost:8080/ws/chat/${roomId}/${userId}`);
+
+    const chatBox = document.getElementById("chat");
+    const input = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    socket.onmessage = function(event) {
+        const msg = document.createElement("div");
+        msg.className = "message";
+        msg.textContent = event.data;
+
+        if (event.data.startsWith(userId)) {
+            msg.classList.add("me");
+        } else {
+            msg.classList.add("admin");
+        }
+
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    sendBtn.onclick = function() {
+        const message = input.value.trim();
+        if (message !== "") {
+            socket.send(message);
+            input.value = "";
+        }
+    };
+
+    input.addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            sendBtn.click();
+        }
+    });
+</script>
+</body>
+</html>

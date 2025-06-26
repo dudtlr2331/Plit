@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>문의 전체 목록 (관리자)</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .answered {
+            color: green;
+            font-weight: bold;
+        }
+        .waiting {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h2> 전체 QnA 문의 목록</h2>
+<table>
+    <thead>
+    <tr>
+        <th>번호</th>
+        <th>제목</th>
+        <th>작성자 ID</th>
+        <th>상태</th>
+        <th>작성일</th>
+        <th>답변</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="qna : ${questions}">
+        <td th:text="${qna.id}">1</td>
+        <td th:text="${qna.title}">제목</td>
+        <td th:text="${qna.userId}">작성자</td>
+        <td>
+            <span th:classappend="${qna.status == '답변완료'} ? 'answered' : 'waiting'" th:text="${qna.status}">상태</span>
+        </td>
+        <td th:text="${#temporals.format(qna.askedAt, 'yyyy-MM-dd HH:mm')}">날짜</td>
+        <td>
+            <a th:href="@{/bo/qna/answer/{id}(id=${qna.id})}">답변하기</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<hr>
+
+<h2>실시간 1:1 문의 응답 대기</h2>
+<table>
+    <thead>
+    <tr>
+        <th>채팅방 ID</th>
+        <th>사용자 ID</th>
+        <th>생성 시간</th>
+        <th>채팅</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="room : ${pendingRooms}">
+        <td th:text="${room.inquiryRoomId}">1</td>
+        <td th:text="${room.userId}">사용자</td>
+        <td th:text="${#temporals.format(room.createdAt, 'yyyy-MM-dd HH:mm')}">시간</td>
+        <td>
+            <a href="#" th:onclick="'window.open(\'/bo/qna/chat/open/' + ${room.inquiryRoomId} + '\', \'chatWindow\', \'width=600,height=600\')'">
+                채팅 응답
+            </a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>문의 작성</title>
+</head>
+<body>
+<h2>문의 작성</h2>
+
+<form action="/fo/mypage/qna/write" method="post">
+    <label for="title">제목:</label><br>
+    <input type="text" id="title" name="title" th:value="${qnaDTO.title}"><br><br>
+
+    <label for="content">내용:</label><br>
+    <textarea id="content" name="content" rows="5" cols="40" th:text="${qnaDTO.content}"></textarea><br><br>
+
+    <button type="submit">등록</button>
+</form>
+
+<a href="/fo/mypage/qna/list">내 문의 내역 보기</a>
+</body>
+</html>
