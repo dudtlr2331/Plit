@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Party List</title>
+</head>
+<body>
+<h1>Party List</h1>
+<p><a th:href="@{/party/new}">새 파티 생성</a></p>
+<table border="1">
+  <tr>
+    <th>번호</th>
+    <th>이름</th>
+    <th>타입</th>
+    <th>상태</th>
+    <th>현재 인원</th>
+    <th>최대 인원</th>
+  </tr>
+  <tr th:each="party : ${parties}">
+    <td th:text="${party.partySeq}"></td>
+    <td>
+      <a th:href="@{/party/{id}(id=${party.partySeq})}" th:text="${party.partyName}"></a>
+    </td>
+    <td th:text="${party.partyType}"></td>
+    <td th:text="${party.partyStatus}"></td>
+    <td th:text="${party.partyHeadcount}"></td>
+    <td th:text="${party.partyMax}"></td>
+  </tr>
+</table>
+</body>
+</html>
