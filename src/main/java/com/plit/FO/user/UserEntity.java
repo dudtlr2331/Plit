@@ -22,8 +22,8 @@ public class UserEntity {
     @Column(name = "user_id", nullable = false, unique = true, length = 16)
     private String userId;
 
-    @Column(name = "user_pwd", nullable = false, length = 24)
-    private String userPwd; // In real app, store hashed password
+    @Column(name = "user_pwd", nullable = false, length = 100)
+    private String userPwd;
 
     @Column(name = "user_nickname", nullable = false, unique = true, length = 30)
     private String userNickname;

@@ -50,7 +50,7 @@
     <p th:text="${message}"></p>
   </div>
 
-  <form th:action="@{/fo/login}" th:object="${userDTO}" method="post">
+  <form th:action="@{/templates/fo/user}" th:object="${userDTO}" method="post">
     <div class="form-group">
       <label for="userId">아이디:</label>
       <input type="text" id="userId" th:field="*{userId}" required>

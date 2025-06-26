@@ -15,7 +15,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    // --- User Registration/Login related ---
+    /// 회원가입
     @Transactional
     public UserDTO registerUser(UserDTO userDTO) {
         if (userRepository.existsByUserId(userDTO.getUserId())) {
@@ -42,11 +42,11 @@ public class UserService {
         return convertToDto(savedUser);
     }
 
+    /// 로그인
     @Transactional(readOnly = true)
     public Optional<UserDTO> loginUser(String userId, String rawPassword) {
-        // In a real application, compare hashed passwords
         return userRepository.findByUserId(userId)
-                .filter(user -> user.getUserPwd().equals(rawPassword)) // TODO: Compare hashed password here
+                .filter(user -> user.getUserPwd().equals(rawPassword))
                 .map(this::convertToDto);
     }
 

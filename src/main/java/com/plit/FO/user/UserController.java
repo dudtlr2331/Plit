@@ -2,6 +2,7 @@ package com.plit.FO.user;
 
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,6 +11,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/fo") // All requests to this controller start with /fo
@@ -31,24 +34,25 @@ public class UserController {
     public String showLoginForm(Model model) {
         // Add a UserDTO object to the model for form binding
         model.addAttribute("userDTO", new UserDTO());
-        return "fo/login/login"; // Maps to src/main/resources/templates/fo/login/login.html
+        return "fo/user/login"; // Maps to src/main/resources/templates/fo/login/login.html
     }
 
-    // Processes the login form submission
+    /// 로그인
     // URL: /fo/login
     @PostMapping("/login")
-    public String processLogin(@ModelAttribute UserDTO userDTO, RedirectAttributes redirectAttributes) {
-        // Here, you would typically use Spring Security or similar for proper authentication.
-        // For this example, we're doing a simple check with UserService.
-        if (userService.loginUser(userDTO.getUserId(), userDTO.getUserPwd()).isPresent()) {
-            // Login successful
-            // You might add user info to session here
+    public String processLogin(@ModelAttribute UserDTO userDTO, RedirectAttributes redirectAttributes, HttpSession session) {
+        Optional<UserDTO> loginResult = userService.loginUser(userDTO.getUserId(), userDTO.getUserPwd());
+        if (loginResult.isPresent()) {
+            // 로그인 성공
+            UserDTO loginUser = loginResult.get();
+            session.setAttribute("loginUser", loginUser); // 로그인 정보 세션에 저장
+
             redirectAttributes.addFlashAttribute("message", "로그인 성공!");
-            return "redirect:/fo/main"; // Redirect to FO main page on success
+            return "redirect:/fo/main";
         } else {
-            // Login failed
+            // 로그인 실패
             redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            return "redirect:/fo/login"; // Redirect back to login page on failure
+            return "redirect:/fo/login"; // 로그인 페이지로 이동
         }
     }
 
@@ -58,7 +62,7 @@ public class UserController {
     public String showRegisterForm(Model model) {
         model.addAttribute("userDTO", new UserDTO());
         // 에러 로그에 따라 'fo/login/register.html'로 경로 수정
-        return "fo/login/register"; // <-- 이 부분을 'fo/user/register' 에서 변경했습니다.
+        return "fo/user/register"; // <-- 이 부분을 'fo/user/register' 에서 변경했습니다.
     }
 
     // Processes the registration form submission
