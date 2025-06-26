@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>내전 찾기 페이지</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #fff; }
+        header {
+            background: #ff5a5a;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header nav {
+            display: flex;
+            align-items: center;
+        }
+        header nav a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .chat-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .chat-popup {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 80px;
+            width: 250px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 999;
+        }
+        .chat-popup div {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .main {
+            padding: 30px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .register-button {
+            padding: 10px 20px;
+            background: #ff5a5a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .match-card {
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 15px;
+            position: relative;
+            background: #fff;
+        }
+        .match-card h4 {
+            margin: 0 0 10px 0;
+        }
+        .match-card .chat-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+        .match-card ul {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        .match-card ul li {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .match-card ul li img {
+            width: 16px;
+            height: 16px;
+            margin-left: auto;
+        }
+        .match-card ul li .position-icon {
+            margin-right: 6px;
+        }
+        .chatbox {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        .chatbox-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .chatbox-input {
+            display: flex;
+        }
+        .chatbox-input input {
+            flex: 1;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .chatbox-input button {
+            padding: 5px 10px;
+            margin-left: 5px;
+            border-radius: 5px;
+            border: none;
+            background-color: #ff5a5a;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav>
+        <a href="#">파티찾기</a>
+        <a href="#">내전찾기</a>
+        <a href="#">클랜찾기</a>
+        <a href="#">트롤신고</a>
+    </nav>
+    <nav>
+        <button class="chat-button" onclick="toggleChatList()">💬</button>
+        <a href="#">로그인</a>
+    </nav>
+    <div id="chatList" class="chat-popup">
+        <div onclick="toggleChatBox('user1')">플레이어1</div>
+        <div onclick="toggleChatBox('user2')">플레이어2</div>
+        <div onclick="toggleChatBox('user3')">플레이어3</div>
+    </div>
+</header>
+<div class="main">
+    <button class="register-button">내전 등록</button>
+    <div class="card-grid">
+        <div class="match-card">
+            <div class="chat-icon" onclick="toggleChatBox('card1')">💬</div>
+            <h4>빠른 내전 구함</h4>
+            <ul>
+                <li><span class="position-icon">🛡️</span>플레이어이름1<img src="티어.png"></li>
+                <li><span class="position-icon">🌿</span>플레이어이름2<img src="티어.png"></li>
+                <li><span class="position-icon">🪄</span>플레이어이름3<img src="티어.png"></li>
+                <li><span class="position-icon">🔫</span>플레이어이름4<img src="티어.png"></li>
+                <li><span class="position-icon">🪽</span>플레이어이름5<img src="티어.png"></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div id="chatBox" class="chatbox">
+    <div class="chatbox-messages" id="chatMessages">채팅 내용</div>
+    <div class="chatbox-input">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요...">
+        <button onclick="sendMessage()">전송</button>
+    </div>
+</div>
+
+<script>
+    function toggleChatList() {
+        const list = document.getElementById('chatList');
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    }
+    function toggleChatBox(userId) {
+        const box = document.getElementById('chatBox');
+        box.style.display = box.style.display === 'block' ? 'none' : 'flex';
+    }
+    function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (message) {
+            const chat = document.getElementById('chatMessages');
+            const msgElem = document.createElement('div');
+            msgElem.textContent = message;
+            chat.appendChild(msgElem);
+            input.value = '';
+            chat.scrollTop = chat.scrollHeight;
+        }
+    }
+</script>
+</body>
+</html>

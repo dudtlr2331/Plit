@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>트롤 신고</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #fff;
+        }
+
+        header {
+            background: #ff5c5c;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header nav a {
+            margin: 0 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        header nav a.active {
+            color: yellow;
+        }
+
+        .top-right {
+            color: white;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto 0;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: flex-start;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 8px 12px;
+            width: 180px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .search-bar button {
+            padding: 8px 12px;
+            font-size: 16px;
+            background: #eee;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #ff5c5c;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .summoner-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-direction: row;
+        }
+
+        .profile-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #000;
+        }
+
+        .summoner-name {
+            font-weight: bold;
+        }
+
+        .summoner-tag {
+            font-size: 12px;
+            color: gray;
+        }
+
+        .tier-icon {
+            width: 20px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .memo-input {
+            background: #f3f3f3;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        .time-ago {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .report-btn {
+            background: #ff5c5c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        footer {
+            background: #222;
+            color: white;
+            padding: 30px 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        footer a {
+            color: white;
+            margin-right: 10px;
+            text-decoration: none;
+        }
+
+        .footer-nav {
+            margin-bottom: 10px;
+        }
+
+        .footer-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="#">파티찾기</a>
+        <a href="#">내전찾기</a>
+        <a href="#">클랜찾기</a>
+        <a href="#" class="active">트롤신고</a>
+    </nav>
+    <div class="top-right">🔴 로그인</div>
+</header>
+
+<div class="container">
+    <div class="search-bar">
+        <input type="text" placeholder="플레이어 검색">
+        <button>🔍</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>소환사이름</th>
+            <th>티어</th>
+            <th>신고횟수</th>
+            <th>메모</th>
+            <th>지난 시간</th>
+            <th>신고</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>
+                <div class="summoner-info">
+                    <div class="profile-circle"></div>
+                    <div>
+                        <div class="summoner-name">플레이어1</div>
+                        <div class="summoner-tag">#KR1</div>
+                    </div>
+                </div>
+            </td>
+            <td><img src="https://cdn-icons-png.flaticon.com/512/1998/1998611.png" class="tier-icon">M1</td>
+            <td>0회</td>
+            <td><input type="text" class="memo-input" placeholder="메모 입력"></td>
+            <td><span class="time-ago">2초 전</span></td>
+            <td><button class="report-btn">+</button></td>
+        </tr>
+        <tr>
+            <td>
+                <div class="summoner-info">
+                    <div class="profile-circle"></div>
+                    <div>
+                        <div class="summoner-name">플레이어1</div>
+                        <div class="summoner-tag">#KR1</div>
+                    </div>
+                </div>
+            </td>
+            <td><img src="https://cdn-icons-png.flaticon.com/512/1998/1998611.png" class="tier-icon">P3</td>
+            <td>2회</td>
+            <td><input type="text" class="memo-input" placeholder="메모 입력"></td>
+            <td><span class="time-ago">5분 전</span></td>
+            <td><button class="report-btn">+</button></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-nav">
+            <a href="#">공지사항</a>
+            <a href="#">사용방법</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">광고/제휴문의</a>
+            <a href="#">개발문의</a>
+            <a href="#">404 Squad</a>
+        </div>
+        <div>
+            lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
+            League of Legends is a trademark of Riot Games.
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

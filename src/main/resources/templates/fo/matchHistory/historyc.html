@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>플레이어 전적 페이지</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #fff; }
+        header {
+            background: #ff5a5a;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header nav {
+            display: flex;
+            align-items: center;
+        }
+        header nav a {
+            margin: 0 10px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .chat-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .chat-popup {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 80px;
+            width: 250px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 999;
+        }
+        .main {
+            max-width: 1200px;
+            margin: auto;
+            padding: 30px;
+            display: flex;
+            gap: 30px;
+        }
+        .left-panel {
+            flex: 1;
+        }
+        .right-panel {
+            flex: 2;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .profile-header img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-right: 20px;
+        }
+        .profile-header h2 {
+            margin: 0;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .tabs button {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .tabs button.active {
+            color: #ff5a5a;
+            font-weight: bold;
+            border-bottom: 3px solid #ff5a5a;
+        }
+        .rank-box, .champion-box, .recent-games, .match-detail {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+        .match-summary {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #e0e0e0;
+            cursor: pointer;
+        }
+        .match-summary.win { background: #d1e7dd; }
+        .match-summary.lose { background: #f8d7da; }
+        .match-detail {
+            display: none;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .match-detail table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .match-detail th, .match-detail td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+        }
+        .match-detail .win-row { background-color: #eefbf3; }
+        .match-detail .lose-row { background-color: #fef1f1; }
+        .match-detail .team-summary {
+            background-color: #ddd;
+            font-weight: bold;
+        }
+        .damage-bar {
+            display: flex;
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .damage-dealt {
+            background-color: #f00;
+            height: 100%;
+        }
+        .damage-taken {
+            background-color: #999;
+            height: 100%;
+        }
+        .vs-cell {
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            background-color: #fff;
+            font-size: 18px;
+        }
+    </style>
+    <script>
+        function toggleMatchDetail(element) {
+            const detail = element.nextElementSibling;
+            detail.style.display = detail.style.display === 'block' ? 'none' : 'block';
+        }
+        function toggleChatList() {
+            const popup = document.getElementById('chatList');
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.tabs button');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const label = btn.textContent;
+                    let url = '/historyc';
+                    if (label.includes('개인')) url += '?rank=solo';
+                    else if (label.includes('자유')) url += '?rank=free';
+
+                    history.pushState({}, '', url);
+
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    document.querySelector('.recent-games').innerHTML = `<h3>최근 게임 (${label})</h3><p>데이터를 불러오는 중...</p>`;
+
+                    setTimeout(() => {
+                        document.querySelector('.recent-games').innerHTML += '<p>(임의의 게임 데이터 출력)</p>';
+                    }, 800);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<header>
+    <nav>
+        <a href="/party">파티찾기</a>
+        <a href="/battle">내전찾기</a>
+        <a href="/clan">클랜찾기</a>
+        <a href="/report">트롤신고</a>
+    </nav>
+    <nav>
+        <button class="chat-button" onclick="toggleChatList()">💬</button>
+        <a href="/login">로그인</a>
+    </nav>
+    <div id="chatList" class="chat-popup">
+        <div>채팅방1</div>
+        <div>채팅방2</div>
+    </div>
+</header>
+<div class="main">
+    <div class="left-panel">
+        <div class="rank-box">
+            <h3>개인/2인 랭크 게임</h3>
+            <p>티어: 플래티넘</p>
+            <p>승/패: 34승 22패</p>
+            <p>승률: 60.7%</p>
+            <p>최고 티어: 다이아몬드</p>
+            <p>전 시즌 티어: 플래티넘</p>
+        </div>
+        <div class="rank-box">
+            <h3>자유 랭크 게임</h3>
+            <p>티어: 골드</p>
+            <p>승/패: 20승 18패</p>
+            <p>승률: 52.6%</p>
+            <p>최고 티어: 골드</p>
+            <p>전 시즌 티어: 실버</p>
+        </div>
+        <div class="champion-box">
+            <h3>선호 챔피언</h3>
+            <p>● ● ● ● ●</p>
+        </div>
+    </div>
+    <div class="right-panel">
+        <div class="tabs">
+            <button class="active">전체</button>
+            <button>개인/2인 랭크 게임</button>
+            <button>자유 랭크 게임</button>
+        </div>
+        <div class="recent-games">
+            <h3>최근 게임 (전체)</h3>
+            <div class="match-summary win" onclick="toggleMatchDetail(this)">
+                <span>블루팀 승리</span>
+                <span>20/10/15</span>
+                <span>챔피언 이름</span>
+            </div>
+            <div class="match-detail">
+                <table>
+                    <tr class="team-summary"><td colspan="5">블루팀 🏆</td></tr>
+                    <tr class="win-row"><td>플레이어1</td><td>챔프1</td><td>10/2/5</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 60%"></div><div class="damage-taken" style="width: 30%"></div></div></td><td>골드</td></tr>
+                    <tr class="win-row"><td>플레이어2</td><td>챔프2</td><td>2/5/7</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 20%"></div><div class="damage-taken" style="width: 40%"></div></div></td><td>플래티넘</td></tr>
+                    <tr class="win-row"><td>플레이어3</td><td>챔프3</td><td>3/1/12</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 40%"></div><div class="damage-taken" style="width: 20%"></div></div></td><td>실버</td></tr>
+                    <tr class="win-row"><td>플레이어4</td><td>챔프4</td><td>5/4/3</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 35%"></div><div class="damage-taken" style="width: 35%"></div></div></td><td>브론즈</td></tr>
+                    <tr class="win-row"><td>플레이어5</td><td>챔프5</td><td>0/1/20</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 10%"></div><div class="damage-taken" style="width: 15%"></div></div></td><td>아이언</td></tr>
+                    <tr><td colspan="5" class="vs-cell">VS</td></tr>
+                    <tr class="team-summary"><td colspan="5">레드팀</td></tr>
+                    <tr class="lose-row"><td>플레이어6</td><td>챔프6</td><td>1/10/1</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 10%"></div><div class="damage-taken" style="width: 80%"></div></div></td><td>실버</td></tr>
+                    <tr class="lose-row"><td>플레이어7</td><td>챔프7</td><td>4/4/4</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 30%"></div><div class="damage-taken" style="width: 40%"></div></div></td><td>플래티넘</td></tr>
+                    <tr class="lose-row"><td>플레이어8</td><td>챔프8</td><td>3/3/3</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 25%"></div><div class="damage-taken" style="width: 25%"></div></div></td><td>브론즈</td></tr>
+                    <tr class="lose-row"><td>플레이어9</td><td>챔프9</td><td>2/6/1</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 15%"></div><div class="damage-taken" style="width: 55%"></div></div></td><td>아이언</td></tr>
+                    <tr class="lose-row"><td>플레이어10</td><td>챔프10</td><td>5/5/5</td><td><div class="damage-bar"><div class="damage-dealt" style="width: 45%"></div><div class="damage-taken" style="width: 35%"></div></div></td><td>골드</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

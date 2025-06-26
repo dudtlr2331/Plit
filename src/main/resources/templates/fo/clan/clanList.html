@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>클랜 찾기</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    header {
+      background: #ff5c5c;
+      padding: 10px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header nav a {
+      margin: 0 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    header nav a:nth-child(3) { /* 클랜찾기 링크 */
+      color: yellow;
+    }
+
+    .top-right {
+      color: white;
+      font-weight: bold;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 30px auto 0;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      justify-content: space-between;
+    }
+
+    .search-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select,
+    input[type="text"] {
+      padding: 8px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    select {
+      width: 150px;
+    }
+
+    input[type="text"] {
+      width: 250px;
+    }
+
+    .register-btn {
+      background: #ff5c5c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 10px;
+    }
+
+    .clan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .clan-card {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.05);
+      position: relative;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column; /* 세로 정렬 */
+      justify-content: space-between; /* 이미지, 제목, 설명, 티어를 카드 내에서 균등하게 분배 */
+    }
+
+    .clan-image-placeholder {
+      width: 100%;
+      padding-bottom: 50%; /* 이미지 비율을 2:1로 가정 (높이/너비) */
+      background-color: #f0f0f0; /* 이미지 없을 때 배경색 */
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    .clan-title-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .clan-title-box h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .clan-member-count {
+      font-size: 13px;
+      background: #eee;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+
+    .clan-card p {
+      margin: 0;
+      font-size: 14px;
+      color: #444;
+      background: #f3f3f3;
+      padding: 10px;
+      padding-bottom: 12px; /* 이미지에서 보이는 패딩과 유사하게 */
+      border-radius: 6px;
+
+      /* 2줄 제한 및 ... 처리 */
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* 2줄 넘어가면 ... */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.5; /* 명확하게 line-height 지정 */
+      max-height: calc(1.5em * 2); /* line-height * 줄 수 */
+
+      margin-bottom: 0; /* small 태그와의 간격을 small 태그의 margin-top으로만 조절 */
+    }
+
+    .clan-card small {
+      color: gray;
+      font-size: 13px;
+      display: block; /* 한 줄 차지 */
+      margin-top: 8px; /* 설명과 티어 정보 사이 간격 */
+      align-self: flex-start; /* 왼쪽 정렬 */
+    }
+
+
+    footer {
+      background: #333;
+      color: white;
+      padding: 30px 20px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    footer a {
+      color: white;
+      margin-right: 10px;
+      text-decoration: none;
+    }
+
+    footer .footer-nav {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <nav>
+    <a href="#">파티찾기</a>
+    <a href="#">내전찾기</a>
+    <a href="#">클랜찾기</a>
+    <a href="#">트롤신고</a>
+  </nav>
+  <div class="top-right">🔴 로그인</div>
+</header>
+
+<div class="container">
+  <div class="search-bar">
+    <div class="search-left">
+      <select>
+        <option>티어전체</option>
+        <option>브론즈~골드</option>
+        <option>플레~챌린저</option>
+      </select>
+      <input type="text" placeholder="클랜명 또는 소개 검색" />
+    </div>
+    <button class="register-btn">클랜등록</button>
+  </div>
+
+  <div class="clan-grid">
+    <div class="clan-card">
+      <div class="clan-image-placeholder"></div> <div class="clan-title-box">
+      <h3>롤이좋아</h3>
+      <span class="clan-member-count">0명</span>
+    </div>
+      <p>롤 즐겜유저들 환영!! 00년생부터 입장 가능! 자유롭게 신청해주세요~ 매일 접속 환영! 같이 롤 해요!</p>
+      <small>티어 브론즈 이상</small>
+    </div>
+    <div class="clan-card">
+      <div class="clan-image-placeholder"></div> <div class="clan-title-box">
+      <h3>즐겜장인</h3>
+      <span class="clan-member-count">4명</span>
+    </div>
+      <p>트롤 싫어요! 매너유저 환영 격전도 같이 뛰어요! 친구 환영! 매일 접속! 즐겁게 게임하실 분 모집합니다!</p>
+      <small>티어 브론즈 이상</small>
+    </div>
+    <div class="clan-card">
+      <div class="clan-image-placeholder"></div> <div class="clan-title-box">
+      <h3>솔랭정글</h3>
+      <span class="clan-member-count">2명</span>
+    </div>
+      <p>정글러 구해요~ 운영 잘하시는 분 환영! 빠르게 신청해주세요! 즐거운 솔랭 라이프 함께 해요!</p>
+      <small>티어 실버 이상</small>
+    </div>
+    <div class="clan-card">
+      <div class="clan-image-placeholder"></div> <div class="clan-title-box">
+      <h3>GGWP</h3>
+      <span class="clan-member-count">3명</span>
+    </div>
+      <p>게임 끝나고 GG 말할 수 있는 매너 유저 환영합니다. 함께 즐롤해요! 항상 긍정적인 분들을 찾습니다!</p>
+      <small>티어 제한 없음</small>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-nav">
+      <a href="#">공지사항</a>
+      <a href="#">사용방법</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="#">광고/제휴문의</a>
+      <a href="#">개발문의</a>
+      <a href="#">404 Squad</a>
+    </div>
+    <div>
+      lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
+      League of Legends is a trademark of Riot Games.
+    </div>
+  </div>
+</footer>
+</body>
+</html>

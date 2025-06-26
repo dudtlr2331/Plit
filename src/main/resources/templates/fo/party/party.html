@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>파티 찾기 페이지</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #fff; }
+    header {
+      background: #ff5a5a;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header nav {
+      display: flex;
+      align-items: center;
+    }
+    header nav a {
+      margin: 0 10px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .chat-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .chat-popup {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 80px;
+      width: 250px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 999;
+    }
+    .chat-popup div {
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    .tab-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .tab {
+      padding: 10px 20px;
+      margin: 0 5px;
+      border-radius: 10px;
+      background: #eee;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab.active {
+      background: #ff5a5a;
+      color: white;
+    }
+    .filter-bar {
+      max-width: 900px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+    }
+    .position-icons img {
+      width: 30px;
+      height: 30px;
+      margin: 0 3px;
+      cursor: pointer;
+    }
+    select {
+      padding: 6px 10px;
+      border-radius: 5px;
+    }
+    .recruit-list {
+      max-width: 900px;
+      margin: auto;
+    }
+    .recruit-header, .recruit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+    }
+    .recruit-header {
+      background: #f3f3f3;
+      font-weight: bold;
+      border-bottom: 2px solid #ccc;
+    }
+    .recruit-item {
+      background: #f8f8f8;
+      margin: 5px 0;
+      border-radius: 8px;
+    }
+    .recruit-item span {
+      margin-right: 10px;
+    }
+    .chat-icon {
+      cursor: pointer;
+    }
+    .recruit-button {
+      padding: 6px 12px;
+      background: #ff5a5a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .position-selector span {
+      font-size: 24px;
+      margin-right: 10px;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    .position-selector span.selected {
+      background-color: #ff5a5a;
+      color: white;
+    }
+    .recruit-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      width: 900px;
+      height: 800px;
+      overflow: auto;
+      z-index: 1000;
+    }
+    .chatbox {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      height: 400px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <nav>
+    <a href="/main">Logo</a>
+    <a href="/party">파티찾기</a>
+    <a href="/clan">클랜찾기</a>
+    <a href="/report">트롤신고</a>
+  </nav>
+  <nav>
+    <button class="chat-button" onclick="toggleChatList()">💬</button>
+    <a href="/login">로그인</a>
+  </nav>
+  <div id="chatList" class="chat-popup">
+    <div onclick="toggleChatBox('user1')">플레이어1</div>
+    <div onclick="toggleChatBox('user2')">플레이어2</div>
+    <div onclick="toggleChatBox('user3')">플레이어3</div>
+  </div>
+</header>
+
+<div class="tab-container">
+  <div class="tab" id="soloTab">솔로 랭크</div>
+  <div class="tab" id="freeTab">자유 랭크</div>
+</div>
+
+<div class="filter-bar">
+  <div class="position-icons position-selector">
+    <span title="전체" onclick="selectPosition(this)">⭐</span>
+    <span title="탑" onclick="selectPosition(this)">🛡️</span>
+    <span title="정글" onclick="selectPosition(this)">🌿</span>
+    <span title="미드" onclick="selectPosition(this)">🪄</span>
+    <span title="원딜" onclick="selectPosition(this)">🔫</span>
+    <span title="서포터" onclick="selectPosition(this)">🪽</span>
+  </div>
+  <select>
+    <option>티어 전체</option>
+    <option>아이언</option>
+    <option>브론즈</option>
+    <option>실버</option>
+    <option>골드</option>
+    <option>플래티넘</option>
+    <option>다이아</option>
+    <option>마스터</option>
+    <option>그랜드마스터</option>
+    <option>챌린저</option>
+  </select>
+  <button class="recruit-button" onclick="toggleRecruitPopup()">모집하기</button>
+</div>
+
+<div class="recruit-list">
+  <div class="recruit-header">
+    <span>소환사이름</span><span>주포지션</span><span>티어</span><span>찾는 포지션</span><span>승률</span><span>찾는티어</span><span>메모</span><span>등록일시</span><span></span>
+  </div>
+  <div class="recruit-item"><span>👑 플레이어A</span><span>🛡️</span><span>다이아</span><span>🪄</span><span>62%</span><span>플래티넘</span><span>환영해요</span><span>2분전</span><span class="chat-icon" onclick="toggleChatBox('A')">💬</span></div>
+  <div class="recruit-item"><span>플레이어B</span><span>🌿</span><span>골드</span><span>🪽</span><span>48%</span><span>실버</span><span>정글러 구함</span><span>5분전</span><span class="chat-icon" onclick="toggleChatBox('B')">💬</span></div>
+  <div class="recruit-item"><span>플레이어C</span><span>🪄</span><span>실버</span><span>🔫</span><span>53%</span><span>골드</span><span>명랑하게</span><span>7분전</span><span class="chat-icon" onclick="toggleChatBox('C')">💬</span></div>
+  <div class="recruit-item"><span>플레이어D</span><span>🔫</span><span>브론즈</span><span>🛡️</span><span>40%</span><span>실버</span><span>탑가능</span><span>10분전</span><span class="chat-icon" onclick="toggleChatBox('D')">💬</span></div>
+</div>
+
+<div id="recruitPopup" class="recruit-popup"></div>
+<div id="chatBox" class="chatbox">채팅창 (여기에 대화 내용 구현 예정)</div>
+
+<script>
+  function toggleRecruitPopup() {
+    const popup = document.getElementById('recruitPopup');
+    popup.innerHTML = '<h3>모집 내용 불러오기</h3>'; // 실제 내용은 여기에 삽입
+    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function toggleChatList() {
+    const list = document.getElementById('chatList');
+    list.style.display = list.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function toggleChatBox(userId) {
+    const box = document.getElementById('chatBox');
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function selectPosition(element) {
+    document.querySelectorAll('.position-selector span').forEach(span => {
+      span.classList.remove('selected');
+    });
+    element.classList.add('selected');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const rank = params.get('rank') || 'solo';
+    const soloTab = document.getElementById('soloTab');
+    const freeTab = document.getElementById('freeTab');
+
+    if (rank === 'free') {
+      freeTab.classList.add('active');
+    } else {
+      soloTab.classList.add('active');
+    }
+
+    soloTab.onclick = () => {
+      window.location.search = '?rank=solo';
+    };
+    freeTab.onclick = () => {
+      window.location.search = '?rank=free';
+    };
+  });
+</script>
+</body>
+</html>
