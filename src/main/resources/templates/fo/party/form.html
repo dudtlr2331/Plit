@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="${party.partySeq != null} ? '파티 수정' : '파티 등록'">파티 폼</title>
+  <meta charset="UTF-8"/>
+</head>
+<body>
+<h1 th:text="${party.partySeq != null} ? '파티 수정' : '파티 등록'">파티 폼</h1>
+
+<form th:action="@{${party.partySeq != null} ? '/party/edit/' + ${party.partySeq} : '/party/new'}" method="post">
+
+  <label>이름:
+    <input type="text" name="partyName" th:value="${party.partyName}" required/>
+  </label><br/>
+
+  <label>타입:
+    <input type="text" name="partyType" th:value="${party.partyType}" required/>
+  </label><br/>
+
+  <label>생성일자:
+    <input type="datetime-local" name="partyCreateDate"
+           th:value="${party.partyCreateDate != null} ? ${#dates.format(party.partyCreateDate, 'yyyy-MM-dd\'T\'HH:mm')}" required/>
+  </label><br/>
+
+  <label>종료일자:
+    <input type="datetime-local" name="partyEndTime"
+           th:value="${party.partyEndTime != null} ? ${#dates.format(party.partyEndTime, 'yyyy-MM-dd\'T\'HH:mm')}" required/>
+  </label><br/>
+
+  <label>상태:
+    <input type="text" name="partyStatus" th:value="${party.partyStatus}" required/>
+  </label><br/>
+
+  <label>현재 인원:
+    <input type="number" name="partyHeadcount" th:value="${party.partyHeadcount}" min="0" required/>
+  </label><br/>
+
+  <label>최대 인원:
+    <input type="number" name="partyMax" th:value="${party.partyMax}" min="1" required/>
+  </label><br/>
+
+  <button type="submit">저장</button>
+</form>
+
+<a th:href="@{/party/list}">목록으로</a>
+
+</body>
+</html>
