@@ -25,84 +25,132 @@
             <p>모든 게이머를 위한 000회원 커뮤니티에 오신 것을 환영합니다.<br>독특한 온라인 모험을 시작하세요.</p>
         </div>
         <div class="right-form">
+
             <!-- STEP 1 -->
             <div class="form-step active" id="step1">
-                <input type="email" class="form-control mb-3" placeholder="이메일 주소" required />
+                <input type="email" id="emailInput" class="form-control mb-3" placeholder="이메일 주소" required />
                 <button class="btn btn-red w-100" onclick="nextStep(2)">계속하기</button>
             </div>
 
             <!-- STEP 2 -->
             <div class="form-step" id="step2">
-                <input type="email" class="form-control mb-3" placeholder="이메일 주소" disabled />
-                <input type="text" class="form-control mb-3" placeholder="생년월일 (연도/월/일)" required />
+                <input type="email" id="emailDisplay" class="form-control mb-3" disabled />
+                <input type="text" id="codeInput" class="form-control mb-3" placeholder="인증번호 입력" required />
                 <button class="btn btn-red w-100" onclick="nextStep(3)">계속하기</button>
             </div>
 
             <!-- STEP 3 -->
+            <!-- STEP 3 -->
             <div class="form-step" id="step3">
-                <input type="email" class="form-control mb-3" placeholder="이메일 주소" disabled />
-                <input type="text" class="form-control mb-3" placeholder="생년월일 (연도/월/일)" disabled />
-                <input type="password" class="form-control mb-2" placeholder="비밀번호" required />
+                <form action="/fo/signup" method="post">
+                    <input type="email" id="emailFinal" name="userId" class="form-control mb-3" readonly />
+                    <input type="password" id="passwordInput" name="userPwd" class="form-control mb-2" placeholder="비밀번호" required />
 
-                <div class="mb-3">
-                    <small class="text-muted">
-                        비밀번호 요구사항<br>
-                        • 8글자 이상<br>
-                        • 영문, 숫자, 기호 중 2개 이상 조합<br>
-                        • 이메일 주소 포함 X
-                    </small>
-                </div>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            비밀번호 요구사항<br>
+                            • 8글자 이상<br>
+                            • 영문, 숫자, 기호 중 2개 이상 조합<br>
+                            • 이메일 주소 포함 X
+                        </small>
+                    </div>
 
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="agree1" required>
-                    <label class="form-check-label" for="agree1">이용약관에 동의합니다.</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="agree2" required>
-                    <label class="form-check-label" for="agree2">개인정보 수집 및 이용에 동의합니다.</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="agree3">
-                    <label class="form-check-label" for="agree3">서비스 홍보 및 마케팅 목적의 수집 및 이용에 동의합니다.</label>
-                </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="agree1" required>
+                        <label class="form-check-label" for="agree1">이용약관에 동의합니다.</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="agree2" required>
+                        <label class="form-check-label" for="agree2">개인정보 수집 및 이용에 동의합니다.</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="agree3">
+                        <label class="form-check-label" for="agree3">서비스 홍보 및 마케팅 목적의 수집 및 이용에 동의합니다.</label>
+                    </div>
 
-                <button class="btn btn-red w-100 mt-3">계정생성</button>
+                    <button type="submit" class="btn btn-red w-100 mt-3" onclick="return validateFinal()">계정생성</button>
+                </form>
             </div>
+
 
             <div class="text-end mt-3">
-                <a href="/login" class="text-decoration-none">이미 계정이 있으신가요? 로그인</a>
+                <a href="/fo/login" class="text-decoration-none">이미 계정이 있으신가요? 로그인</a>
             </div>
+
         </div>
     </div>
 </div>
 
 <script>
-    function nextStep(step) {
-        // STEP 1 → STEP 2
+    async function nextStep(step) {
         if (step === 2) {
-            const email = document.querySelector('#step1 input[type="email"]').value.trim();
+            const email = document.getElementById('emailInput').value.trim();
             if (!email) {
                 alert("이메일을 입력해주세요.");
                 return;
             }
-            // 입력값을 다음 단계에 채워넣기
-            document.querySelectorAll('#step2 input[type="email"], #step3 input[type="email"]').forEach(el => el.value = email);
-        }
 
-        // STEP 2 → STEP 3
-        if (step === 3) {
-            const birth = document.querySelector('#step2 input[type="text"]').value.trim();
-            if (!birth) {
-                alert("생년월일을 입력해주세요.");
+            try {
+                const res = await fetch('/fo/check-id?userId=' + encodeURIComponent(email));
+                const { available } = await res.json();
+                if (!available) {
+                    alert("이미 사용 중인 아이디입니다.");
+                    return;
+                }
+            } catch (e) {
+                alert("중복 확인 중 오류가 발생했습니다.");
                 return;
             }
-            document.querySelector('#step3 input[placeholder*="생년월일"]').value = birth;
+
+            document.getElementById('emailDisplay').value = email;
+            document.getElementById('emailFinal').value = email;
         }
 
-        // show next step
-        // 공통: 모든 step 비활성화 → 해당 step만 활성화
+        if (step === 3) {
+            const code = document.getElementById('codeInput').value.trim();
+            if (!code) {
+                alert("인증번호를 입력해주세요.");
+                return;
+            }
+
+            if (code !== "123456") {
+                alert("인증번호가 올바르지 않습니다. (가라코드: 123456)");
+                return;
+            }
+        }
+
         document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
         document.getElementById('step' + step).classList.add('active');
+    }
+
+    function isValidPassword(password, email) {
+        const minLength = 8;
+        const hasLetter = /[a-zA-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+        const typeCount = [hasLetter, hasNumber, hasSymbol].filter(Boolean).length;
+
+        const emailUserPart = email.split('@')[0];
+        const includesEmail = password.includes(emailUserPart);
+
+        return password.length >= minLength && typeCount >= 2 && !includesEmail;
+    }
+
+    function validateFinal() {
+        const password = document.getElementById('passwordInput').value.trim();
+        const email = document.getElementById('emailFinal').value.trim();
+
+        if (!isValidPassword(password, email)) {
+            alert("비밀번호는 8자 이상이며, 영문/숫자/기호 중 2가지 이상 조합이어야 하고 이메일을 포함할 수 없습니다.");
+            return false;
+        }
+
+        if (!document.getElementById('agree1').checked || !document.getElementById('agree2').checked) {
+            alert("필수 약관에 동의해주세요.");
+            return false;
+        }
+
+        return true;
     }
 </script>
 

@@ -34,10 +34,10 @@ public class UserEntity {
     @Column(name = "is_banned", nullable = false)
     private Boolean isBanned;
 
-    @Column(name = "user_modi_id", nullable = false, length = 16)
+    @Column(name = "user_modi_id", length = 16)
     private String userModiId;
 
-    @Column(name = "user_modi_date", nullable = false)
+    @Column(name = "user_modi_date")
     private LocalDate userModiDate;
 
     @Column(name = "user_create_date", nullable = false)
@@ -45,4 +45,19 @@ public class UserEntity {
 
     @Column(name = "user_auth", nullable = false, length = 5)
     private String userAuth;
+
+    public UserDTO toDTO() {
+        return UserDTO.builder()
+                .userSeq(this.userSeq)
+                .userId(this.userId)
+                .userPwd(this.userPwd)
+                .userNickname(this.userNickname)
+                .useYn(this.useYn)
+                .isBanned(this.isBanned)
+                .userModiId(this.userModiId)
+                .userModiDate(this.userModiDate)
+                .userCreateDate(this.userCreateDate)
+                .userAuth(this.userAuth)
+                .build();
+    }
 }

@@ -6,12 +6,10 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -21,15 +19,15 @@ public class UserController {
 
     private final UserService userService; // Inject UserService
 
-    // Handles the main page for Front Office
+
+    /// 메인
     // URL: /fo/main
     @GetMapping("/main")
     public String mainPage() {
         return "fo/main/main"; // Maps to src/main/resources/templates/fo/main/main.html
     }
 
-    // Displays the login form
-    // URL: /fo/login
+    /// 로그인 버튼
     @GetMapping("/login")
     public String showLoginForm(Model model) {
         // Add a UserDTO object to the model for form binding
@@ -48,7 +46,7 @@ public class UserController {
             session.setAttribute("loginUser", loginUser); // 로그인 정보 세션에 저장
 
             redirectAttributes.addFlashAttribute("message", "로그인 성공!");
-            return "redirect:/fo/main";
+            return "redirect:/main";
         } else {
             // 로그인 실패
             redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않습니다.");
@@ -56,18 +54,33 @@ public class UserController {
         }
     }
 
-    // Displays the registration form
-    // URL: /fo/register
-    @GetMapping("/register")
-    public String showRegisterForm(Model model) {
-        model.addAttribute("userDTO", new UserDTO());
-        // 에러 로그에 따라 'fo/login/register.html'로 경로 수정
-        return "fo/user/register"; // <-- 이 부분을 'fo/user/register' 에서 변경했습니다.
+    /// 로그아웃
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/fo/main";
     }
 
-    // Processes the registration form submission
+
+    /// 회원가입 버튼
     // URL: /fo/register
-    @PostMapping("/register")
+    @GetMapping("/signup")
+    public String showRegisterForm(Model model) {
+        model.addAttribute("userDTO", new UserDTO());
+        return "fo/user/signup";
+    }
+
+    /// 회원가입 아이디 중복 검사
+    @GetMapping("/check-id")
+    @ResponseBody
+    public Map<String, Object> checkId(@RequestParam("userId") String userId) {
+        boolean available = userService.isUserIdAvailable(userId);
+        return Map.of("available", available);
+    }
+
+    /// 회원가입
+    // URL: /fo/signup
+    @PostMapping("/signup")
     public String processRegistration(@ModelAttribute UserDTO userDTO, RedirectAttributes redirectAttributes) {
         try {
             userService.registerUser(userDTO);
@@ -75,10 +88,10 @@ public class UserController {
             return "redirect:/fo/login"; // Redirect to login page after successful registration
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage()); // Display specific error (e.g., duplicate ID)
-            return "redirect:/fo/register"; // Redirect back to register page on failure
+            return "redirect:/fo/user/signup"; // Redirect back to register page on failure
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "회원가입 중 오류가 발생했습니다.");
-            return "redirect:/fo/register";
+            return "redirect:/fo/user/signup";
         }
     }
 }
