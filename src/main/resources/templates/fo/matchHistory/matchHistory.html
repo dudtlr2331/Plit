@@ -66,6 +66,12 @@
     <button style="margin-left: auto;" class="btn-red">전적갱신</button>
 </div>
 
+<div class="tabs">
+    <button class="tab active">전체</button>
+    <button class="tab">개인/2인 랭크 게임</button>
+    <button class="tab">자유 랭크 게임</button>
+</div>
+
 <div class="main">
     <div class="left-panel">
         <div class="rank-box">
@@ -91,23 +97,51 @@
     </div>
     <div class="right-panel">
 
-        <div class="tabs">
-            <button class="active">전체</button>
-            <button>개인/2인 랭크 게임</button>
-            <button>자유 랭크 게임</button>
-        </div>
         <div class="recent-games">
             <h3>최근 게임 (전체)</h3>
 
-            <div th:if="${matchIds != null}">
-                <div th:each="matchId : ${matchIds}" class="match-summary" onclick="toggleMatchDetail(this)">
-                    <span th:text="'Match ID: ' + ${matchId}"></span>
+            <div th:if="${matchList != null}">
+                <div class="summary-bar">
+                    <p>
+                        총 [[${totalCount}]]전 [[${winCount}]]승 [[${totalCount - winCount}]]패
+                    </p>
+
+                    <div class="win-loss-bar" style="display: flex; height: 20px; width: 300px; border: 1px solid #ccc;">
+                        <div th:style="'background-color: #4da6ff; width:' + ${winCount * 100 / totalCount} + '%'"></div>
+                        <div th:style="'background-color: #ff4d4d; width:' + ${(100 - (winCount * 100 / totalCount))} + '%'"></div>
+                    </div>
+                </div>
+
+                <br>
+
+                <!-- 전적 상세 리스트 -->
+                <div th:each="match : ${matchList}" class="match-summary-box" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+                    <p><strong>챔피언:</strong> <span th:text="${match.championName}"></span></p>
+                    <p><strong>포지션:</strong> <span th:text="${match.teamPosition}"></span></p>
+                    <p>
+                        <strong>KDA:</strong>
+                        <span th:text="${match.kills} + '/' + ${match.deaths} + '/' + ${match.assists}"></span>
+                    </p>
+                    <p>
+                        <strong>결과:</strong>
+                        <span th:text="${match.win} ? '승리' : '패배'" style="font-weight: bold;"></span>
+                    </p>
+                    <p>
+                        <strong>게임 모드:</strong>
+                        <span th:text="${modeMap[match.gameMode]} ?: '기타 모드'"></span>
+                        <span th:text="'(' + ${match.gameMode} + ')'"></span>
+                    </p>
+                    <p>
+                        <strong>아이템:</strong>
+                        <span th:each="item : ${match.itemIds}" th:text="${item} + ' '" />
+                    </p>
                 </div>
             </div>
 
-            <div th:if="${#lists.isEmpty(matchIds)}">
+            <div th:if="${#lists.isEmpty(matchList)}">
                 <p>불러온 전적이 없습니다.</p>
             </div>
+
 
             <div class="match-summary win" onclick="toggleMatchDetail(this)">
                 <span>블루팀 승리</span>

@@ -28,9 +28,9 @@ public class TestRunner implements CommandLineRunner {
                     new HttpEntity<>(null),
                     String.class
             );
-            System.out.println("✅ API 호출 성공:\n" + response.getBody());
+            System.out.println("API 호출 성공:\n" + response.getBody());
         } catch (Exception e) {
-            System.err.println("❌ API 호출 실패: " + e.getMessage());
+            System.err.println("API 호출 실패: " + e.getMessage());
         }
     }
 }
