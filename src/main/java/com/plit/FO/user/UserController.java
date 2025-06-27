@@ -46,7 +46,7 @@ public class UserController {
             session.setAttribute("loginUser", loginUser); // 로그인 정보 세션에 저장
 
             redirectAttributes.addFlashAttribute("message", "로그인 성공!");
-            return "redirect:/fo/main";
+            return "redirect:/main";
         } else {
             // 로그인 실패
             redirectAttributes.addFlashAttribute("error", "아이디 또는 비밀번호가 일치하지 않습니다.");
@@ -85,29 +85,13 @@ public class UserController {
         try {
             userService.registerUser(userDTO);
             redirectAttributes.addFlashAttribute("message", "회원가입 성공! 로그인해주세요.");
-            return "redirect:/fo/login";
+            return "redirect:/fo/login"; // Redirect to login page after successful registration
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage()); // Display specific error (e.g., duplicate ID)
-            return "redirect:/fo/signup";
+            return "redirect:/fo/user/signup"; // Redirect back to register page on failure
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "회원가입 중 오류가 발생했습니다.");
-            return "redirect:/fo/signup";
+            return "redirect:/fo/user/signup";
         }
     }
-
-
-    /// 회원탈퇴
-    @PostMapping("/user/delete")
-    public String deleteUser(@RequestParam("userSeq") Integer userSeq, HttpSession session, RedirectAttributes redirectAttributes) {
-        try {
-            userService.deleteUser(userSeq);
-            session.invalidate();
-            redirectAttributes.addFlashAttribute("message", "회원 탈퇴가 완료되었습니다.");
-            return "redirect:/fo/main";
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/fo/mypage/mypage";
-        }
-    }
-
 }
