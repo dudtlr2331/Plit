@@ -26,6 +26,8 @@ logging:
 
 riot:
   api:
-    key: RGAPI-b3290b19-cbb0-46cd-9204-02d08988e624
+    key: RGAPI-8e8a8e36-6299-411d-b7b5-feeffa18856b
 
-
+# 파일 업로드 경로 설정
+custom:
+  upload-path: /Users/minseok/qna/uploads

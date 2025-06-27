@@ -2,6 +2,8 @@ package com.plit.FO.party;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -25,7 +27,8 @@ public class PartyEntity {
     @Column(name = "party_type", nullable = false, length = 6)
     private String partyType; // 타입
 
-    @Column(name = "party_create_date", nullable = false)
+    @CreationTimestamp
+    @Column(name = "party_create_date", nullable = false, updatable = false)
     private LocalDateTime partyCreateDate; // 생성일자
 
     @Column(name = "party_end_time", nullable = false)
