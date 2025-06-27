@@ -50,7 +50,7 @@
     <p th:text="${message}"></p>
   </div>
 
-  <form th:action="@{/templates/fo/user}" th:object="${userDTO}" method="post">
+  <form th:action="@{/fo/login}" th:object="${userDTO}" method="post">
     <div class="form-group">
       <label for="userId">아이디:</label>
       <input type="text" id="userId" th:field="*{userId}" required>
@@ -62,7 +62,7 @@
     <button type="submit">로그인</button>
   </form>
   <div class="register-link">
-    계정이 없으신가요? <a th:href="@{/fo/register}">회원가입</a>
+    계정이 없으신가요? <a th:href="@{/fo/signup}">회원가입</a>
   </div>
 </div>
 </body>
