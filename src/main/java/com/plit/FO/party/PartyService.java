@@ -19,7 +19,7 @@ public class PartyService {
         return partyRepository.findAll();
     }
 
-    public PartyEntity saveParty(PartyEntity party) {
+    public PartyEntity saveParty(PartyEntity party) { // 파티 생성 또는 업데이트 (JPA save 메서드가 insert/update를 자동으로 판단)
         return partyRepository.save(party);
     }
 

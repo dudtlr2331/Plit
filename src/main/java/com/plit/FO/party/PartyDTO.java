@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class PartyDTO {
-    private Integer partySeq;      // 번호
+    private Integer partySeq;  // 번호
     private String partyName;  // 파티 이름
     private String partyType;  // 타입
     private LocalDateTime partyCreateDate; // 생성일자

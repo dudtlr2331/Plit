@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"> <head>
   <meta charset="UTF-8">
   <title>파티 찾기 페이지</title>
   <style>
@@ -209,12 +208,30 @@
 
 <div class="recruit-list">
   <div class="recruit-header">
-    <span>소환사이름</span><span>주포지션</span><span>티어</span><span>찾는 포지션</span><span>승률</span><span>찾는티어</span><span>메모</span><span>등록일시</span><span></span>
+    <span>파티이름</span>
+    <span>타입</span>
+    <span>생성일자</span>
+    <span>종료일자</span>
+    <span>상태</span>
+    <span>현재 인원</span>
+    <span>최대 인원</span>
+    <span>파티 번호</span>
+    <span></span>
   </div>
-  <div class="recruit-item"><span>👑 플레이어A</span><span>🛡️</span><span>다이아</span><span>🪄</span><span>62%</span><span>플래티넘</span><span>환영해요</span><span>2분전</span><span class="chat-icon" onclick="toggleChatBox('A')">💬</span></div>
-  <div class="recruit-item"><span>플레이어B</span><span>🌿</span><span>골드</span><span>🪽</span><span>48%</span><span>실버</span><span>정글러 구함</span><span>5분전</span><span class="chat-icon" onclick="toggleChatBox('B')">💬</span></div>
-  <div class="recruit-item"><span>플레이어C</span><span>🪄</span><span>실버</span><span>🔫</span><span>53%</span><span>골드</span><span>명랑하게</span><span>7분전</span><span class="chat-icon" onclick="toggleChatBox('C')">💬</span></div>
-  <div class="recruit-item"><span>플레이어D</span><span>🔫</span><span>브론즈</span><span>🛡️</span><span>40%</span><span>실버</span><span>탑가능</span><span>10분전</span><span class="chat-icon" onclick="toggleChatBox('D')">💬</span></div>
+  <div class="recruit-item" th:each="party : ${parties}">
+    <span>
+      <a th:href="@{/party/{id}(id=${party.partySeq})}" th:text="${party.partyName}"></a>
+    </span>
+    <span th:text="${party.partyType}"></span>
+    <span th:text="${#temporals.format(party.partyCreateDate, 'yy.MM.dd HH:mm')}"></span> <span th:text="${#temporals.format(party.partyEndTime, 'yy.MM.dd HH:mm')}"></span> <span th:text="${party.partyStatus}"></span>
+    <span th:text="${party.partyHeadcount}"></span>
+    <span th:text="${party.partyMax}"></span>
+    <span th:text="${party.partySeq}"></span>
+    <span class="chat-icon" onclick="toggleChatBox('partyId-' + ${party.partySeq})">💬</span>
+  </div>
+  <div th:if="${#lists.isEmpty(parties)}" class="recruit-item" style="justify-content: center;">
+    <span>현재 모집 중인 파티가 없습니다.</span>
+  </div>
 </div>
 
 <div id="recruitPopup" class="recruit-popup"></div>
@@ -223,7 +240,20 @@
 <script>
   function toggleRecruitPopup() {
     const popup = document.getElementById('recruitPopup');
-    popup.innerHTML = '<h3>모집 내용 불러오기</h3>'; // 실제 내용은 여기에 삽입
+    // 실제 모집하기 폼을 로드하는 API 호출 또는 내용을 여기에 삽입
+    popup.innerHTML = `
+      <h3>새 파티 모집하기</h3>
+      <form action="/party/new" method="post">
+        <label>파티 이름: <input type="text" name="partyName" required></label><br>
+        <label>파티 타입 (예: 솔로랭크, 자유랭크): <input type="text" name="partyType" required></label><br>
+        <label>파티 종료 일시: <input type="datetime-local" name="partyEndTime" required></label><br>
+        <label>파티 상태 (예: WAITING): <input type="text" name="partyStatus" value="WAITING" required></label><br>
+        <label>현재 인원: <input type="number" name="partyHeadcount" value="1" min="1" required></label><br>
+        <label>최대 인원: <input type="number" name="partyMax" value="5" min="1" required></label><br>
+        <button type="submit">모집 시작</button>
+        <button type="button" onclick="document.getElementById('recruitPopup').style.display='none'">닫기</button>
+      </form>
+    `;
     popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
   }
 
@@ -235,6 +265,7 @@
   function toggleChatBox(userId) {
     const box = document.getElementById('chatBox');
     box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    console.log('채팅 박스 토글: ' + userId);
   }
 
   function selectPosition(element) {
