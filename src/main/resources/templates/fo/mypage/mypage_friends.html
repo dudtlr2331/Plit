@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>마이페이지 - 친구 목록</title>
+  <link rel="stylesheet" href="/css/mypageFriends.css" />
+</head>
+<body>
+<div class="container">
+  <div class="sidebar">
+    <ul>
+      <li><a href="/mypage/account">계정 관리</a></li>
+      <li><a href="/mypage/qna">문의하기</a></li>
+      <li><a href="/mypage/friends" class="active">친구 목록</a></li>
+      <li><a href="/mypage/block">차단 목록</a></li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <div class="section active">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>친구 목록</h2>
+        <div style="position: relative; display: inline-block;">
+          <button onclick="toggleRequestPopup()" class="submit-button">친구 신청</button>
+
+          <div id="requestPopup" class="request-popup" style="display: none;">
+            <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px;">
+              <span>친구 요청 목록</span>
+              <button onclick="toggleRequestPopup()">×</button>
+            </div>
+            <div id="requestList" style="padding: 10px;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div th:if="${#lists.isEmpty(friendList)}" class="friend-item">
+        <div class="friend-left">
+          <div class="profile-circle"></div>
+          <span>친구가 없습니다.</span>
+        </div>
+      </div>
+
+      <div th:each="friend : ${friendList}" class="friend-item">
+        <div class="friend-left">
+          <div class="profile-circle"></div>
+          <span th:text="${friend.user.userNickname}">닉네임</span>
+          <input class="memo-input" th:value="${friend.memo}" readonly />
+          <button class="memo-edit-btn" th:attr="data-friendsno=${friend.friendsNo}, data-currentmemo=${friend.memo}" onclick="openMemoPopup(this)">✏️</button>
+        </div>
+        <div class="friend-actions">
+          <button class="chat-btn"
+                  th:attr="onclick=|openChat('${friend.user.userNickname}')|">💬</button>
+          <button class="block-btn"
+                  th:attr="onclick=|blockFriend(${friend.friendsNo})|">차단</button>
+          <button class="delete-btn"
+                  th:attr="onclick=|deleteFriend(${friend.friendsNo})|">삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 채팅 팝업 -->
+<div class="chat-popup" id="chatPopup">
+  <div class="chat-header">
+    <span id="chatTarget">플레이어</span>
+    <button onclick="closeChat()">×</button>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="chat-message received">안녕하세요! 무엇을 도와드릴까요?</div>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." />
+  </div>
+</div>
+
+<!--메모 수정 팝업-->
+<div id="memoPopup" class="chat-popup" style="width: 300px;">
+  <div class="chat-header">
+    <span>메모 수정</span>
+    <button onclick="closeMemoPopup()">×</button>
+  </div>
+  <div class="chat-body">
+    <input type="hidden" id="memoFriendId" />
+    <textarea id="memoInputArea" rows="4" style="width: 100%; padding: 10px;"></textarea>
+  </div>
+  <div style="padding: 10px;">
+    <button class="submit-button" onclick="submitMemo()">저장</button>
+  </div>
+</div>
+
+<script>
+  function toggleRequestPopup() {
+    const popup = document.getElementById('requestPopup');
+    popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+    if (popup.style.display === 'flex') {
+      loadFriendRequests();
+    }
+  }
+
+  function loadFriendRequests() {
+    fetch('/api/friends/requests')
+            .then(res => res.json())
+            .then(data => {
+              const container = document.getElementById('requestList');
+              container.innerHTML = '';
+
+              if (data.length === 0) {
+                container.innerHTML = '<p>요청이 없습니다.</p>';
+                return;
+              }
+
+              data.forEach(req => {
+                const div = document.createElement('div');
+                div.className = 'request-item';
+                div.textContent = `From: ${req.fromUserNickname} (${req.fromUserId})`;
+                container.appendChild(div);
+              });
+            });
+  }
+
+  function openChat(name) {
+    document.getElementById('chatPopup').style.display = 'flex';
+    document.getElementById('chatTarget').textContent = name;
+    document.getElementById('chatInput').focus();
+  }
+
+  function closeChat() {
+    document.getElementById('chatPopup').style.display = 'none';
+    document.getElementById('chatBody').innerHTML = '';
+    document.getElementById('chatInput').value = '';
+  }
+
+  document.getElementById('chatInput')?.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && this.value.trim()) {
+      const msg = this.value.trim();
+      const div = document.createElement('div');
+      div.className = 'chat-message sent';
+      div.textContent = msg;
+      document.getElementById('chatBody').appendChild(div);
+      this.value = '';
+      document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
+    }
+  });
+
+  //메모 수정
+  function openMemoPopup(btn) {
+    const friendNo = btn.getAttribute("data-friendsno");
+    const currentMemo = btn.getAttribute("data-currentmemo");
+
+    document.getElementById("memoFriendId").value = friendNo;
+    document.getElementById("memoInputArea").value = currentMemo;
+
+    document.getElementById("memoPopup").style.display = "flex";
+  }
+
+  function closeMemoPopup() {
+    document.getElementById("memoPopup").style.display = "none";
+  }
+
+  function submitMemo() {
+    const friendNo = document.getElementById("memoFriendId").value;
+    const newMemo = document.getElementById("memoInputArea").value;
+
+    fetch(`/api/friends/${friendNo}/memo`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ memo: newMemo })
+    })
+            .then(res => {
+              if (res.ok) {
+                alert("메모가 저장되었습니다.");
+                location.reload();
+              } else {
+                alert("메모 저장에 실패했습니다.");
+              }
+            });
+  }
+
+  // 친구 신청 목록
+  function loadFriendRequests() {
+    fetch('/api/friends/requests')
+            .then(res => res.json())
+            .then(data => {
+              const container = document.getElementById('requestList');
+              container.innerHTML = '';
+
+              if (data.length === 0) {
+                container.innerHTML = '<p>요청이 없습니다.</p>';
+                return;
+              }
+
+              data.forEach(req => {
+                const div = document.createElement('div');
+                div.className = 'request-item';
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+                div.style.marginBottom = '10px';
+
+                const nickname = document.createElement('span');
+                nickname.textContent = req.user.userNickname;
+                nickname.style.flex = '1';
+
+                const memo = document.createElement('span');
+                memo.textContent = req.memo || '';
+                memo.style.flex = '2';
+                memo.style.margin = '0 10px';
+
+                const actions = document.createElement('div');
+                actions.style.display = 'flex';
+                actions.style.gap = '5px';
+
+                const acceptBtn = document.createElement('button');
+                acceptBtn.textContent = '수락';
+                acceptBtn.className = 'submit-button';
+                acceptBtn.onclick = () => handleFriendAction(req.friendsNo, 'accept');
+
+                const declineBtn = document.createElement('button');
+                declineBtn.textContent = '거절';
+                declineBtn.className = 'delete-btn';
+                declineBtn.onclick = () => handleFriendAction(req.friendsNo, 'decline');
+
+                actions.appendChild(acceptBtn);
+                actions.appendChild(declineBtn);
+
+                div.appendChild(nickname);
+                div.appendChild(memo);
+                div.appendChild(actions);
+
+                container.appendChild(div);
+              });
+            });
+  }
+
+
+  // 친구신청 수락 및 거절
+  function handleFriendAction(friendNo, action) {
+    fetch(`/api/friends/${friendNo}/${action}`, {
+      method: "POST"
+    }).then(res => {
+      if (res.ok) {
+        alert(`${action === 'accept' ? '수락' : '거절'}되었습니다.`);
+        loadFriendRequests();
+      } else {
+        alert('처리에 실패했습니다.');
+      }
+    });
+  }
+
+  function toggleRequestPopup() {
+    const popup = document.getElementById('requestPopup');
+    popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+
+    if (popup.style.display === 'flex') {
+      loadFriendRequests();
+    }
+  }
+
+  data.forEach(req => {
+    const div = document.createElement('div');
+    div.className = 'request-item';
+
+    const nickname = document.createElement('span');
+    nickname.className = 'nickname';
+    nickname.textContent = req.user.userNickname;
+
+    const memo = document.createElement('span');
+    memo.className = 'memo';
+    memo.textContent = req.memo || '';
+
+    const actions = document.createElement('div');
+    actions.className = 'request-actions';
+
+    const acceptBtn = document.createElement('button');
+    acceptBtn.textContent = '수락';
+    acceptBtn.className = 'submit-button';
+    acceptBtn.onclick = () => handleFriendAction(req.friendsNo, 'accept');
+
+    const declineBtn = document.createElement('button');
+    declineBtn.textContent = '거절';
+    declineBtn.className = 'delete-btn';
+    declineBtn.onclick = () => handleFriendAction(req.friendsNo, 'decline');
+
+    actions.appendChild(acceptBtn);
+    actions.appendChild(declineBtn);
+
+    div.appendChild(nickname);
+    div.appendChild(memo);
+    div.appendChild(actions);
+
+    container.appendChild(div);
+  });
+
+  // 친구 차단
+  function blockFriend(friendNo) {
+    if (!confirm('정말 이 친구를 차단하시겠습니까?')) return;
+
+    fetch(`/api/friends/${friendNo}/block`, {
+      method: "POST"
+    })
+            .then(res => {
+              if (res.ok) {
+                alert("친구를 차단했습니다.");
+                location.reload();
+              } else {
+                alert("차단에 실패했습니다.");
+              }
+            });
+  }
+
+  // 친구 삭제
+  function deleteFriend(friendNo) {
+    if (!confirm('정말 이 친구를 삭제하시겠습니까?')) return;
+
+    fetch(`/api/friends/${friendNo}`, {
+      method: "DELETE"
+    })
+            .then(res => {
+              if (res.ok) {
+                alert("친구가 삭제되었습니다.");
+                location.reload();
+              } else {
+                alert("삭제에 실패했습니다.");
+              }
+            });
+  }
+</script>
+</body>
+</html>
