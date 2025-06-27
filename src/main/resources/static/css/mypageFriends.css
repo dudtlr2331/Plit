@@ -1,0 +1,332 @@
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+.container {
+    display: flex;
+    max-width: 1000px;
+    margin: 60px auto;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+.sidebar {
+    width: 200px;
+    background: #fafafa;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+}
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar li {
+    margin-bottom: 16px;
+}
+.sidebar li a {
+    display: block;
+    padding: 12px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.3s;
+}
+.sidebar li a:hover,
+.sidebar li a.active {
+    background-color: #eee;
+}
+
+.content {
+    flex: 1;
+    padding: 40px;
+}
+
+.section {
+    display: none;
+}
+.section.active {
+    display: block;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 22px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.info-group {
+    margin-top: 20px;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+.info-row label {
+    width: 80px;
+    font-weight: bold;
+}
+.info-row input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+.info-row button {
+    background: #ff4d4d;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+}
+.form-group textarea {
+    resize: vertical;
+}
+.form-group label {
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.submit-button {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 20px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.privacy-check {
+    margin-top: 10px;
+}
+
+.friend-item, .blocked-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.profile-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ccc;
+    margin-right: 12px;
+}
+
+.friend-left, .blocked-left {
+    display: flex;
+    align-items: center;
+}
+
+.memo-input {
+    margin-left: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.friend-actions button,
+.blocked-actions button {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.chat-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #ff5c5c;
+    cursor: pointer;
+    padding: 0;
+}
+
+.block-btn {
+    background: #ffe5e5;
+    color: #cc0000;
+}
+
+.unblock-btn {
+    background: #ff5c5c;
+    color: white;
+}
+
+/* 채팅 팝업 */
+.chat-popup {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 280px;
+    height: 380px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+.chat-header {
+    background: #ff4d4d;
+    color: white;
+    padding: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.chat-body {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+.chat-message {
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    max-width: 75%;
+    word-break: break-word;
+}
+.chat-message.sent {
+    background: #dcf8c6;
+    margin-left: auto;
+}
+.chat-message.received {
+    background: #f1f0f0;
+}
+.chat-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+.chat-input input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+}
+
+.memo-edit-btn {
+    margin-left: 6px;
+    background: #eee;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.delete-btn {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 20px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.delete-btn:hover {
+    background-color: #c0392b;
+}
+
+#requestPopup {
+    position: absolute;
+    top: 100%; /* 버튼 바로 아래 */
+    /*left: 0;   !* 버튼 왼쪽 정렬 *!*/
+    right: 0;
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    width: 420px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+    z-index: 999;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    padding: 10px;
+}
+
+.request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background-color: #f7f7f7;
+    border: 1px solid #eee;
+}
+
+.request-item .nickname {
+    min-width: 80px;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.request-item span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.request-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.request-item span.nickname {
+    flex: 1;
+    font-weight: bold;
+    color: #333;
+}
+
+
+.request-item .memo {
+    flex: 2;
+    background: #ddd;
+    padding: 6px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    color: #555;
+}
+
+.request-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+}

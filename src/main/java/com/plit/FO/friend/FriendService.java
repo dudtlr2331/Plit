@@ -33,46 +33,89 @@ public class FriendService {
     }
 
     // 친구 신청 목록 조회
-    public List<FriendDTO> getPendingFriendRequests(String currentUserId) {
-        // 현재 userId 로 userSeq 조회
-        UserEntity currentUser = userRepository.findByUserId(currentUserId)
-                .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
-        Integer toUserId = currentUser.getUserSeq();
+    public List<FriendDTO> getPendingFriendRequests(Integer currentUserSeq) {
+        // 현재 유저에게 온 친구 요청 중 PENDING 상태 조회
+        List<FriendEntity> requests = friendRepository.findByToUserIdAndStatus(currentUserSeq, "PENDING");
 
-        // 해당 유저에게 온 친구 요청 중 PENDING 상태인 것들 조회
-        List<FriendEntity> requests = friendRepository.findByToUserIdAndStatus(toUserId, "PENDING");
-
-        // 결과가 없으면 빈 리스트 반환
         return requests.stream()
-                .map(friend -> FriendDTO.builder()
-                        .friendsNo(friend.getFriendsNo())
-                        .fromUserId(friend.getFromUserId())
-                        .toUserId(friend.getToUserId())
-                        .status(friend.getStatus())
-                        .createAt(friend.getCreatedAt())
-                        .build())
+                .map(friend -> {
+                    UserDTO fromUserDTO = userRepository.findById(friend.getFromUserId())
+                            .map(UserEntity::toDTO)
+                            .orElse(null);
+
+                    return FriendDTO.builder()
+                            .friendsNo(friend.getFriendsNo())
+                            .fromUserId(friend.getFromUserId())
+                            .toUserId(friend.getToUserId())
+                            .status(friend.getStatus())
+                            .createAt(friend.getCreatedAt())
+                            .memo(friend.getMemo())
+                            .user(fromUserDTO) // 닉네임 등 접근 가능
+                            .build();
+                })
+                .filter(dto -> dto.getUser() != null)
                 .toList();
     }
 
-    public List<UserDTO> getAcceptedFriends(String currentUserId) {
-        //임의로 넣은 유저 id
-        currentUserId = "asdf";
-        Integer currentUserSeq = userRepository.findByUserId(currentUserId)
-                .orElseThrow().getUserSeq();
-
+    public List<FriendDTO> getAcceptedFriends(Integer currentUserSeq) {
         List<FriendEntity> friends = friendRepository
-                .findByStatusAndFromUserIdOrStatusAndToUserId("ACCEPTED", currentUserSeq, "ACCEPTED", currentUserSeq);
+                .findByStatusAndFromUserIdOrStatusAndToUserId(
+                        "ACCEPTED", currentUserSeq,
+                        "ACCEPTED", currentUserSeq
+                );
 
         return friends.stream()
                 .map(f -> {
                     Integer friendSeq = f.getFromUserId().equals(currentUserSeq)
-                            ? f.getToUserId() : f.getFromUserId();
+                            ? f.getToUserId()
+                            : f.getFromUserId();
+
                     return userRepository.findById(friendSeq)
-                            .map(UserEntity::toDTO).orElse(null);
+                            .map(user -> {
+                                FriendDTO dto = new FriendDTO();
+                                dto.setUser(user.toDTO()); // 상대방의 정보
+                                dto.setMemo(f.getMemo());
+                                dto.setFriendsNo(f.getFriendsNo());
+                                return dto;
+                            }).orElse(null);
                 })
                 .filter(Objects::nonNull)
                 .toList();
     }
+
+    // 친구 수락
+    public void acceptFriendByNo(Integer friendNo, Integer currentUserSeq) {
+        UserEntity currentUser = userRepository.findById(currentUserSeq)
+                .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
+
+        FriendEntity friend = friendRepository.findById(friendNo)
+                .orElseThrow(() -> new RuntimeException("친구 요청이 존재하지 않습니다."));
+
+        if (!friend.getToUserId().equals(currentUser.getUserSeq())) {
+            throw new RuntimeException("현재 유저에게 온 요청이 아닙니다.");
+        }
+
+        friend.setStatus("ACCEPTED");
+        friendRepository.save(friend);
+    }
+
+
+    // 친구 신청 거절
+    public void declineFriend(Integer friendNo, Integer currentUserSeq) {
+        UserEntity currentUser = userRepository.findById(currentUserSeq)
+                .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
+
+        FriendEntity friend = friendRepository.findById(friendNo)
+                .orElseThrow(() -> new RuntimeException("친구 요청이 존재하지 않습니다."));
+
+        if (!friend.getToUserId().equals(currentUser.getUserSeq())) {
+            throw new RuntimeException("현재 유저에게 온 요청이 아닙니다.");
+        }
+
+        friend.setStatus("DECLINED");
+        friendRepository.save(friend);
+    }
+
 
     public void acceptFriend(Integer fromUserId, String currentUserId) {
         UserEntity currentUser = userRepository.findByUserId(currentUserId)
@@ -96,5 +139,44 @@ public class FriendService {
                 .status(e.getStatus())
                 .createAt(e.getCreatedAt())
                 .build();
+    }
+
+    public void updateMemo(Integer friendNo, String memo) {
+
+        FriendEntity friend = friendRepository.findById(friendNo)
+                .orElseThrow(() -> new RuntimeException("친구 정보를 찾을 수 없습니다."));
+        friend.setMemo(memo);
+        friendRepository.save(friend);
+    }
+
+    public void blockFriend(Integer friendNo, Integer currentUserSeq) {
+        FriendEntity friend = friendRepository.findById(friendNo)
+                .orElseThrow(() -> new RuntimeException("친구 정보를 찾을 수 없습니다."));
+
+        // 요청한 유저가 friend 관계의 한 쪽인지 검증
+        if (!friend.getFromUserId().equals(currentUserSeq) && !friend.getToUserId().equals(currentUserSeq)) {
+            throw new RuntimeException("차단 권한이 없습니다.");
+        }
+
+        friend.setStatus("BLOCKED"); // 또는 BLOCK 으로 명명한 경우에 맞게
+        friendRepository.save(friend);
+    }
+
+    public void deleteFriend(Integer friendNo, Integer currentUserSeq) {
+        UserEntity currentUser = userRepository.findById(currentUserSeq)
+                .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
+
+        FriendEntity friend = friendRepository.findById(friendNo)
+                .orElseThrow(() -> new RuntimeException("친구 관계가 존재하지 않습니다."));
+
+        // 내가 관련된 친구 요청이 아닐 경우 막기
+        if (!friend.getFromUserId().equals(currentUser.getUserSeq()) &&
+                !friend.getToUserId().equals(currentUser.getUserSeq())) {
+            throw new RuntimeException("해당 친구를 삭제할 권한이 없습니다.");
+        }
+
+        // 상태만 변경
+        friend.setStatus("DECLINED");
+        friendRepository.save(friend);
     }
 }
