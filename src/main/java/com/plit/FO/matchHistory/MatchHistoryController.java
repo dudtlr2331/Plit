@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/fo/match")
 @RequiredArgsConstructor
@@ -17,12 +15,12 @@ public class MatchHistoryController {
     private final MatchHistoryService matchHistoryService;
 
     @GetMapping
-    public String getMatchHistory(@RequestParam(name = "username") String username, Model model) {
+    public String getMatchPage(@RequestParam String gameName,
+                               @RequestParam String tagLine,
+                               Model model) {
 
-        List<MatchHistoryDTO> matchHistoryDTOList = matchHistoryService.getMatchHistory(username);
-
-        model.addAttribute("username", username);
-        model.addAttribute("matchHistoryDTOList", matchHistoryDTOList);
+        SummonerDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
+        model.addAttribute("summoner", summoner);
 
         return "fo/matchHistory/matchHistory";
     }

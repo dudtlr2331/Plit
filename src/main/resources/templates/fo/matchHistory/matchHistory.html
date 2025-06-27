@@ -21,7 +21,7 @@
             buttons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const label = btn.textContent;
-                    let url = '/historyc';
+                    let url = '/matchHistory';
                     if (label.includes('개인')) url += '?rank=solo';
                     else if (label.includes('자유')) url += '?rank=free';
 
@@ -30,10 +30,12 @@
                     buttons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
 
-                    document.querySelector('.recent-games').innerHTML = `<h3>최근 게임 (${label})</h3><p>데이터를 불러오는 중...</p>`;
+                    const recent = document.querySelector('.recent-games');
+                    recent.innerHTML = `<h3>최근 게임 (${label})</h3><p>데이터를 불러오는 중...</p>`;
+                    // document.querySelector('.recent-games').innerHTML = `<h3>최근 게임 (${label})</h3><p>데이터를 불러오는 중...</p>`;
 
                     setTimeout(() => {
-                        document.querySelector('.recent-games').innerHTML += '<p>(임의의 게임 데이터 출력)</p>';
+                        recent.innerHTML += '<p>(임의의 게임 데이터 출력)</p>';
                     }, 800);
                 });
             });
@@ -57,6 +59,13 @@
         <div>채팅방2</div>
     </div>
 </header>
+
+<div class="profile-header">
+    <img th:src="@{'https://ddragon.leagueoflegends.com/cdn/14.12.1/img/profileicon/' + ${summoner.profileIconId} + '.png'}" alt="프로필 아이콘"/>
+    <h2 th:text="${summoner.gameName} + ' #' + ${summoner.tagLine}">플레이어1 #KR1</h2>
+    <button style="margin-left: auto;" class="btn-red">전적갱신</button>
+</div>
+
 <div class="main">
     <div class="left-panel">
         <div class="rank-box">
@@ -81,6 +90,7 @@
         </div>
     </div>
     <div class="right-panel">
+
         <div class="tabs">
             <button class="active">전체</button>
             <button>개인/2인 랭크 게임</button>
@@ -88,6 +98,17 @@
         </div>
         <div class="recent-games">
             <h3>최근 게임 (전체)</h3>
+
+            <div th:if="${matchIds != null}">
+                <div th:each="matchId : ${matchIds}" class="match-summary" onclick="toggleMatchDetail(this)">
+                    <span th:text="'Match ID: ' + ${matchId}"></span>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(matchIds)}">
+                <p>불러온 전적이 없습니다.</p>
+            </div>
+
             <div class="match-summary win" onclick="toggleMatchDetail(this)">
                 <span>블루팀 승리</span>
                 <span>20/10/15</span>
@@ -115,3 +136,4 @@
 </div>
 </body>
 </html>
+
