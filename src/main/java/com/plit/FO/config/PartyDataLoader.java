@@ -16,7 +16,6 @@ public class PartyDataLoader {
         return args -> {
             if (repository.count() == 0) {
 
-                // 데이터가 없을 때만 insert
                 repository.save(PartyEntity.builder()
                         .partyName("첫 번째 파티")
                         .partyType("TYPE1")
@@ -25,6 +24,8 @@ public class PartyDataLoader {
                         .partyStatus("WAITING")
                         .partyHeadcount(1)
                         .partyMax(5)
+                        .memo("첫 번째 파티입니다.")
+                        .mainPosition("TOP")
                         .build());
 
                 repository.save(PartyEntity.builder()
@@ -35,6 +36,8 @@ public class PartyDataLoader {
                         .partyStatus("FULL")
                         .partyHeadcount(5)
                         .partyMax(5)
+                        .memo("풀파티 완료")
+                        .mainPosition("ADC")
                         .build());
             }
         };
