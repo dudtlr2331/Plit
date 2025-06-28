@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>마이페이지</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/qna.css}">
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
             margin: 0;
             background-color: #f4f4f4;
         }
+
         .container {
             display: flex;
             max-width: 1000px;
@@ -18,20 +20,24 @@
             border: 1px solid #ddd;
             background: #fff;
         }
+
         .sidebar {
             width: 200px;
             background: #fafafa;
             padding: 20px;
             border-right: 1px solid #ddd;
         }
+
         .sidebar ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
+
         .sidebar li {
             margin-bottom: 16px;
         }
+
         .sidebar li a {
             display: block;
             padding: 12px 16px;
@@ -40,6 +46,7 @@
             color: #333;
             transition: background-color 0.3s;
         }
+
         .sidebar li a:hover,
         .sidebar li a.active {
             background-color: #eee;
@@ -53,6 +60,7 @@
         .section {
             display: none;
         }
+
         .section.active {
             display: block;
         }
@@ -74,16 +82,19 @@
             margin-bottom: 15px;
             gap: 10px;
         }
+
         .info-row label {
             width: 80px;
             font-weight: bold;
         }
+
         .info-row input {
             flex: 1;
             padding: 10px;
             border-radius: 6px;
             border: 1px solid #ccc;
         }
+
         .info-row button {
             background: #ff4d4d;
             border: none;
@@ -91,38 +102,6 @@
             border-radius: 6px;
             padding: 8px 12px;
             cursor: pointer;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-family: inherit;
-        }
-        .form-group textarea {
-            resize: vertical;
-        }
-        .form-group label {
-            font-weight: bold;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .submit-button {
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 12px 20px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .privacy-check {
-            margin-top: 10px;
         }
 
         .friend-item, .blocked-item {
@@ -179,11 +158,6 @@
             color: #cc0000;
         }
 
-        .delete-btn {
-            background: #f2f2f2;
-            color: #666;
-        }
-
         .unblock-btn {
             background: #ff5c5c;
             color: white;
@@ -204,6 +178,7 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
             z-index: 1000;
         }
+
         .chat-header {
             background: #ff4d4d;
             color: white;
@@ -214,11 +189,13 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .chat-body {
             flex: 1;
             padding: 10px;
             overflow-y: auto;
         }
+
         .chat-message {
             margin-bottom: 8px;
             padding: 8px 10px;
@@ -226,18 +203,22 @@
             max-width: 75%;
             word-break: break-word;
         }
+
         .chat-message.sent {
             background: #dcf8c6;
             margin-left: auto;
         }
+
         .chat-message.received {
             background: #f1f0f0;
         }
+
         .chat-input {
             display: flex;
             padding: 10px;
             border-top: 1px solid #eee;
         }
+
         .chat-input input {
             flex: 1;
             padding: 8px;
@@ -247,146 +228,49 @@
     </style>
 </head>
 <body>
-
 <div class="container">
+    <!-- 사이드바 -->
     <div class="sidebar">
         <ul>
-            <li><a href="#" class="tab-btn active" data-tab="account">계정 관리</a></li>
-            <li><a href="#" class="tab-btn" data-tab="inquiry">문의하기</a></li>
-            <li><a href="#" class="tab-btn" data-tab="friends">친구 목록</a></li>
-            <li><a href="#" class="tab-btn" data-tab="blocked">차단 목록</a></li>
+            <li><a th:href="@{/mypage}" th:classappend="${viewSection=='account'}?'active'">계정 관리</a></li>
+            <li><a th:href="@{/mypage/qna/list}" th:classappend="${viewSection=='qna'}?'active'">문의하기</a></li>
+            <li><a th:href="@{/mypage/friends}" th:classappend="${viewSection=='friends'}?'active'">친구 목록</a></li>
+            <li><a th:href="@{/mypage/blocked}" th:classappend="${viewSection=='blocked'}?'active'">차단 목록</a></li>
         </ul>
     </div>
 
+    <!-- 컨텐츠 -->
     <div class="content">
-        <!-- 계정 관리 -->
-        <div id="account" class="section active">
+        <!-- 1) 계정 정보 화면 -->
+        <div th:if="${viewSection=='account'}">
             <h2>기본 정보</h2>
-            <div class="info-group">
-                <div class="info-row">
-                    <label>닉네임</label><input type="text" value="내닉네임"><button>수정</button>
-                </div>
-                <div class="info-row">
-                    <label>이메일</label><input type="email" value="abc@abc.com"><button>수정</button>
-                </div>
-                <div class="info-row">
-                    <label>비밀번호</label><input type="password" value="********"><button>수정</button>
-                </div>
-            </div>
+            <!-- 계정 정보 form/UI 등 -->
         </div>
 
-        <!-- 문의하기 -->
-        <div id="inquiry" class="section">
-            <h2>문의 등록</h2>
-            <div class="form-group">
-                <label>문의 종류</label>
-                <input type="text" placeholder="ex) 이용문의" />
-            </div>
-            <div class="form-group">
-                <label>문의 제목</label>
-                <input type="text" placeholder="ex) 신고 관련 문의" />
-            </div>
-            <div class="form-group">
-                <label>문의 내용</label>
-                <textarea rows="5" placeholder="자세한 내용을 입력해주세요."></textarea>
-            </div>
-            <div class="form-group">
-                <label>첨부파일</label>
-                <input type="file" />
-            </div>
-            <div class="privacy-check">
-                <label><input type="checkbox" required> 개인정보 수집 및 이용 동의</label>
-            </div>
-            <button class="submit-button">제출하기</button>
+        <!-- QnA -->
+        <div th:if="${viewSection == 'qna'}">
+
+            <div th:if="${viewMode == 'list'}" th:insert="~{fo/mypage/qna/list :: listFragment}"></div>
+            <div th:if="${viewMode == 'write'}" th:insert="~{fo/mypage/qna/write :: writeFragment}"></div>
+            <div th:if="${viewMode == 'view'}" th:insert="~{fo/mypage/qna/view :: viewFragment}"></div>
         </div>
 
-        <!-- 친구 목록 -->
-        <div id="friends" class="section">
+
+    </div>
+
+        <!-- 3) 친구 목록 -->
+        <div th:if="${viewSection=='friends'}">
             <h2>친구 목록</h2>
-            <div class="friend-item">
-                <div class="friend-left">
-                    <div class="profile-circle"></div>
-                    플레이어1
-                    <input class="memo-input" placeholder="메모" />
-                </div>
-                <div class="friend-actions">
-                    <button class="chat-btn" onclick="openChat('플레이어1')">💬</button>
-                    <button class="block-btn">차단</button>
-                    <button class="delete-btn">삭제</button>
-                </div>
-            </div>
+            <!-- UI 구성 -->
         </div>
 
-        <!-- 차단 목록 -->
-        <div id="blocked" class="section">
+        <!-- 4) 차단 목록 -->
+        <div th:if="${viewSection=='blocked'}">
             <h2>차단 목록</h2>
-            <div class="blocked-item" id="blocked1">
-                <div class="blocked-left">
-                    <div class="profile-circle"></div>
-                    플레이어2
-                    <input class="memo-input" placeholder="메모" />
-                </div>
-                <div class="blocked-actions">
-                    <button class="unblock-btn" onclick="document.getElementById('blocked1').remove()">차단 해제</button>
-                </div>
-            </div>
+            <!-- UI 구성 -->
         </div>
+
     </div>
 </div>
-
-<!-- 채팅 팝업 -->
-<div class="chat-popup" id="chatPopup">
-    <div class="chat-header">
-        <span id="chatTarget">플레이어</span>
-        <button onclick="closeChat()">×</button>
-    </div>
-    <div class="chat-body" id="chatBody">
-        <div class="chat-message received">안녕하세요! 무엇을 도와드릴까요?</div>
-    </div>
-    <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." />
-    </div>
-</div>
-
-<script>
-    const tabs = document.querySelectorAll('.tab-btn');
-    const sections = document.querySelectorAll('.section');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', e => {
-            e.preventDefault();
-            const tabName = tab.dataset.tab;
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            sections.forEach(sec => sec.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-        });
-    });
-
-    function openChat(name) {
-        document.getElementById('chatPopup').style.display = 'flex';
-        document.getElementById('chatTarget').textContent = name;
-        document.getElementById('chatInput').focus();
-    }
-
-    function closeChat() {
-        document.getElementById('chatPopup').style.display = 'none';
-        document.getElementById('chatBody').innerHTML = '';
-        document.getElementById('chatInput').value = '';
-    }
-
-    document.getElementById('chatInput').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && this.value.trim()) {
-            const msg = this.value.trim();
-            const div = document.createElement('div');
-            div.className = 'chat-message sent';
-            div.textContent = msg;
-            document.getElementById('chatBody').appendChild(div);
-            this.value = '';
-            document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
-        }
-    });
-</script>
-
 </body>
 </html>

@@ -8,5 +8,5 @@ import java.util.List;
 @Repository
 public interface QnaRepository extends JpaRepository<QnaEntity,Long> {
     List<QnaEntity> findByUserId(Long userId);
-
+    List<QnaEntity> findByUserIdOrderByAskedAtDesc(Long userId);
 }

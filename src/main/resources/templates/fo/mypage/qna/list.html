@@ -1,50 +1,55 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>나의 문의 내역</title>
-    <meta charset="UTF-8">
-</head>
-<body>
-<h2>나의 문의 내역</h2>
+<div th:fragment="listFragment">
+    <h2>나의 문의 내역</h2>
 
-<table border="1">
-    <thead>
-    <tr>
-        <th>번호</th>
-        <th>제목</th>
-        <th>상태</th>
-        <th>작성일</th>
-        <th>삭제</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="qna : ${questions}">
-        <td th:text="${qna.id}">1</td>
-        <td>
-            <a th:href="@{/fo/mypage/qna/view/{id}(id=${qna.id})}" th:text="${qna.title}">제목</a>
-        </td>
-        <td th:text="${qna.status}">대기중</td>
-        <td th:text="${#temporals.format(qna.askedAt, 'yyyy-MM-dd HH:mm')}">날짜</td>
+    <table class="qna-table">
+        <thead>
+        <tr>
+            <th>번호</th>
+            <th>제목</th>
+            <th>첨부</th>
+            <th>상태</th>
+            <th>작성일</th>
+            <th>삭제</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="qna, stat : ${questions}">
+            <td th:text="${stat.index + 1}">1</td>
+            <td>
+                <a th:href="@{/mypage/qna/view/{id}(id=${qna.id})}"
+                   th:text="${qna.title}">제목</a>
+            </td>
+            <td>
+                <span th:if="${qna.fileName}">📎</span>
+            </td>
+            <td>
+                <span th:class="'qna-status-badge ' + (${qna.status} == '답변완료' ? 'completed' : 'pending')"
+                      th:text="${qna.status}">상태</span>
+            </td>
+            <td th:text="${#temporals.format(qna.askedAt, 'yyyy.MM.dd HH:mm')}">날짜</td>
+            <td>
+                <form th:action="@{/mypage/qna/delete/{id}(id=${qna.id})}" method="post">
+                    <button type="submit" class="qna-delete-btn"
+                            onclick="return confirm('정말 삭제할까요?')">삭제</button>
+                </form>
+            </td>
+        </tr>
 
+        <!-- 비어있을 때 -->
+        <tr th:if="${#lists.isEmpty(questions)}">
+            <td colspan="6">문의 내역이 없습니다.</td>
+        </tr>
+        </tbody>
+    </table>
 
-        <td>
-            <form th:action="@{/fo/mypage/qna/delete/{id}(id=${qna.id})}" method="post" style="display:inline;">
-                <button type="submit" onclick="return confirm('정말 삭제할까요?')">삭제</button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
+    <div class="qna-actions">
+        <a th:href="@{/mypage/qna/write}" class="qna-submit-button">➕ 새 문의</a>
+        <button onclick="openChat()" class="qna-chat-btn">💬 실시간 문의</button>
+    </div>
 
-<br>
-<a href="/fo/mypage/qna/write">새 문의 작성</a>
-
-<button onclick="openChat()">실시간 문의하기</button>
-
-<script>
-    function openChat() {
-        window.open('/fo/mypage/qna/chat', 'chatWindow', 'width=500,height=600');
-    }
-</script>
-</body>
-</html>
+    <script>
+        function openChat() {
+            window.open('/mypage/qna/chat', 'chatWindow', 'width=500,height=600');
+        }
+    </script>
+</div>

@@ -22,9 +22,13 @@ public class QnaEntity {
     private Long userId;
 
     private String title;
-    private String content;
-    private String answer;
     private String status;
+
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Column(columnDefinition = "TEXT")
+    private String answer;
 
     @Column(name = "asked_at")
     private LocalDateTime askedAt;
@@ -32,4 +36,6 @@ public class QnaEntity {
     @Column(name = "answered_at")
     private LocalDateTime answeredAt;
 
+    @Column(name = "file_name")
+    private String fileName;
 }

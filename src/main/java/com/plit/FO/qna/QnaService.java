@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class QnaService {
@@ -24,13 +25,19 @@ public class QnaService {
         qna.setStatus("대기중");
         qna.setAskedAt(LocalDateTime.now());
 
+        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+            String originalFilename = dto.getFile().getOriginalFilename();
+            String savedName = UUID.randomUUID() + "_" + originalFilename;
+            qna.setFileName(savedName); // DB 저장용
+        }
+
         qnaRepository.save(qna);
 
         System.out.println("문의 등록됨 → " + qna.getTitle());
     }
 
     public List<QnaEntity> getMyQuestions(Long userId) {
-        return qnaRepository.findByUserId(userId);
+        return qnaRepository.findByUserIdOrderByAskedAtDesc(userId);
     }
 
     public void deleteQna(Long id, Long userId) {
@@ -43,6 +50,9 @@ public class QnaService {
             }
         });
     }
+
+
+    //관리자
 
     // 관리자 전체 문의 내역 조회
     public List<QnaEntity> getAllQuestions() {
