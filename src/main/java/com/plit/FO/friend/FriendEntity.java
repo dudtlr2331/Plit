@@ -26,4 +26,7 @@ public class FriendEntity {
 
     @Column(name = "created_at", nullable = true)
     private String createdAt;
+
+    @Column(name = "memo", nullable = true)
+    private String memo;
 }

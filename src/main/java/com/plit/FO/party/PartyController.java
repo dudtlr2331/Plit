@@ -19,10 +19,10 @@ public class PartyController {
         this.partyService = partyService;
     }
 
-    @GetMapping("/list")
-    public String listParties(Model model) {
+    @GetMapping
+    public String parties(Model model) {
         model.addAttribute("parties", partyService.findAllParties());
-        return "fo/party/list";
+        return "fo/party/party";
     }
 
     @GetMapping("/{id}")
@@ -51,20 +51,19 @@ public class PartyController {
             party.setPartyCreateDate(LocalDateTime.now());
         }
         partyService.saveParty(party);
-        return "redirect:/party/list";
+        return "redirect:/party";
     }
 
     @GetMapping("/edit/{id}")
     public String editPartyForm(@PathVariable Long id, Model model) {
         PartyEntity party = partyService.getParty(id);
         if (party == null) {
-            return "redirect:/party/list";
+            return "redirect:/party";
         }
         model.addAttribute("party", party);
         return "fo/party/form";
     }
 
-    // --- 이 부분이 핵심 수정 ---
     @PostMapping("/edit/{id}")
     public String updateParty(
             @PathVariable Long id,
@@ -89,6 +88,6 @@ public class PartyController {
     @PostMapping("/delete/{id}")
     public String deleteParty(@PathVariable Long id) {
         partyService.deleteParty(id);
-        return "redirect:/party/list";
+        return "redirect:/party";
     }
 }
