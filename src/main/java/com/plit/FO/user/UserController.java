@@ -13,19 +13,10 @@ import java.util.Map;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/fo") // All requests to this controller start with /fo
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService; // Inject UserService
-
-
-    /// 메인
-    // URL: /fo/main
-    @GetMapping("/main")
-    public String mainPage() {
-        return "fo/main/main"; // Maps to src/main/resources/templates/fo/main/main.html
-    }
 
     /// 로그인 버튼
     @GetMapping("/login")
