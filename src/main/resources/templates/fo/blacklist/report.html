@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="loginUserNickname" th:content="${loginUser != null} ? ${loginUser.userNickname} : ''">
+    <title>트롤 신고</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #fff;
+        }
+
+        header {
+            background: #ff5c5c;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header nav a {
+            margin: 0 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        header nav a.active {
+            color: yellow;
+        }
+
+        .top-right {
+            color: white;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto 0;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: flex-start;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 8px 12px;
+            width: 180px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .search-bar button {
+            padding: 8px 12px;
+            font-size: 16px;
+            background: #eee;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #ff5c5c;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .summoner-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-direction: row;
+        }
+
+        .profile-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #000;
+        }
+
+        .summoner-name {
+            font-weight: bold;
+        }
+
+        .summoner-tag {
+            font-size: 12px;
+            color: gray;
+        }
+
+        .tier-icon {
+            width: 20px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .memo-input {
+            background: #f3f3f3;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        .time-ago {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .report-btn {
+            background: #ff5c5c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        footer {
+            background: #222;
+            color: white;
+            padding: 30px 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        footer a {
+            color: white;
+            margin-right: 10px;
+            text-decoration: none;
+        }
+
+        .footer-nav {
+            margin-bottom: 10px;
+        }
+
+        .footer-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="#">파티찾기</a>
+        <a href="#">내전찾기</a>
+        <a href="#">클랜찾기</a>
+        <a href="#" class="active">트롤신고</a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <!-- 로그인 상태 -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
+
+            <!-- 로그인 상태 -->
+            <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+                <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+
+                <button onclick="location.href='/mypage'"
+                        style="background: white; color: #ff5c5c; border: 2px solid #ff5c5c;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    마이페이지
+                </button>
+
+                <button onclick="location.href='/fo/logout'"
+                        style="background: #fb5858; color: white; border: none;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold;">
+                    로그아웃
+                </button>
+            </div>
+
+            <!-- 비로그인 상태 -->
+            <div th:if="${session.loginUser == null}">
+                <button onclick="location.href='/fo/login'"
+                        style="background: white; color: #ff5c5c; border: 1px solid #ff5c5c;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    로그인
+                </button>
+            </div>
+        </div>
+</header>
+
+<div class="container">
+    <div class="search-bar">
+        <input type="text" placeholder="플레이어 검색">
+        <button>🔍</button>
+        <button id="openReportPopup" style="margin-left:auto;">신고하기</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>소환사이름</th>
+            <th>티어</th>
+            <th>신고횟수</th>
+            <th>메모</th>
+            <th>지난 시간</th>
+            <th>신고</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>
+                <div class="summoner-info">
+                    <div class="profile-circle"></div>
+                    <div>
+                        <div class="summoner-name">플레이어1</div>
+                        <div class="summoner-tag">#KR1</div>
+                    </div>
+                </div>
+            </td>
+            <td><img src="https://cdn-icons-png.flaticon.com/512/1998/1998611.png" class="tier-icon">M1</td>
+            <td>0회</td>
+            <td><input type="text" class="memo-input" placeholder="메모 입력"></td>
+            <td><span class="time-ago">2초 전</span></td>
+            <td><button class="report-btn">+</button></td>
+        </tr>
+        <tr>
+            <td>
+                <div class="summoner-info">
+                    <div class="profile-circle"></div>
+                    <div>
+                        <div class="summoner-name">플레이어1</div>
+                        <div class="summoner-tag">#KR1</div>
+                    </div>
+                </div>
+            </td>
+            <td><img src="https://cdn-icons-png.flaticon.com/512/1998/1998611.png" class="tier-icon">P3</td>
+            <td>2회</td>
+            <td><input type="text" class="memo-input" placeholder="메모 입력"></td>
+            <td><span class="time-ago">5분 전</span></td>
+            <td><button class="report-btn">+</button></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="reportPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+     width:700px; height:600px; background:#fff; border:1px solid #ccc; box-shadow:0 0 10px rgba(0,0,0,0.2); padding:20px; z-index:1000;">
+
+    <h2 style="margin-top:0;">비매너 유저 신고</h2>
+
+    <div style="display:flex; flex-direction:column; align-items:center;">
+        <label style="align-self:flex-start; margin-bottom:5px;">신고하는 플레이어</label>
+        <input type="text" id="reporter" readonly value="로그인이 필요합니다"
+               style="width:90%; padding:8px; margin-bottom:20px; border-radius:6px; border:1px solid #ccc;" />
+
+        <label style="align-self:flex-start; margin-bottom:5px;">신고할 플레이어</label>
+        <input type="text" id="reportedPlayer" placeholder="신고 할 플레이어"
+               style="width:90%; padding:8px; margin-bottom:20px; border-radius:6px; border:1px solid #ccc;" />
+
+        <label style="align-self:flex-start; margin-bottom:5px;">신고 사유</label>
+        <textarea id="reportReason" placeholder="신고 사유를 입력해주세요"
+                  style="width:90%; height:220px; padding:10px; border-radius:6px; border:1px solid #ccc; resize:none;"></textarea>
+
+        <div style="margin-top:20px; width:90%; display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closePopup()" style="background:#eee; border:none; padding:10px 20px; border-radius:6px;">취소</button>
+            <button onclick="submitReport()" style="background:#ff5c5c; color:white; border:none; padding:10px 20px; border-radius:6px;">신고</button>
+        </div>
+    </div>
+</div>
+
+<div class="chat-list" id="chatList" style="
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    display: none;
+    width: 250px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1000;
+">
+    <div class="chat-header" style="display: flex; justify-content: space-between;">
+        <strong>채팅 목록</strong>
+        <button onclick="toggleChatList()">X</button>
+    </div>
+    <p onclick="toggleChatPopup()">플레이어1</p>
+    <p onclick="toggleChatPopup()">플레이어2</p>
+</div>
+
+<!-- 채팅 팝업 -->
+<div class="chat-popup" id="chatPopup" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    width: 300px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1000;
+">
+    <div class="chat-header" style="display: flex; justify-content: space-between;">
+        <strong>플레이어1</strong>
+        <button onclick="toggleChatPopup()">X</button>
+    </div>
+    <div class="chat-body" style="
+        height: 200px;
+        overflow-y: auto;
+        background: #f9f9f9;
+        margin: 10px 0;
+        padding: 10px;
+    ">
+        <p>안녕하세요!</p>
+        <p>신고 관련 문의 있습니다.</p>
+    </div>
+    <input type="text" placeholder="메시지 입력..." style="width: 100%; padding: 10px;">
+</div>
+
+
+
+<footer>
+    <div class="footer-container">
+        <div class="footer-nav">
+            <a href="#">공지사항</a>
+            <a href="#">사용방법</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">광고/제휴문의</a>
+            <a href="#">개발문의</a>
+            <a href="#">404 Squad</a>
+        </div>
+        <div>
+            lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
+            League of Legends is a trademark of Riot Games.
+        </div>
+    </div>
+</footer>
+
+</body>
+
+<script>
+
+    const nicknameMeta = document.querySelector('meta[name="loginUserNickname"]');
+    const nickname = nicknameMeta ? nicknameMeta.content : null;
+
+    if (nickname) {
+        sessionStorage.setItem("loginUserNickname", nickname);
+    } else {
+        sessionStorage.removeItem("loginUserNickname");
+    }
+
+    // 팝업 열기
+    document.getElementById("openReportPopup").addEventListener("click", function () {
+        const nickname = sessionStorage.getItem("loginUserNickname");
+
+        const reporterInput = document.getElementById("reporter");
+        if (nickname) {
+            reporterInput.value = nickname;
+        } else {
+            reporterInput.value = "로그인이 필요합니다";
+        }
+
+        document.getElementById("reportPopup").style.display = "block";
+    });
+
+    // 팝업 닫기
+    function closePopup() {
+        document.getElementById("reportPopup").style.display = "none";
+    }
+
+    // 신고 전송
+    function submitReport() {
+        const reporter = document.getElementById("reporter").value;
+        const reportedPlayer = document.getElementById("reportedPlayer").value;
+        const reason = document.getElementById("reportReason").value;
+
+        if (!reportedPlayer || !reason.trim()) {
+            alert("모든 항목을 입력해주세요.");
+            return;
+        }
+
+        fetch("/api/blacklist/report", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                reporterNickname: reporter,
+                reportedNickname: reportedPlayer,
+                reason: reason
+            })
+        }).then(res => {
+            if (res.ok) {
+                alert("신고가 접수되었습니다.");
+                closePopup();
+            } else {
+                alert("신고 처리 중 오류가 발생했습니다.");
+            }
+        });
+    }
+
+    // 채팅목록
+    function toggleChatList() {
+        const el = document.getElementById('chatList');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 채팅창
+    function toggleChatPopup() {
+        const el = document.getElementById('chatPopup');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+</script>
+</html>
