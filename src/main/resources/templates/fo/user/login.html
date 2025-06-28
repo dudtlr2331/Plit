@@ -40,7 +40,7 @@
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
     <div th:if="${message}" class="success-message" th:text="${message}"></div>
 
-    <form th:action="@{/fo/login}" th:object="${userDTO}" method="post">
+    <form th:action="@{/login}" th:object="${userDTO}" method="post">
         <div class="mb-3">
             <input type="text" th:field="*{userId}" class="form-control" placeholder="이메일 주소" required>
         </div>
@@ -53,7 +53,7 @@
     </form>
 
     <div class="mb-3">
-        <a href="/fo/signup" class="text-decoration-none text-danger">계정이 없으신가요? 회원가입</a>
+        <a href="/signup" class="text-decoration-none text-danger">계정이 없으신가요? 회원가입</a>
     </div>
 
     <div class="divider"><span>OR</span></div>
