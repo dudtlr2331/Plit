@@ -1,35 +1,162 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"> <head>
   <meta charset="UTF-8">
   <title>파티 찾기 페이지</title>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 0; background: #fff; }
-    header { background: #ff5a5a; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-    header nav { display: flex; align-items: center; }
-    header nav a { margin: 0 10px; color: white; text-decoration: none; font-weight: bold; cursor: pointer; }
-    .chat-button { background: none; border: none; font-size: 20px; margin-right: 10px; cursor: pointer; }
-    .chat-popup { display: none; position: absolute; top: 60px; right: 80px; width: 250px; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 10px; z-index: 999; }
-    .chat-popup div { padding: 5px; border-bottom: 1px solid #eee; cursor: pointer; }
-    .tab-container { display: flex; justify-content: center; margin: 20px 0; }
-    .tab { padding: 10px 20px; margin: 0 5px; border-radius: 10px; background: #eee; cursor: pointer; font-weight: bold; }
-    .tab.active { background: #ff5a5a; color: white; }
-    .filter-bar { max-width: 900px; margin: auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px; }
-    .position-icons img { width: 30px; height: 30px; margin: 0 3px; cursor: pointer; }
-    select { padding: 6px 10px; border-radius: 5px; }
-    .recruit-list { max-width: 900px; margin: auto; }
-    .recruit-header, .recruit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; }
-    .recruit-header { background: #f3f3f3; font-weight: bold; border-bottom: 2px solid #ccc; }
-    .recruit-item { background: #f8f8f8; margin: 5px 0; border-radius: 8px; }
-    .recruit-item span { margin-right: 10px; }
-    .chat-icon { cursor: pointer; }
-    .recruit-button { padding: 6px 12px; background: #ff5a5a; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    .position-selector span { font-size: 24px; margin-right: 10px; cursor: pointer; padding: 5px; border-radius: 5px; }
-    .position-selector span.selected { background-color: #ff5a5a; color: white; }
-    .recruit-popup, #partyDetailPopup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; border-radius: 10px; width: 900px; max-height: 800px; overflow: auto; z-index: 1000; }
-    .chatbox { display: none; position: fixed; bottom: 20px; right: 20px; width: 300px; height: 400px; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 10px; z-index: 1000; }
+    header {
+      background: #ff5a5a;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header nav {
+      display: flex;
+      align-items: center;
+    }
+    header nav a {
+      margin: 0 10px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .chat-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .chat-popup {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 80px;
+      width: 250px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 999;
+    }
+    .chat-popup div {
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    .tab-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .tab {
+      padding: 10px 20px;
+      margin: 0 5px;
+      border-radius: 10px;
+      background: #eee;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab.active {
+      background: #ff5a5a;
+      color: white;
+    }
+    .filter-bar {
+      max-width: 900px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+    }
+    .position-icons img {
+      width: 30px;
+      height: 30px;
+      margin: 0 3px;
+      cursor: pointer;
+    }
+    select {
+      padding: 6px 10px;
+      border-radius: 5px;
+    }
+    .recruit-list {
+      max-width: 900px;
+      margin: auto;
+    }
+    .recruit-header, .recruit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+    }
+    .recruit-header {
+      background: #f3f3f3;
+      font-weight: bold;
+      border-bottom: 2px solid #ccc;
+    }
+    .recruit-item {
+      background: #f8f8f8;
+      margin: 5px 0;
+      border-radius: 8px;
+    }
+    .recruit-item span {
+      margin-right: 10px;
+    }
+    .chat-icon {
+      cursor: pointer;
+    }
+    .recruit-button {
+      padding: 6px 12px;
+      background: #ff5a5a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .position-selector span {
+      font-size: 24px;
+      margin-right: 10px;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    .position-selector span.selected {
+      background-color: #ff5a5a;
+      color: white;
+    }
+    .recruit-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      width: 900px;
+      height: 800px;
+      overflow: auto;
+      z-index: 1000;
+    }
+    .chatbox {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      height: 400px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      z-index: 1000;
+    }
   </style>
-  <link rel="stylesheet" th:href="@{/css/party-popup.css}">
 </head>
 <body>
 <header>
@@ -93,25 +220,10 @@
   </div>
   <div class="recruit-item" th:each="party : ${parties}">
     <span>
-      <a href="javascript:void(0)" class="party-detail-link"
-         th:attr="data-seq=${party.partySeq},
-                  data-name=${party.partyName},
-                  data-type=${party.partyType},
-                  data-created=${#temporals.format(party.partyCreateDate, 'yyyy-MM-dd HH:mm')},
-                  data-end=${#temporals.format(party.partyEndTime, 'yyyy-MM-dd HH:mm')},
-                  data-status=${party.partyStatus},
-                  data-headcount=${party.partyHeadcount},
-                  data-max=${party.partyMax},
-                  data-memo=${party.memo},
-                  data-main=${party.mainPosition},
-                  data-positions=${party.positions}">
-        <span th:text="${party.partyName}"></span>
-      </a>
+      <a th:href="@{/party/{id}(id=${party.partySeq})}" th:text="${party.partyName}"></a>
     </span>
     <span th:text="${party.partyType}"></span>
-    <span th:text="${#temporals.format(party.partyCreateDate, 'yy.MM.dd HH:mm')}"></span>
-    <span th:text="${#temporals.format(party.partyEndTime, 'yy.MM.dd HH:mm')}"></span>
-    <span th:text="${party.partyStatus}"></span>
+    <span th:text="${#temporals.format(party.partyCreateDate, 'yy.MM.dd HH:mm')}"></span> <span th:text="${#temporals.format(party.partyEndTime, 'yy.MM.dd HH:mm')}"></span> <span th:text="${party.partyStatus}"></span>
     <span th:text="${party.partyHeadcount}"></span>
     <span th:text="${party.partyMax}"></span>
     <span th:text="${party.partySeq}"></span>
@@ -123,130 +235,64 @@
 </div>
 
 <div id="recruitPopup" class="recruit-popup"></div>
-<div id="partyDetailPopup" class="recruit-popup"></div>
 <div id="chatBox" class="chatbox">채팅창 (여기에 대화 내용 구현 예정)</div>
 
 <script>
   function toggleRecruitPopup() {
     const popup = document.getElementById('recruitPopup');
+    // 실제 모집하기 폼을 로드하는 API 호출 또는 내용을 여기에 삽입
     popup.innerHTML = `
-    <h3>새 파티 모집하기</h3>
-    <form action="/party/new" method="post">
-      <label>파티 이름: <input type="text" name="partyName" required></label><br>
-      <label>파티 타입:
-        <select name="partyType" required>
-          <option value="솔로랭크">솔로랭크</option>
-          <option value="자유랭크">자유랭크</option>
-        </select>
-      </label><br>
-      <label>종료일자: <input type="datetime-local" name="partyEndTime" required></label><br>
-      <label>상태: <input type="text" name="partyStatus" value="WAITING" required></label><br>
-      <label>현재 인원: <input type="number" name="partyHeadcount" value="1" min="1" required></label><br>
-      <label>최대 인원: <input type="number" name="partyMax" value="5" min="1" required></label><br>
-      <label>메모:<br><textarea name="memo" rows="3" cols="40"></textarea></label><br>
-      <label>주 포지션:
-        <select name="mainPosition" required>
-          <option value="TOP">탑</option>
-          <option value="JUNGLE">정글</option>
-          <option value="MID">미드</option>
-          <option value="ADC">원딜</option>
-          <option value="SUPPORT">서포터</option>
-          <option value="ALL">전체</option>
-        </select>
-      </label><br>
-      <label>모집 포지션:<br/>
-        <div>
-          <label><input type="checkbox" name="positions" value="TOP"> 탑</label>
-          <label><input type="checkbox" name="positions" value="JUNGLE"> 정글</label>
-          <label><input type="checkbox" name="positions" value="MID"> 미드</label>
-          <label><input type="checkbox" name="positions" value="ADC"> 원딜</label>
-          <label><input type="checkbox" name="positions" value="SUPPORT"> 서포터</label>
-          <label><input type="checkbox" name="positions" value="ALL"> 전체</label>
-        </div>
-      </label><br>
-      <button type="submit">모집 시작</button>
-      <button type="button" onclick="document.getElementById('recruitPopup').style.display='none'">닫기</button>
-    </form>`;
-    popup.style.display = 'block';
-
-    const checkboxes = popup.querySelectorAll("input[name='positions']");
-    checkboxes.forEach(cb => {
-      cb.addEventListener("change", () => {
-        const selected = Array.from(checkboxes).filter(c => c.checked && c.value !== 'ALL');
-        const all = popup.querySelector("input[name='positions'][value='ALL']");
-        if (selected.length === 5) {
-          checkboxes.forEach(c => c.checked = false);
-          if (all) all.checked = true;
-        } else if (all && all.checked && selected.length > 0) {
-          all.checked = false;
-        }
-      });
-    });
-  }
-
-  function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions) {
-    const popup = document.getElementById('partyDetailPopup');
-    popup.innerHTML = `
-    <h3>파티 상세 정보</h3>
-    <p><strong>이름:</strong> ${name}</p>
-    <p><strong>타입:</strong> ${type}</p>
-    <p><strong>생성일자:</strong> ${createDate}</p>
-    <p><strong>종료일자:</strong> ${endDate}</p>
-    <p><strong>상태:</strong> ${status}</p>
-    <p><strong>현재 인원:</strong> ${headcount}</p>
-    <p><strong>최대 인원:</strong> ${max}</p>
-    <p><strong>메모:</strong> ${memo}</p>
-    <p><strong>주 포지션:</strong> ${mainPosition}</p>
-    <p><strong>모집 포지션:</strong> ${positions}</p>
-    <div style="margin-top: 20px;">
-      <a href="/party/edit/${seq}"><button>수정</button></a>
-      <form action="/party/delete/${seq}" method="post" style="display:inline;">
-        <button type="submit" onclick="return confirm('정말 삭제할까요?')">삭제</button>
+      <h3>새 파티 모집하기</h3>
+      <form action="/party/new" method="post">
+        <label>파티 이름: <input type="text" name="partyName" required></label><br>
+        <label>파티 타입 (예: 솔로랭크, 자유랭크): <input type="text" name="partyType" required></label><br>
+        <label>파티 종료 일시: <input type="datetime-local" name="partyEndTime" required></label><br>
+        <label>파티 상태 (예: WAITING): <input type="text" name="partyStatus" value="WAITING" required></label><br>
+        <label>현재 인원: <input type="number" name="partyHeadcount" value="1" min="1" required></label><br>
+        <label>최대 인원: <input type="number" name="partyMax" value="5" min="1" required></label><br>
+        <button type="submit">모집 시작</button>
+        <button type="button" onclick="document.getElementById('recruitPopup').style.display='none'">닫기</button>
       </form>
-      <button onclick="closePartyDetail()">닫기</button>
-    </div>`;
-    popup.style.display = 'block';
-  }
-
-  function closePartyDetail() {
-    const popup = document.getElementById('partyDetailPopup');
-    popup.style.display = 'none';
-    popup.innerHTML = '';
+    `;
+    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
   }
 
   function toggleChatList() {
     const list = document.getElementById('chatList');
     list.style.display = list.style.display === 'block' ? 'none' : 'block';
   }
+
   function toggleChatBox(userId) {
     const box = document.getElementById('chatBox');
     box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    console.log('채팅 박스 토글: ' + userId);
   }
+
   function selectPosition(element) {
-    document.querySelectorAll('.position-selector span').forEach(span => span.classList.remove('selected'));
+    document.querySelectorAll('.position-selector span').forEach(span => {
+      span.classList.remove('selected');
+    });
     element.classList.add('selected');
   }
+
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.party-detail-link').forEach(el => {
-      el.addEventListener('click', () => {
-        showPartyDetail(
-                el.dataset.seq,
-                el.dataset.name,
-                el.dataset.type,
-                el.dataset.created,
-                el.dataset.end,
-                el.dataset.status,
-                el.dataset.headcount,
-                el.dataset.max,
-                el.dataset.memo,
-                el.dataset.main,
-                el.dataset.positions
-        );
-      });
-    });
     const params = new URLSearchParams(window.location.search);
     const rank = params.get('rank') || 'solo';
-    document.getElementById(rank + 'Tab').classList.add('active');
+    const soloTab = document.getElementById('soloTab');
+    const freeTab = document.getElementById('freeTab');
+
+    if (rank === 'free') {
+      freeTab.classList.add('active');
+    } else {
+      soloTab.classList.add('active');
+    }
+
+    soloTab.onclick = () => {
+      window.location.search = '?rank=solo';
+    };
+    freeTab.onclick = () => {
+      window.location.search = '?rank=free';
+    };
   });
 </script>
 </body>

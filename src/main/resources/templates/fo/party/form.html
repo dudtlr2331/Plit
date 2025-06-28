@@ -23,6 +23,7 @@
   <input type="hidden" name="partyCreateDate" th:if="${party.partySeq == null}" />
   <br th:if="${party.partySeq != null}"/>
 
+
   <label>종료일자:
     <input type="datetime-local" name="partyEndTime"
            th:value="${party.partyEndTime}"
@@ -39,24 +40,6 @@
 
   <label>최대 인원:
     <input type="number" name="partyMax" th:value="${party.partyMax}" min="1" required/>
-  </label><br/>
-
-  <label>메모:
-    <textarea name="memo" rows="3" cols="50" th:text="${party.memo}"></textarea>
-  </label><br/>
-
-  <label>주 포지션:
-    <select name="mainPosition" required>
-      <option th:each="pos : ${positions}" th:value="${pos}" th:text="${pos.displayName}"
-              th:selected="${pos} == ${party.mainPosition}"></option>
-    </select>
-  </label><br/>
-
-  <label>모집 포지션:
-    <select name="positions" multiple size="5">
-      <option th:each="pos : ${positions}" th:value="${pos}" th:text="${pos.displayName}"
-              th:selected="${party.positions.contains(pos)}"></option>
-    </select>
   </label><br/>
 
   <button type="submit">저장</button>

@@ -6,8 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "party")
@@ -44,13 +42,4 @@ public class PartyEntity {
 
     @Column(name = "party_max", nullable = false)
     private Integer partyMax; // 최대 모집 인원 수
-
-    @Column(name = "memo", nullable = false)
-    private String memo;  //메모
-
-    @Column(name = "main_position", nullable = false, length = 10)
-    private String mainPosition;  //주 포지션
-
-    @OneToMany(mappedBy = "party", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PartyFindPositionEntity> partyFindPositions = new ArrayList<>();
 }
