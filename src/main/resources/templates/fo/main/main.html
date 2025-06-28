@@ -1,48 +1,225 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>메인 페이지</title>
-    <link rel="stylesheet" th:href="@{/static.css}">
+    <title>플레이어 매칭 UI</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; }
-        p { color: #666; }
-        .message { color: green; font-weight: bold; }
-        .button-group a {
-            display: inline-block;
-            margin: 10px 5px;
-            padding: 10px 20px;
-            background-color: #007bff;
+        body { font-family: sans-serif; margin: 0; padding: 0; }
+        header {
+            background: #ff5a5a;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        header .logo { font-weight: bold; cursor: pointer; }
+        header nav a {
+            margin: 0 10px;
             color: white;
             text-decoration: none;
-            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .button-group a:hover {
-            background-color: #0056b3;
+        .search-box {
+            display: flex;
+            justify-content: center;
+            margin: 30px;
+        }
+        .search-box input {
+            width: 400px;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+        }
+        .player-list {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+        .more-button {
+            display: block;
+            margin: 20px auto;
+            background: #ff5a5a;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .clan-section {
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+        .clan-title {
+            font-weight: bold;
+            margin: 20px 0 10px;
+            cursor: pointer;
+        }
+        .clan-cards {
+            display: flex;
+            gap: 20px;
+        }
+        .clan-card {
+            flex: 1;
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .chat-list, .chat-popup {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+            z-index: 1000;
+        }
+        .chat-list {
+            top: 60px;
+            right: 20px;
+            display: none;
+            width: 250px;
+        }
+        .chat-popup {
+            bottom: 20px;
+            right: 20px;
+            display: none;
+            width: 300px;
+        }
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+        }
+        .chat-body {
+            height: 200px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            margin: 10px 0;
+            padding: 10px;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>환영합니다!</h1>
-    <p>이곳은 Front Office의 메인 페이지입니다.</p>
 
-    <!-- Display success/error messages -->
-    <div th:if="${message}" class="message">
-        <p th:text="${message}"></p>
-    </div>
-    <div th:if="${error}" class="error" style="color: red;">
-        <p th:text="${error}"></p>
-    </div>
+<header>
+    <div class="logo" onclick="location.href='/main'">Logo</div>
+    <nav>
+        <a onclick="location.href='/fo/party'">파티찾기</a>
+        <a onclick="location.href='/fo/clan'">클랜찾기</a>
+        <a onclick="location.href='/fo/report'">트롤신고</a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
-    <div class="button-group">
-        <a th:href="@{/fo/login}">로그인</a>
-        <a th:href="@{/fo/signup}">회원가입</a>
+        <!-- 로그인 상태인 경우 -->
+        <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+            <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+
+            <button onclick="location.href='/fo/mypage/mypage'"
+                    style="background: white; color: #ff5a5a; border: 2px solid #ff5a5a;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+                           transition: all 0.2s ease;"
+                    onmouseover="this.style.backgroundColor='#ffebeb';"
+                    onmouseout="this.style.backgroundColor='white';">
+                마이페이지
+            </button>
+
+            <button onclick="location.href='/fo/logout'"
+                    style="background: #fb5858; color: white; border: none;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold;
+                           cursor: pointer; transition: all 0.2s ease;"
+                    onmouseover="this.style.backgroundColor='#d40000';"
+                    onmouseout="this.style.backgroundColor='#fb5858';">
+                로그아웃
+            </button>
+        </div>
+
+        <!-- 비로그인 상태인 경우 -->
+        <div th:if="${session.loginUser == null}">
+            <button onclick="location.href='/fo/login'"
+                    style="background: white; color: #ff5a5a; border: 1px solid #ff5a5a;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+                           transition: all 0.2s ease;"
+                    onmouseover="this.style.backgroundColor='#ffebeb';"
+                    onmouseout="this.style.backgroundColor='white';">
+                로그인
+            </button>
+        </div>
     </div>
-    <!-- Add other main page content here -->
+</header>
+
+
+<div class="search-box">
+    <input type="text" placeholder="플레이어 이름 (플레이어#KR1)">
 </div>
+
+<div class="player-list">
+    <div class="player-item">
+        <span>플레이어1</span>
+        <button onclick="toggleChatPopup()">💬</button>
+    </div>
+    <div class="player-item">
+        <span>플레이어2</span>
+        <button onclick="toggleChatPopup()">💬</button>
+    </div>
+    <div class="player-item">
+        <span>플레이어3</span>
+        <button onclick="toggleChatPopup()">💬</button>
+    </div>
+    <button class="more-button">더보기</button>
+</div>
+
+<div class="clan-section">
+    <div class="clan-title" onclick="location.href='/clan'">클랜찾기 ></div>
+    <div class="clan-cards">
+        <div class="clan-card" onclick="toggleChatPopup()">플이좋아</div>
+        <div class="clan-card" onclick="toggleChatPopup()">플이좋아</div>
+        <div class="clan-card" onclick="toggleChatPopup()">플이좋아</div>
+    </div>
+</div>
+
+<div class="chat-list" id="chatList">
+    <div class="chat-header">
+        <strong>채팅 목록</strong>
+        <button onclick="toggleChatList()">X</button>
+    </div>
+    <p onclick="toggleChatPopup()">플레이어1</p>
+    <p onclick="toggleChatPopup()">플레이어2</p>
+</div>
+
+<div class="chat-popup" id="chatPopup">
+    <div class="chat-header">
+        <strong>플레이어1</strong>
+        <button onclick="toggleChatPopup()">X</button>
+    </div>
+    <div class="chat-body">
+        <p>안녕하세요!</p>
+        <p>파티 하실래요?</p>
+    </div>
+    <input type="text" placeholder="메시지 입력..." style="width: 100%; padding: 10px;">
+</div>
+
+<script>
+    function toggleChatList() {
+        const el = document.getElementById('chatList');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function toggleChatPopup() {
+        const el = document.getElementById('chatPopup');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+</script>
+
 </body>
 </html>
