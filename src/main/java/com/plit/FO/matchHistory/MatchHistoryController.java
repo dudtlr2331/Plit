@@ -23,12 +23,14 @@ public class MatchHistoryController {
                                @RequestParam String tagLine,
                                Model model) {
 
+        System.out.println("gameName = " + gameName);
+
         SummonerDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
         System.out.println("summoner: " + summoner);
-
         List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(summoner.getPuuid());
 
         model.addAttribute("summoner", summoner);
+        model.addAttribute("matchList", matchList);
 
         int winCount = (int) matchList.stream().filter(MatchHistoryDTO::isWin).count();
         int totalCount = matchList.size();
@@ -36,6 +38,9 @@ public class MatchHistoryController {
         model.addAttribute("matchList", matchList);
         model.addAttribute("winCount", winCount);
         model.addAttribute("totalCount", totalCount);
+
+        MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
+        model.addAttribute("summary", summary);
 
         Map<String, String> modeMap = Map.of(
                 "CHERRY", "아레나",
@@ -47,5 +52,12 @@ public class MatchHistoryController {
         model.addAttribute("modeMap", modeMap);
 
         return "fo/matchHistory/matchHistory";
+    }
+
+    @GetMapping("/detail")
+    @ResponseBody
+    public MatchDetailDTO getMatchDetail(@RequestParam String matchId,
+                                         @RequestParam String puuid) {
+        return matchHistoryService.getMatchDetail(matchId, puuid);
     }
 }

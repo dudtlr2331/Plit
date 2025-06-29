@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 
+// 테스트용
+
 @Component
 public class TestRunner implements CommandLineRunner {
 
