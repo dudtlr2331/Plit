@@ -23,4 +23,20 @@ public class PartyDTO {
     private String memo; //메모
     private String mainPosition; //주 포지션
     private List<PositionEnum> positions = new ArrayList<>(); // 찾는 포지션
+
+    public PartyDTO(PartyEntity entity) {
+        this.partySeq = entity.getPartySeq();
+        this.partyName = entity.getPartyName();
+        this.partyType = entity.getPartyType();
+        this.partyCreateDate = entity.getPartyCreateDate();
+        this.partyEndTime = entity.getPartyEndTime();
+        this.partyStatus = entity.getPartyStatus();
+        this.partyHeadcount = entity.getPartyHeadcount();
+        this.partyMax = entity.getPartyMax();
+        this.memo = entity.getMemo();
+        this.mainPosition = entity.getMainPosition();
+        this.positions = entity.getPartyFindPositions().stream()
+                .map(PartyFindPositionEntity::getPosition)
+                .toList();
+    }
 }

@@ -3,6 +3,8 @@ package com.plit.FO.party;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface PartyRepository extends JpaRepository<PartyEntity, Long> {
 //    findAll() – 전체 조회
@@ -10,4 +12,5 @@ public interface PartyRepository extends JpaRepository<PartyEntity, Long> {
 //    findById(id) – id로 조회
 //    deleteById(id) – 삭제
 
+    List<PartyEntity> findByPartyType(String partyType);
 }

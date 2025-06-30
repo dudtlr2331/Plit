@@ -7,44 +7,22 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequestMapping("/party")
 public class PartyController {
+
     private final PartyService partyService;
-    private final PartyRepository partyRepository;
 
-    public PartyController(PartyService partyService, PartyRepository partyRepository) {
+    public PartyController(PartyService partyService) {
         this.partyService = partyService;
-        this.partyRepository = partyRepository;
     }
 
-    @GetMapping()
-    public String list(Model model) {
-        model.addAttribute("parties", partyService.getAllParties());
+    @GetMapping
+    public String partyPage() {
         return "fo/party/party";
-    }
-
-    @GetMapping("/new")
-    public String newForm(Model model) {
-        model.addAttribute("party", new PartyDTO());
-        model.addAttribute("positions", PositionEnum.values());
-        return "fo/party/form";
     }
 
     @PostMapping("/new")
     public String create(PartyDTO dto) {
         partyService.saveParty(dto);
         return "redirect:/party";
-    }
-
-    @GetMapping("/{id}")
-    public String view(@PathVariable Long id, Model model) {
-        model.addAttribute("party", partyService.getParty(id));
-        return "fo/party/view";
-    }
-
-    @GetMapping("/edit/{id}")
-    public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("party", partyService.getParty(id));
-        model.addAttribute("positions", PositionEnum.values());
-        return "fo/party/form";
     }
 
     @PostMapping("/edit/{id}")
@@ -55,7 +33,7 @@ public class PartyController {
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
-        partyRepository.deleteById(id);
+        partyService.deleteParty(id);
         return "redirect:/party";
     }
 }
