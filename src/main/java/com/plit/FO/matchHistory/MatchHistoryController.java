@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +30,10 @@ public class MatchHistoryController {
         System.out.println("summoner: " + summoner);
         List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(summoner.getPuuid());
 
+        String tier = matchHistoryService.getTierByPuuid(summoner.getPuuid());
+
         model.addAttribute("summoner", summoner);
-        model.addAttribute("matchList", matchList);
+        model.addAttribute("tier", tier);
 
         int winCount = (int) matchList.stream().filter(MatchHistoryDTO::isWin).count();
         int totalCount = matchList.size();
@@ -50,6 +53,12 @@ public class MatchHistoryController {
         );
 
         model.addAttribute("modeMap", modeMap);
+
+        Map<String, RankDTO> rankMap = matchHistoryService.getRankInfoByPuuid(summoner.getPuuid());
+        model.addAttribute("rankMap", rankMap);
+
+        List<FavoriteChampionDTO> favoriteChampions = matchHistoryService.getFavoriteChampions(matchList);
+        model.addAttribute("favoriteChampions", favoriteChampions);
 
         return "fo/matchHistory/matchHistory";
     }

@@ -46,4 +46,7 @@ public class MatchHistoryDTO { // 매치정보
     private int gameDurationMinutes;
     private int gameDurationSeconds;
     private String killParticipation;
+
+    private String queueType;
+
 }

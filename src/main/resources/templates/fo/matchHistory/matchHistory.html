@@ -103,22 +103,86 @@
 
 <div class="main">
     <div class="left-panel">
+
         <div class="rank-box">
-            <h3>개인/2인 랭크 게임</h3>
-            <p>티어: 플래티넘</p>
-            <p>승/패: 34승 22패</p>
-            <p>승률: 60.7%</p>
+            <div class="rank-box">
+                <h3>개인/2인 랭크 게임</h3>
+                <div class="tier-summary" th:if="${rankMap['RANKED_SOLO_5x5'] != null}">
+                    <img th:src="@{'/img/emblem-' + ${rankMap['RANKED_SOLO_5x5'].tier.toLowerCase()} + '.png'}"
+                         class="tier-icon" alt="현재 티어" />
+
+                    <div class="tier-info">
+                        <div class="tier-name" th:text="${rankMap['RANKED_SOLO_5x5'].tier + ' ' + rankMap['RANKED_SOLO_5x5'].rank}">
+                            tier
+                        </div>
+                        <div class="lp" th:text="${rankMap['RANKED_SOLO_5x5'].leaguePoints + ' LP'}">
+                            leaguepoints
+                        </div>
+                        <div class="win-rate"
+                             th:text="${rankMap['RANKED_SOLO_5x5'].wins + '승 ' + rankMap['RANKED_SOLO_5x5'].losses + '패 · 승률 ' + #numbers.formatDecimal(rankMap['RANKED_SOLO_5x5'].winRate, 0, 0) + '%'}">
+                            win-rate
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
         <div class="rank-box">
             <h3>자유 랭크 게임</h3>
-            <p>티어: 골드</p>
-            <p>승/패: 20승 18패</p>
-            <p>승률: 52.6%</p>
+            <div class="tier-summary" th:if="${rankMap['RANKED_FLEX_SR'] != null}">
+                <img th:src="@{'/img/emblem-' + ${rankMap['RANKED_FLEX_SR'].tier.toLowerCase()} + '.png'}"
+                     class="tier-icon" alt="현재 티어" />
+
+                <div class="tier-info">
+                    <div class="tier-name"
+                         th:text="${rankMap['RANKED_FLEX_SR'].tier + ' ' + rankMap['RANKED_FLEX_SR'].rank}">
+                        tier
+                    </div>
+                    <div class="lp"
+                         th:text="${rankMap['RANKED_FLEX_SR'].leaguePoints + ' LP'}">
+                        lp
+                    </div>
+                    <div class="win-rate"
+                         th:text="${rankMap['RANKED_FLEX_SR'].wins + '승 ' + rankMap['RANKED_FLEX_SR'].losses + '패 · 승률 ' + #numbers.formatDecimal(rankMap['RANKED_FLEX_SR'].winRate, 0, 0) + '%'}">
+                        win-rate
+                    </div>
+                </div>
+            </div>
+
+            <div class="no-rank-info" th:if="${rankMap['RANKED_FLEX_SR'] == null}">
+                <p style="color: gray; font-size: 14px;">자유 랭크 정보가 없습니다.</p>
+            </div>
         </div>
-        <div class="champion-box">
-            <h3>선호 챔피언</h3>
-            <p>● ● ● ● ●</p>
+
+        <div class="champion-preference-box">
+            <h2>선호챔피언</h2>
+            <h3 th:text="'S' + ${T(java.time.Year).now().value}">year</h3>
+            <div class="champion-row" th:each="champ : ${favoriteChampions}">
+                <div class="champion-icon">
+                    <img th:src="@{'https://ddragon.leagueoflegends.com/cdn/14.12.1/img/champion/' + ${champ.name} + '.png'}"
+                         alt="champion" />
+                </div>
+                <div class="champion-info">
+                    <div class="champ-name" th:text="${champ.korName}">루시안</div>
+                    <div class="cs-info" th:text="'CS ' + ${champ.totalCs} + ' (' + ${#numbers.formatDecimal(champ.csPerMin, 1, 1)} + ')'">
+                        CS
+                    </div>
+                </div>
+
+                <div class="kda-info">
+                    <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2) + ':1 평점'}">3.09:1 평점</div>
+                    <div class="kda" th:text="${champ.kills} + ' / ' + ${champ.deaths} + ' / ' + ${champ.assists}">8.4 / 4.3 / 5.1</div>
+                </div>
+
+                <div class="usage-info">
+                    <div class="usage-percent" th:text="${champ.flexUsagePercent + '%'}" style="color:#f45b5b;">63%</div>
+                    <div class="game-count" th:text="${champ.flexGameCount + '게임'}">76게임</div>
+                </div>
+            </div>
+
+            <div class="show-more">모든 시즌 티어 보기 ⌄</div>
         </div>
+
     </div>
     <div class="right-panel">
 
@@ -126,48 +190,51 @@
             <h3>최근 게임 (전체)</h3>
 
             <div th:if="${matchList != null}">
-                <div class="summary-bar">
-                    <p>
-                        총 <strong th:text="${summary.totalCount}"></strong>전
-                        <strong th:text="${summary.winCount}"></strong>승
-                        <span th:text="${100 * summary.winCount / summary.totalCount} + '%'"></span>
-                    </p>
-
-                    <div class="win-loss-bar">
-                        <div class="win-bar" th:style="'width:' + ${winCount * 100 / totalCount} + '%'">
-                            [[${winCount * 100 / totalCount}]]%
-                        </div>
-                        <div class="lose-bar" th:style="'width:' + ${(100 - (winCount * 100 / totalCount))} + '%'">
-                            [[${100 - (winCount * 100 / totalCount)}]]%
-                        </div>
-                    </div>
-                </div>
 
                 <div class="kda-summary">
 
-                    <!-- K/D/A -->
+                    <div class="match-summary-block">
+                        <p class="match-record-text"
+                           th:text="${summary.totalCount} + '전 ' + ${summary.winCount} + '승 ' + ${summary.loseCount} + '패'">
+                            20전 16승 4패
+                        </p>
+
+                        <div class="win-loss-bar">
+                            <div class="win-bar"
+                                 th:style="'width:' + (${summary.winCount * 100.0 / summary.totalCount}) + '%'">
+                                <span th:text="${summary.winCount} + '승'">16승</span>
+                            </div>
+                            <div class="lose-bar"
+                                 th:style="'width:' + (${summary.loseCount * 100.0 / summary.totalCount}) + '%'">
+                                <span th:text="${summary.loseCount} + '패'">4패</span>
+                            </div>
+                        </div>
+
+                        <p class="win-rate-text"
+                           th:text="${#numbers.formatDecimal(summary.winCount * 100.0 / summary.totalCount, 0, 0)} + '%'">
+                            53%
+                        </p>
+                    </div>
+
+                    <!-- 아래는 기존 kda 등 유지 -->
                     <div class="kda-stat">
-                        <div class="label"></div>
+                        <div class="label">K/D/A</div>
                         <div>
                             <strong th:text="${#numbers.formatDecimal(summary.avgKills, 1, 1)}">0.0</strong> /
                             <span style="color:red;" th:text="${#numbers.formatDecimal(summary.avgDeaths, 1, 1)}">0.0</span> /
                             <span th:text="${#numbers.formatDecimal(summary.avgAssists, 1, 1)}">0.0</span>
                         </div>
-                    </div>
-
-                    <!-- KDA 비율 + 킬관여 -->
-                    <div class="kda-stat">
-                        <div class="label">KDA 비율</div>
                         <div th:text="${#numbers.formatDecimal(summary.kdaRatio, 2, 2)} + ' : 1'">0.00 : 1</div>
                         <div style="color:red; font-size: 12px;"
                              th:text="|킬 관여 ${#numbers.formatDecimal(summary.killParticipation, 1, 1)}%|">
-                            킬 관여 0%
+                            킬 관여
                         </div>
                     </div>
 
+
                     <!-- 챔피언 상위 3개 -->
                     <div class="favorite-champions-section">
-                        <h4 class="section-title">선호 챔피언</h4>
+                        <h4 class="section-title">최근 선호 챔피언</h4>
                         <div class="favorite-champions">
                             <div class="champion" th:each="entry : ${summary.sortedChampionList.subList(0, 3)}">
                                 <img th:src="@{'https://ddragon.leagueoflegends.com/cdn/14.12.1/img/champion/' + ${entry.key} + '.png'}"
@@ -185,7 +252,7 @@
 
                     <!-- 선호 포지션 -->
                     <div class="favorite-positions">
-                        <h4 class="section-title">선호 포지션</h4>
+                        <h4 class="section-title">최근 선호 포지션</h4>
                         <div class="position-bar-container">
                             <div class="position"
                                  th:each="pos : ${summary.sortedPositionList}">
@@ -199,12 +266,12 @@
 
                                 <img th:src="@{'/img/position-' + ${pos.toLowerCase()} + '.png'}"
                                      th:alt="${pos}" class="position-icon" />
-
                             </div>
                         </div>
                     </div>
 
                 </div>
+            </div>
 
                 <div th:each="match : ${matchList}">
                     <div class="match-summary-box"
