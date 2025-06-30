@@ -52,8 +52,8 @@ public class FriendRestController {
     // 친구 차단
     @PostMapping("/{friendNo}/block")
     public ResponseEntity<?> blockFriend(@PathVariable Integer friendNo, HttpSession session) {
-        UserDTO currentUser = (UserDTO) session.getAttribute("loginUser");
-        friendService.blockFriend(friendNo, currentUser.getUserSeq());
+        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+        friendService.blockFriend(friendNo, loginUser.getUserSeq());
         return ResponseEntity.ok().build();
     }
 
