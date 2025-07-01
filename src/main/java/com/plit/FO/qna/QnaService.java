@@ -37,13 +37,13 @@ public class QnaService {
     }
 
     public List<QnaEntity> getMyQuestions(Long userId) {
-        return qnaRepository.findByUserIdOrderByAskedAtDesc(userId);
+        return qnaRepository.findByUserIdAndDeleteYnOrderByAskedAtDesc(userId, "N");
     }
 
     public void deleteQna(Long id, Long userId) {
         qnaRepository.findById(id).ifPresent(qna -> {
             if (qna.getUserId().equals(userId)) {
-                qnaRepository.delete(qna);
+                qnaRepository.softDelete(id, userId);
                 System.out.println("문의 삭제됨: " + id);
             } else {
                 System.out.println("삭제 권한 없음: " + userId);
@@ -56,7 +56,8 @@ public class QnaService {
 
     // 관리자 전체 문의 내역 조회
     public List<QnaEntity> getAllQuestions() {
-        return qnaRepository.findAll();
+        return qnaRepository.findByDeleteYnOrderByAskedAtDesc("N");
+//        return qnaRepository.findAll();
     }
     // 관리자용 - 특정 문의글 조회
     public QnaEntity findById(Long id) {

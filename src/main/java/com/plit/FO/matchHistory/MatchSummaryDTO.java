@@ -18,6 +18,7 @@ public class MatchSummaryDTO { // 매치 20게임 통계
     private double kdaRatio;
     private double killParticipation;
     private int winCount;
+    private int loseCount;
     private int totalCount;
 
     // 챔피언
