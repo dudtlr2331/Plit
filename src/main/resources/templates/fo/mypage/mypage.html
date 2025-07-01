@@ -57,6 +57,24 @@
             padding: 40px;
         }
 
+        .withdraw-link {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            text-align: left;
+            background: none;
+            border: none;
+            color: #333;
+            font: inherit;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .withdraw-link:hover {
+            background-color: #eee;
+        }
+
         .section {
             display: none;
         }
@@ -225,29 +243,119 @@
             border-radius: 20px;
             border: 1px solid #ccc;
         }
+
+        .password-change-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .password-label {
+            width: 120px;
+            font-weight: normal !important;
+            white-space: nowrap;
+        }
+
+        .password-input {
+            flex: none !important;
+            width: 300px !important;
+            max-width: 100%;
+        }
+
+        .info-row {
+            justify-content: space-between;
+        }
+
     </style>
 </head>
 <body>
 <div class="container">
     <!-- 사이드바 -->
     <div class="sidebar">
+        <div style="margin-bottom: 20px;">
+            <a th:href="@{/main}" style="display: inline-block;">
+                <img src="/images/logo.png" alt="로고" style="height: 40px;" />
+            </a>
+        </div>
+
         <ul>
             <li><a th:href="@{/mypage}" th:classappend="${viewSection=='account'}?'active'">계정 관리</a></li>
             <li><a th:href="@{/mypage/qna/list}" th:classappend="${viewSection=='qna'}?'active'">문의하기</a></li>
             <li><a th:href="@{/mypage/friends}" th:classappend="${viewSection=='friends'}?'active'">친구 목록</a></li>
             <li><a th:href="@{/mypage/blocked}" th:classappend="${viewSection=='blocked'}?'active'">차단 목록</a></li>
+            <li>
+                <form th:if="${session.loginUser != null}"
+                      th:action="@{/user/delete}" method="post"
+                      onsubmit="return confirm('정말 탈퇴하시겠습니까?');">
+                    <input type="hidden" name="userSeq" th:value="${session.loginUser.userSeq}" />
+                    <button type="submit" class="withdraw-link">회원 탈퇴</button>
+                </form>
+            </li>
         </ul>
     </div>
 
     <!-- 컨텐츠 -->
     <div class="content">
         <!-- 1) 계정 정보 화면 -->
-        <div th:if="${viewSection=='account'}">
+        <div th:if="${viewSection == 'account'}">
             <h2>기본 정보</h2>
-            <!-- 계정 정보 form/UI 등 -->
+
+            <!-- 닉네임 표시 줄 -->
+            <div class="info-row" id="nicknameRow" style="justify-content: space-between;">
+                <label>닉네임</label>
+                <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
+                    <span th:text="${session.loginUser.userNickname}">닉네임</span>
+                    <button type="button" onclick="showNicknameInput()">변경</button>
+                </div>
+            </div>
+
+
+            <!-- 닉네임 수정 줄 -->
+            <div class="info-row" id="nicknameEditRow" style="display: none; justify-content: space-between;">
+                <label>닉네임</label>
+                <form th:action="@{/mypage/change-nickname}" method="post"
+                      style="flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <input type="text" name="newNickname" id="newNicknameInput" placeholder="새 닉네임 입력" required style="flex: 1;" />
+                    <div style="display: flex; gap: 6px;">
+                        <button type="submit">저장</button>
+                        <button type="button" onclick="cancelNicknameEdit()" style="background: #ccc; color: black;">취소</button>
+                    </div>
+                </form>
+            </div>
+
+
+
+
+            <!-- 비밀번호 변경 섹션 -->
+            <div class="info-group" style="margin-top: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 18px; font-weight: bold; margin: 0;">비밀번호 변경</h3>
+                    <button type="submit" form="passwordForm" class="password-change-btn">비밀번호 변경</button>
+                </div>
+                <hr style="margin: 10px 0;" />
+
+                <form th:action="@{/mypage/change-password}" method="post" id="passwordForm">
+                    <div class="info-row">
+                        <label class="password-label">현재 비밀번호 입력</label>
+                        <input type="password" name="currentPwd" required class="password-input" />
+                    </div>
+                    <div class="info-row">
+                        <label class="password-label">새 비밀번호 입력</label>
+                        <input type="password" name="newPwd" required class="password-input" />
+                    </div>
+                </form>
+            </div>
+
         </div>
 
-        <!-- QnA -->
+
+
+
+            <!-- QnA -->
         <div th:if="${viewSection == 'qna'}">
 
             <div th:if="${viewMode == 'list'}" th:insert="~{fo/mypage/qna/list :: listFragment}"></div>
@@ -272,5 +380,20 @@
 
     </div>
 </div>
+
+<script>
+    function showNicknameInput() {
+        document.getElementById("nicknameRow").style.display = "none";
+        document.getElementById("nicknameEditRow").style.display = "flex";
+    }
+
+    function cancelNicknameEdit() {
+        document.getElementById("nicknameRow").style.display = "flex";
+        document.getElementById("nicknameEditRow").style.display = "none";
+    }
+</script>
+
+
+
 </body>
 </html>
