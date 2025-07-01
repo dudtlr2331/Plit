@@ -12,7 +12,7 @@
       <li><a href="/mypage/account">계정 관리</a></li>
       <li><a href="/mypage/qna">문의하기</a></li>
       <li><a href="/mypage/friends" class="active">친구 목록</a></li>
-      <li><a href="/mypage/block">차단 목록</a></li>
+      <li><a href="/mypage/blocked">차단 목록</a></li>
     </ul>
   </div>
 
@@ -259,41 +259,6 @@
       loadFriendRequests();
     }
   }
-
-  data.forEach(req => {
-    const div = document.createElement('div');
-    div.className = 'request-item';
-
-    const nickname = document.createElement('span');
-    nickname.className = 'nickname';
-    nickname.textContent = req.user.userNickname;
-
-    const memo = document.createElement('span');
-    memo.className = 'memo';
-    memo.textContent = req.memo || '';
-
-    const actions = document.createElement('div');
-    actions.className = 'request-actions';
-
-    const acceptBtn = document.createElement('button');
-    acceptBtn.textContent = '수락';
-    acceptBtn.className = 'submit-button';
-    acceptBtn.onclick = () => handleFriendAction(req.friendsNo, 'accept');
-
-    const declineBtn = document.createElement('button');
-    declineBtn.textContent = '거절';
-    declineBtn.className = 'delete-btn';
-    declineBtn.onclick = () => handleFriendAction(req.friendsNo, 'decline');
-
-    actions.appendChild(acceptBtn);
-    actions.appendChild(declineBtn);
-
-    div.appendChild(nickname);
-    div.appendChild(memo);
-    div.appendChild(actions);
-
-    container.appendChild(div);
-  });
 
   // 친구 차단
   function blockFriend(friendNo) {

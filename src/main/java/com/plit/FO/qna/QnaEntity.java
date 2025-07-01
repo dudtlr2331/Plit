@@ -38,4 +38,7 @@ public class QnaEntity {
 
     @Column(name = "file_name")
     private String fileName;
+
+    @Column(name = "delete_yn", columnDefinition = "VARCHAR(1) DEFAULT 'N'")
+    private String deleteYn = "N";
 }

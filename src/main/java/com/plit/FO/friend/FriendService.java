@@ -1,8 +1,11 @@
 package com.plit.FO.friend;
 
+import com.plit.FO.block.BlockEntity;
+import com.plit.FO.block.BlockRepository;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,9 @@ public class FriendService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BlockRepository blockRepository;
 
     public FriendDTO sendFriendRequest(Integer fromUserId, Integer toUserId) {
         FriendEntity friend = FriendEntity.builder()
@@ -149,6 +155,7 @@ public class FriendService {
         friendRepository.save(friend);
     }
 
+    @Transactional
     public void blockFriend(Integer friendNo, Integer currentUserSeq) {
         FriendEntity friend = friendRepository.findById(friendNo)
                 .orElseThrow(() -> new RuntimeException("친구 정보를 찾을 수 없습니다."));
@@ -158,8 +165,27 @@ public class FriendService {
             throw new RuntimeException("차단 권한이 없습니다.");
         }
 
-        friend.setStatus("BLOCKED"); // 또는 BLOCK 으로 명명한 경우에 맞게
+        // 친구 상태를 BLOCKED로 변경
+        friend.setStatus("BLOCKED");
         friendRepository.save(friend);
+
+        // 차단 대상자 추출 (내가 아닌 쪽)
+        Integer blockedUserSeq = friend.getFromUserId().equals(currentUserSeq)
+                ? friend.getToUserId()
+                : friend.getFromUserId();
+
+        // 이미 차단된 관계인지 확인 (중복 방지)
+        boolean alreadyBlocked = blockRepository.existsByBlockerIdAndBlockedUserIdAndIsReleasedFalse(currentUserSeq, blockedUserSeq);
+        if (!alreadyBlocked) {
+            BlockEntity block = BlockEntity.builder()
+                    .blockerId(currentUserSeq)
+                    .blockedUserId(blockedUserSeq)
+                    .blockedAt(LocalDateTime.now())
+                    .isReleased(false)
+                    .build();
+
+            blockRepository.save(block);
+        }
     }
 
     public void deleteFriend(Integer friendNo, Integer currentUserSeq) {
