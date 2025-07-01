@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>마이페이지 - 차단 목록</title>
+    <link rel="stylesheet" href="/css/mypageFriends.css" />
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <ul>
+            <li><a href="/mypage/account">계정 관리</a></li>
+            <li><a href="/mypage/qna">문의하기</a></li>
+            <li><a href="/mypage/friends">친구 목록</a></li>
+            <li><a href="/mypage/blocked" class="active">차단 목록</a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <div class="section active">
+            <h2>차단 목록</h2>
+
+            <div style="display: flex; font-weight: bold; margin-bottom: 10px; padding: 0 10px;">
+                <div style="width: 200px;">플레이어 이름</div>
+                <div style="flex: 1; text-align: center;">차단 날짜</div>
+                <div style="width: 100px; text-align: right;">관리</div>
+            </div>
+
+            <!-- 차단된 친구가 없을 때 -->
+            <div th:if="${#lists.isEmpty(blockList)}" class="friend-item">
+                <div class="friend-left">
+                    <div class="profile-circle"></div>
+                    <span>차단한 친구가 없습니다.</span>
+                </div>
+            </div>
+
+            <!-- 차단된 친구 목록 -->
+            <div th:each="block : ${blockList}" class="friend-item" style="display: flex; align-items: center; padding: 10px;">
+                <div class="profile-circle"></div>
+                <div style="width: 200px;" th:text="${block.blockedUserNickname}">닉네임</div>
+                <div style="flex: 1; text-align: center;" th:text="${#temporals.format(block.blockedAt, 'yyyy-MM-dd')}">2025-06-30</div>
+                <div style="width: 100px; text-align: right;">
+                    <button class="delete-btn"
+                            th:attr="onclick=|unblockFriend(${block.no})|">차단 해제</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // 차단 해제
+    function unblockFriend(blockNo) {
+        if (!confirm('정말 이 친구의 차단을 해제하시겠습니까?')) return;
+
+        fetch(`/api/blocks/${blockNo}/release`, {
+            method: "POST"
+        }).then(res => {
+            if (res.ok) {
+                alert("차단을 해제했습니다.");
+                location.reload();
+            } else {
+                alert("차단 해제에 실패했습니다.");
+            }
+        });
+    }
+</script>
+</body>
+</html>
