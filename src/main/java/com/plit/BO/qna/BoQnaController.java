@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Controller
 @RequestMapping("/bo/qna")
@@ -36,6 +37,16 @@ public class BoQnaController {
 
         List<QnaEntity> allQuestions = qnaService.getAllQuestions();
         model.addAttribute("questions", allQuestions);
+
+        // 테스트용 채팅방 목록 (실제 서비스에서는 DB 또는 세션 기반으로 대체)
+        List<Map<String, Object>> pendingRooms = new ArrayList<>();
+        Map<String, Object> testRoom = new HashMap<>();
+        testRoom.put("inquiryRoomId", "admin-room");
+        testRoom.put("userId", "user1");
+        testRoom.put("createdAt", LocalDateTime.now());
+        pendingRooms.add(testRoom);
+        model.addAttribute("pendingRooms", pendingRooms);
+
         return "bo/qna/list";
     }
 
@@ -81,5 +92,20 @@ public class BoQnaController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    // 관리자 채팅 화면 (팝업으로 오픈됨)
+    @GetMapping("/chat/inquiry/open/{roomId}")
+    public String openAdminChat(@PathVariable String roomId, Model model) {
+        model.addAttribute("roomId", roomId);
+        model.addAttribute("userId", "admin"); // 테스트용
+        // model.addAttribute("userId", session.getAttribute("userId")); // 실사용 시
+        return "bo/qna/admchat";
+    }
+
+    // 관리자 채팅 HTML 단독 진입 (개별 테스트용)
+    @GetMapping("/admchat")
+    public String showAdminChat() {
+        return "bo/qna/admchat";
     }
 }

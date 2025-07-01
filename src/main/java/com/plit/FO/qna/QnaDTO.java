@@ -10,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Setter
 @NoArgsConstructor
 public class QnaDTO {
-    private String type;
     private String title;
     private String content;
     private MultipartFile file;
