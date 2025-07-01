@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>클랜 상세</title>
+    <link rel="stylesheet" href="/css/clan.css" />
+</head>
+<body>
+<header>
+    <nav>
+        <a href="#">파티찾기</a>
+        <a href="#">내전찾기</a>
+        <a href="/clan" style="color: yellow">클랜찾기</a>
+        <a href="#">트롤신고</a>
+    </nav>
+    <div class="top-right">🔴 로그인</div>
+</header>
+
+<div class="detail-container">
+    <div class="detail-header">
+        <h1 th:text="${clan.name}">클랜 이름</h1>
+        <span class="member-count">0명</span>
+    </div>
+
+    <div class="detail-section">
+        <h2>소개</h2>
+        <p th:text="${clan.intro}">클랜 소개 내용입니다.</p>
+    </div>
+
+    <div class="detail-section">
+        <h2>가입 조건</h2>
+        <p th:text="'최소 티어: ' + ${clan.minTier}">브론즈 이상</p>
+    </div>
+
+    <div class="detail-section">
+        <h2>오픈채팅</h2>
+        <div class="link-buttons">
+            <!-- 카카오톡 링크가 있을 때만 버튼 보이기 -->
+            <a href="#"
+               th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+               data-type="kakao"
+               th:data-url="${clan.kakaoLink}"
+               onclick="handleLink(this)">카카오톡 오픈채팅</a>
+
+            <!-- 디스코드 링크가 있을 때만 버튼 보이기 -->
+            <a href="#"
+               th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+               data-type="discord"
+               th:data-url="${clan.discordLink}"
+               onclick="handleLink(this)">디스코드 초대링크</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-nav">
+            <a href="#">공지사항</a>
+            <a href="#">사용방법</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">광고/제휴문의</a>
+            <a href="#">개발문의</a>
+            <a href="#">404 Squad</a>
+        </div>
+        <div>
+            lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
+            League of Legends is a trademark of Riot Games.
+        </div>
+    </div>
+</footer>
+
+<script>
+    function handleLink(el) {
+        const url = el.dataset.url;
+        const type = el.dataset.type;
+        if (!url || url === 'null') {
+            alert(type === 'kakao' ? '카카오톡 링크가 등록되어 있지 않습니다.' : '디스코드 링크가 등록되어 있지 않습니다.');
+            return;
+        }
+        window.open(url, '_blank');
+    }
+</script>
+</body>
+</html>
