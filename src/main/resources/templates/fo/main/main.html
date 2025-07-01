@@ -115,8 +115,8 @@
     <div class="logo" onclick="location.href='/main'">Logo</div>
     <nav>
         <a onclick="location.href='/party'">파티찾기</a>
-        <a onclick="location.href='/fo/clan'">클랜찾기</a>
-        <a onclick="location.href='/fo/report'">트롤신고</a>
+        <a onclick="location.href='/clan'">클랜찾기</a>
+        <a onclick="location.href='/report'">트롤신고</a>
     </nav>
     <div style="display: flex; align-items: center; gap: 15px;">
         <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
@@ -125,7 +125,7 @@
         <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
             <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
 
-            <button onclick="location.href='/fo/mypage'"
+            <button onclick="location.href='/mypage'"
                     style="background: white; color: #ff5a5a; border: 2px solid #ff5a5a;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
                            transition: all 0.2s ease;"
@@ -134,7 +134,7 @@
                 마이페이지
             </button>
 
-            <button onclick="location.href='/fo/logout'"
+            <button onclick="location.href='/logout'"
                     style="background: #fb5858; color: white; border: none;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold;
                            cursor: pointer; transition: all 0.2s ease;"
