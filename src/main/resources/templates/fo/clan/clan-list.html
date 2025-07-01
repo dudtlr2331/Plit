@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>클랜 찾기</title>
+  <link rel="stylesheet" href="/css/clan.css" />
+</head>
+<body>
+<header>
+  <nav>
+    <a href="#">파티찾기</a>
+    <a href="#">내전찾기</a>
+    <a href="/clan" style="color: yellow">클랜찾기</a>
+    <a href="#">트롤신고</a>
+  </nav>
+  <div class="top-right">🔴 로그인</div>
+</header>
+
+<div class="container">
+  <div class="search-bar">
+
+    <form method="get" action="/clan" id="searchForm">
+      <div class="search-left">
+        <select name="tier" onchange="document.getElementById('searchForm').submit()">
+          <option value="">티어 전체</option>
+          <option value="언랭크">언랭크</option>
+          <option value="브론즈">브론즈</option>
+          <option value="실버">실버</option>
+          <option value="골드">골드</option>
+          <option value="플레티넘">플레티넘</option>
+          <option value="다이아">다이아</option>
+          <option value="마스터">마스터</option>
+          <option value="챌린저">챌린저</option>
+        </select>
+        <input type="text" name="keyword" placeholder="클랜명 또는 소개 검색" />
+        <!-- 이 검색 버튼은 선택사항이지만 남겨둬도 무방 -->
+        <button type="submit" class="register-btn">검색</button>
+      </div>
+    </form>
+
+    <a href="javascript:void(0);" class="register-btn" onclick="openModal()">클랜등록</a>
+    <div id="clanModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+
+        <h2>클랜 등록하기</h2>
+        <form method="post" action="/clan/register" enctype="multipart/form-data">
+          <input type="text" name="name" placeholder="클랜 이름" required />
+          <input type="text" name="summonerName" placeholder="소환사 이름" required />
+          <label for="imageUpload" class="image-label">이미지 등록하기</label>
+          <input type="file" id="imageUpload" name="imageFile" accept="image/*" onchange="previewImage(event)" />
+          <img id="imagePreview" style="max-width: 100%; margin-top: 10px;" />
+
+          <textarea name="intro" placeholder="클랜 소개" required></textarea>
+
+          <select name="minTier" required>
+            <option value="">티어 선택</option>
+            <option value="언랭크">언랭크</option>
+            <option value="브론즈">브론즈</option>
+            <option value="실버">실버</option>
+            <option value="골드">골드</option>
+            <option value="플레티넘">플레티넘</option>
+            <option value="다이아">다이아</option>
+            <option value="마스터">마스터</option>
+            <option value="챌린저">챌린저</option>
+          </select>
+
+          <input type="text" name="discordLink" placeholder="디스코드 초대 주소" />
+          <input type="text" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
+
+          <div style="text-align: right;">
+            <button type="submit" class="register-btn">등록하기</button>
+            <button type="button" class="cancel-btn" onclick="closeModal()">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="clan-grid">
+
+    <div class="clan-card" th:each="clan : ${clans}" th:onclick="|location.href='/clan/${clan.id}'|" style="cursor: pointer;">
+      <div class="clan-image-placeholder">
+        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}"
+             alt="클랜 이미지"
+             style="width: 100%; height: 100%; object-fit: cover;" />
+      </div>
+      <div class="clan-title-box">
+        <h3 th:text="${clan.name}">클랜이름</h3>
+        <span class="clan-member-count">0명</span>
+      </div>
+      <p th:text="${clan.intro}">소개글</p>
+      <small>
+        <span th:text="'티어 ' + ${clan.minTier} + ' 이상'">티어 브론즈 이상</span>
+        <span class="clan-links" style="float: right;">
+    <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+       th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+      <img src="/images/discord-icon.png" alt="" class="social-icon" />
+    </a>
+    <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+       th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+      <img src="/images/kakao-icon.png" alt="" class="social-icon" />
+    </a>
+  </span>
+      </small>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-nav">
+      <a href="#">공지사항</a>
+      <a href="#">사용방법</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="#">광고/제휴문의</a>
+      <a href="#">개발문의</a>
+      <a href="#">404 Squad</a>
+    </div>
+    <div>
+      lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
+      League of Legends is a trademark of Riot Games.
+    </div>
+  </div>
+</footer>
+
+<script>
+  function openModal() {
+    document.getElementById("clanModal").style.display = "block";
+  }
+
+  function closeModal() {
+    document.getElementById("clanModal").style.display = "none";
+  }
+
+
+    // 이미지 미리보기 함수
+    function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+    const output = document.getElementById('imagePreview');
+    output.src = reader.result;
+  };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+</script>
+</body>
+</html>

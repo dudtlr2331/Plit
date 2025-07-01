@@ -1,0 +1,311 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+header {
+    background: #ff5c5c;
+    padding: 10px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header nav a {
+    margin: 0 20px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+header nav a:nth-child(3) {
+    color: yellow;
+}
+
+.top-right {
+    color: white;
+    font-weight: bold;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto 0;
+    padding: 0 20px;
+    flex: 1;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: space-between;
+}
+
+.search-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-btn {
+    background: #ff5c5c;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+select,
+input[type="text"] {
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+select {
+    width: 150px;
+}
+
+input[type="text"] {
+    width: 250px;
+}
+
+.register-btn {
+    background: #ff5c5c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.clan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.clan-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    aspect-ratio: 1 / 1;
+    padding: 15px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ccc;
+    position: relative;
+    text-decoration: none; /* 링크 스타일 제거 */
+    color: inherit; /* 글씨 색 유지 */
+}
+
+.clan-image-placeholder {
+    width: 100%;
+    height: 100px; /* 원하는 크기로 */
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.clan-title-box {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.clan-title-box h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    font-size: 18px;
+}
+
+.clan-member-count {
+    font-size: 13px;
+    background: #eee;
+    padding: 4px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.clan-card p {
+    margin: 0;
+    font-size: 14px;
+    color: #444;
+    background: #f3f3f3;
+    padding: 10px;
+    padding-bottom: 12px;
+    border-radius: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5;
+    max-height: calc(1.5em * 2);
+    margin-bottom: 0;
+}
+
+.clan-card small {
+    color: gray;
+    font-size: 13px;
+    display: block;
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+footer {
+    background: #333;
+    color: white;
+    padding: 30px 20px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+footer a {
+    color: white;
+    margin-right: 10px;
+    text-decoration: none;
+}
+
+footer .footer-nav {
+    margin-bottom: 10px;
+}
+
+.social-icon {
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+/*클랜등록*/
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background-color: #1f1f1f;
+    margin: 100px auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 400px;
+    color: white;
+    position: relative;
+}
+
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    background: #666;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    margin-left: 8px;
+}
+
+/*상세페이지*/
+
+/* 상세페이지 컨테이너 */
+.detail-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 제목과 인원수 */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.detail-header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.member-count {
+    font-size: 14px;
+    background: #eee;
+    padding: 6px 12px;
+    border-radius: 12px;
+}
+
+/* 소개, 조건, 링크 구역 */
+.detail-section {
+    margin-bottom: 20px;
+}
+
+.detail-section h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+/* 링크 버튼 */
+.link-buttons a {
+    display: inline-block;
+    margin-right: 10px;
+    padding: 10px 14px;
+    background: #ff5c5c;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.link-buttons a:hover {
+    background: #e44d4d;
+}
