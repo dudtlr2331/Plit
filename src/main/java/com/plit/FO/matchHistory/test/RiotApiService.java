@@ -50,6 +50,18 @@ public class RiotApiService {
         String puuid = getPuuid(gameName, tagLine);
         return getRankInfoByPuuid(puuid);
     }
+
+    public Map<String, Object> getSummonerByName(String summonerName) {
+        String encodedName = java.net.URLEncoder.encode(summonerName, java.nio.charset.StandardCharsets.UTF_8);
+        String url = String.format("https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-name/%s", encodedName);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Riot-Token", riotApiKey);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+        return response.getBody(); // 여기에 puuid, id, accountId 등 포함
+    }
 }
 
 

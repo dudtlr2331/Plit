@@ -31,5 +31,17 @@ public class RiotTestController {
                     .body("에러 발생: " + e.getMessage());
         }
     }
+
+    @GetMapping("/summoner/by-name")
+    public ResponseEntity<?> getSummonerByName(@RequestParam String summonerName) {
+        try {
+            Map<String, Object> result = riotApiService.getSummonerByName(summonerName);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("에러 발생: " + e.getMessage());
+        }
+    }
+
 }
 

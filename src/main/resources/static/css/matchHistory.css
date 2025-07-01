@@ -359,3 +359,41 @@ header nav a {
     display: inline-block;
     vertical-align: middle;
 }
+
+.player-summary-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.champion-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+}
+
+.runes {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rune-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.summoner-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+}
+
+.summoner-name {
+    font-weight: bold;
+}
+
+.summoner-tier {
+    color: gray;
+    font-size: 11px;
+}

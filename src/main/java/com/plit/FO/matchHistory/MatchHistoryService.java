@@ -42,6 +42,11 @@ public class MatchHistoryService {
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
             Map<String, String> body = response.getBody();
 
+            if (body == null || body.get("puuid") == null) {
+                System.err.println("Riot API 응답은 왔지만 소환사를 찾지 못함 (null)");
+                return null;
+            }
+
             String puuid = body.get("puuid");
             System.out.println("puuid = " + puuid);
 
@@ -61,7 +66,12 @@ public class MatchHistoryService {
             return dto;
 
         } catch (Exception e) {
-            System.err.println("소환사 정보 조회 실패: " + e.getMessage());
+//            System.err.println("소환사 정보 조회 실패: " + e.getMessage());
+            System.err.println("소환사 정보 조회 실패");
+            System.err.println("입력 gameName: " + gameName);
+            System.err.println("입력 tagLine: " + tagLine);
+            System.err.println("에러 메시지: " + e.getMessage());
+            e.printStackTrace(); // → 실제 원인까지 콘솔에 출력
             return null;
         }
     }
@@ -451,7 +461,7 @@ public class MatchHistoryService {
             List<MatchHistoryDTO> blueTeam = new ArrayList<>();
             List<MatchHistoryDTO> redTeam = new ArrayList<>();
 
-            Map<String,String> tierCache = new HashMap<>(); // 데이터 양이 많아 속도가 너무 느려져서
+            Map<String,String> tierCache = new HashMap<>();
 
             for (Map<String, Object> p : participants) {
                 List<String> itemImageUrls = new ArrayList<>();
@@ -470,6 +480,17 @@ public class MatchHistoryService {
                     tier = getTierByPuuid(puuid);
                     tierCache.put(puuid, tier);
                 }
+
+                // 룬 ID 추출
+                Map<String, Object> perks = (Map<String, Object>) p.get("perks");
+                List<Map<String, Object>> styles = (List<Map<String, Object>>) perks.get("styles");
+
+                int mainRune1 = (int) ((Map<String, Object>) ((List<?>) styles.get(0).get("selections")).get(0)).get("perk");
+                int mainRune2 = (int) styles.get(1).get("style");
+
+                Map<String, Object> statPerks = (Map<String, Object>) perks.get("statPerks");
+                int statRune1 = (int) statPerks.get("offense");
+                int statRune2 = (int) statPerks.get("flex");
 
                 MatchHistoryDTO dto = MatchHistoryDTO.builder()
                         .matchId(matchId)
@@ -497,6 +518,15 @@ public class MatchHistoryService {
                         )
                         .wardsPlaced(((Number) p.getOrDefault("wardsPlaced", 0)).intValue())
                         .wardsKilled(((Number) p.getOrDefault("wardsKilled", 0)).intValue())
+                        .mainRune1(mainRune1)
+                        .mainRune2(mainRune2)
+                        .statRune1(statRune1)
+                        .statRune2(statRune2)
+                        .championImageUrl("/img/champions/" + p.get("championName") + ".png")
+                        .mainRune1Url("/img/runes/" + mainRune1 + ".png")
+                        .mainRune2Url("/img/runes/" + mainRune2 + ".png")
+                        .statRune1Url("/img/runes/" + statRune1 + ".png")
+                        .statRune2Url("/img/runes/" + statRune2 + ".png")
                         .build();
 
                 String teamId = p.get("teamId").toString();
