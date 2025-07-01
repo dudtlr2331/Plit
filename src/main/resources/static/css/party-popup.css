@@ -293,3 +293,49 @@ select {
     gap: 6px;
     margin-top: 5px;
 }
+
+
+
+/* 주 포지션 선택 영역 */
+.position-selector span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    margin-right: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: transparent;
+    transition: background 0.2s;
+}
+
+.position-selector span:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.position-selector span.selected {
+    background-color: #ff5a5a;
+}
+
+/* 모든 아이콘 기본 SVG 색상: 연한 회색 유지 */
+.position-selector svg.position-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.position-icon path {
+    fill: #bbb;
+}
+.position-icon .top-fill,
+.position-icon .mid-fill,
+.position-icon .bottom-fill,
+.position-icon .all-fill {
+    fill: #bbb;
+}
+
+.position-selector span.selected .top-fill,
+.position-selector span.selected .mid-fill,
+.position-selector span.selected .bottom-fill,
+.position-selector span.selected .all-fill {
+    fill: #444;
+}
