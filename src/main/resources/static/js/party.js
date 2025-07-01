@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    const rank = params.get('rank') || '솔로랭크';
-    setActiveTab(rank === '자유랭크' ? 'freeTab' : 'soloTab');
+    const rank = params.get('rank') || 'solo';
+    setActiveTab(rank === 'team' ? 'freeTab' : 'soloTab');
     loadParties(rank);
 
     document.querySelectorAll('.position-selector span').forEach(span => {
@@ -30,12 +30,12 @@ function setActiveTab(id) {
 
 document.getElementById('soloTab').onclick = () => {
     setActiveTab('soloTab');
-    loadParties('솔로랭크');
+    loadParties('solo');
 };
 
 document.getElementById('freeTab').onclick = () => {
     setActiveTab('freeTab');
-    loadParties('자유랭크');
+    loadParties('team');;
 };
 
 function loadParties(partyType) {
@@ -111,12 +111,12 @@ function renderParties(data) {
 }
 
 function filterByMainPosition(koreanPos) {
-    const code = positionMap[koreanPos] || 'ALL';
-    if (code === 'ALL') {
-        renderParties(allParties);
-    } else {
-        renderParties(allParties.filter(p => p.mainPosition === code));
-    }
+    const code = positionMap[koreanPos];
+    if (!code) return;
+
+    renderParties(
+        allParties.filter(p => p.mainPosition && p.mainPosition.toUpperCase() === code)
+    );
 }
 
 function toggleChatList() {
