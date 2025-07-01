@@ -1,0 +1,295 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+}
+
+header {
+    background: #ff5a5a;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header nav {
+    display: flex;
+    align-items: center;
+}
+
+header nav a {
+    margin: 0 10px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.chat-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.chat-popup {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 80px;
+    width: 250px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 999;
+}
+
+.chat-popup div {
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.tab-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.tab {
+    padding: 10px 20px;
+    margin: 0 5px;
+    border-radius: 10px;
+    background: #eee;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.tab.active {
+    background: #ff5a5a;
+    color: white;
+}
+
+.filter-bar {
+    max-width: 900px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+}
+
+.position-icons img {
+    width: 30px;
+    height: 30px;
+    margin: 0 3px;
+    cursor: pointer;
+}
+
+select {
+    padding: 6px 10px;
+    border-radius: 5px;
+}
+
+.recruit-list {
+    max-width: 900px;
+    margin: auto;
+}
+
+.recruit-header,
+.recruit-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.recruit-header {
+    background: #f3f3f3;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+}
+
+.recruit-item {
+    background: #f8f8f8;
+    margin: 5px 0;
+    border-radius: 8px;
+}
+
+.recruit-item span {
+    margin-right: 10px;
+}
+
+.chat-icon {
+    cursor: pointer;
+}
+
+.recruit-button {
+    padding: 6px 12px;
+    background: #ff5a5a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.position-selector span {
+    font-size: 24px;
+    margin-right: 10px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.position-selector span.selected {
+    background-color: #ff5a5a;
+    color: white;
+}
+
+/* 팝업 공통 스타일 */
+.recruit-popup,
+#partyDetailPopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    padding: 30px;
+    border-radius: 12px;
+    width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.recruit-popup h3,
+#partyDetailPopup h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.recruit-popup label,
+#partyDetailPopup p {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #333;
+}
+
+.recruit-popup input[type="text"],
+.recruit-popup input[type="datetime-local"],
+.recruit-popup input[type="number"],
+.recruit-popup select,
+.recruit-popup textarea {
+    width: 100%;
+    max-width: 600px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.recruit-popup textarea {
+    resize: vertical;
+}
+
+.position-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.position-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.position-group input[type="checkbox"] {
+    transform: scale(1.2);
+}
+
+.popup-buttons {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.popup-buttons button,
+.recruit-popup button {
+    background: #ff5a5a;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 5px;
+    font-size: 13px;
+}
+
+.popup-buttons button:hover,
+.recruit-popup button:hover {
+    background: #ff7777;
+}
+
+.chatbox {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1000;
+}
+
+.recruit-popup,
+#partyDetailPopup {
+    width: 600px;
+    padding: 20px;
+    max-height: 90vh;
+}
+
+.recruit-popup h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.recruit-popup label {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.recruit-popup input[type="text"],
+.recruit-popup input[type="datetime-local"],
+.recruit-popup input[type="number"],
+.recruit-popup select,
+.recruit-popup textarea {
+    padding: 5px;
+    font-size: 13px;
+}
+
+.recruit-popup textarea {
+    rows: 2;
+    font-size: 13px;
+}
+
+.position-group {
+    gap: 6px;
+    margin-top: 5px;
+}

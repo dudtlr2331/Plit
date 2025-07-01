@@ -1,0 +1,250 @@
+/* qna.css - QnA 전용 스타일 */
+
+/* 테이블 */
+.qna-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.qna-table th, .qna-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.qna-table th {
+    background-color: #fafafa;
+    font-weight: bold;
+}
+
+/* 상태 뱃지 */
+.qna-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.qna-status-badge.completed {
+    background-color: #d0f0c0;
+    color: #2d7a3e;
+}
+
+.qna-status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* 삭제 버튼 */
+.qna-delete-btn {
+    background: #f8d7da;
+    color: #721c24;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* QnA 액션 버튼 */
+.qna-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.qna-submit-button,
+.qna-chat-btn {
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.qna-submit-button {
+    background-color: #ff4d4d;
+    color: #fff;
+}
+
+.qna-chat-btn {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+/* 상세 테이블 */
+.qna-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.qna-detail-table th {
+    background-color: #fafafa;
+    width: 120px;
+    text-align: left;
+    padding: 10px;
+    vertical-align: top;
+    font-weight: bold;
+}
+
+.qna-detail-table td {
+    text-align: left;
+    padding: 10px;
+    vertical-align: top;
+    white-space: pre-line;
+}
+
+/* QnA 작성 폼 */
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+}
+.form-group input[type="text"],
+.form-group textarea,
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+}
+.select-box {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    background-color: #fff;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23999" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+}
+.privacy-check {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+.submit-button {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.qna-button-right {
+    text-align: right;
+    margin-top: 20px;
+}
+
+.tooltip-error {
+    display: none;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    margin-top: 6px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-error {
+    display: none;
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-top: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    /* 기존에 있던 위치 속성 제거 */
+    position: relative;
+    left: 0;
+    top: 0;
+    transform: none;
+}
+
+.tooltip-error.show {
+    display: inline-block;
+}
+
+/*채팅 팝업*/
+
+.chat-popup {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 280px;
+    height: 400px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+.chat-header {
+    background: #ff4d4d;
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+}
+.chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+.chat-input {
+    display: flex;
+    border-top: 1px solid #eee;
+}
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-bottom-left-radius: 12px;
+}
+.chat-input button {
+    padding: 0 16px;
+    background: #ff4d4d;
+    border: none;
+    color: white;
+    border-bottom-right-radius: 12px;
+}

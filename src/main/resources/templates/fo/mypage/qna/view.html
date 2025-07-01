@@ -1,23 +1,41 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>문의 상세보기</title>
-    <meta charset="UTF-8">
-</head>
-<body>
-<h2>문의 상세보기</h2>
+<div th:fragment="viewFragment">
+    <h2>문의 상세보기</h2>
 
-<p><strong>제목:</strong> <span th:text="${qna.title}"></span></p>
-<p><strong>내용:</strong> <span th:text="${qna.content}"></span></p>
-<p><strong>상태:</strong> <span th:text="${qna.status}"></span></p>
+    <table class="qna-table">
+        <tbody>
+        <tr>
+            <th>제목</th>
+            <td th:text="${qna.title}"></td>
+        </tr>
+        <tr th:if="${qna.fileName != null && !qna.fileName.isEmpty()}">
+            <th>첨부파일</th>
+            <td>
+                <a th:href="@{/mypage/qna/download/{file}(file=${qna.fileName})}" th:text="${qna.fileName}" download></a>
+            </td>
+        </tr>
+        <tr>
+            <th>상태</th>
+            <td>
+                <span th:class="'qna-status-badge ' + (${qna.status} == '답변완료' ? 'completed' : 'pending')"
+                      th:text="${qna.status}">상태</span>
+            </td>
+        </tr>
+        <tr>
+            <th>문의 내용</th>
+            <td th:text="${qna.content}" style="white-space: pre-line;"></td>
+        </tr>
+        <tr th:if="${qna.answer}">
+            <th>답변</th>
+            <td th:text="${qna.answer}" style="white-space: pre-line;"></td>
+        </tr>
+        <tr th:unless="${qna.answer}">
+            <th>답변</th>
+            <td><em>아직 답변이 등록되지 않았습니다.</em></td>
+        </tr>
+        </tbody>
+    </table>
 
-<div th:if="${qna.answer}">
-    <p><strong>답변:</strong> <span th:text="${qna.answer}"></span></p>
+    <div class="qna-actions">
+        <a th:href="@{/mypage/qna}" class="qna-submit-button">← 목록으로</a>
+    </div>
 </div>
-<div th:unless="${qna.answer}">
-    <p><em>아직 답변이 등록되지 않았습니다.</em></p>
-</div>
-
-<a th:href="@{/fo/mypage/qna/list}">← 목록으로 돌아가기</a>
-</body>
-</html>

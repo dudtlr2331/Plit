@@ -6,8 +6,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/party")
+@RequestMapping("/api/parties")
 public class PartyRestController {
+
+    private final PartyService partyService;
+
+    public PartyRestController(PartyService partyService) {
+        this.partyService = partyService;
+    }
+
+    @GetMapping
+    public List<PartyDTO> getParties(@RequestParam(defaultValue = "솔로랭크") String partyType) {
+        return partyService.findByPartyType(partyType);
+    }
 
 //    private final PartyService partyService;
 //

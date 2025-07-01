@@ -1,20 +1,23 @@
 package com.plit.FO.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
+    private final JavaMailSender mailSender;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -55,6 +58,25 @@ public class UserService {
 
         return adj + noun + number;
     }
+
+    /// 회원가입 - 인증번호 메일 발송
+    public String sendEmailCode(String toEmail) {
+        String code = String.format("%06d", new Random().nextInt(1_000_000));
+
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(toEmail);
+        msg.setSubject("회원가입 인증번호");
+        msg.setText("인증번호: " + code + " (유효시간 3분)");
+        mailSender.send(msg);
+
+        return code;          // 컨트롤러에서 세션에 저장
+    }
+
+    /// 회원가입 - 인증번호 검증
+    public boolean verifyEmailCode(String inputCode, String savedCode) {
+        return savedCode != null && savedCode.equals(inputCode);
+    }
+
 
     /// 회원가입
     @Transactional
@@ -160,5 +182,65 @@ public class UserService {
                 .userCreateDate(userEntity.getUserCreateDate())
                 .userAuth(userEntity.getUserAuth())
                 .build();
+    }
+
+    /// 비밀번호 변경
+    public boolean changePassword(String userId, String currentPwd, String newPwd) {
+        Optional<UserEntity> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isPresent() && passwordEncoder.matches(currentPwd, userOpt.get().getUserPwd())) {
+            UserEntity user = userOpt.get();
+            user.setUserPwd(passwordEncoder.encode(newPwd));
+            userRepository.save(user);
+            return true;
+        }
+        return false;
+    }
+
+
+    /// 닉네임 변경
+    @Transactional
+    public void updateNickname(String userId, String newNickname) {
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+
+        user.setUserNickname(newNickname);
+        user.setUserModiDate(LocalDate.now());
+        userRepository.save(user);
+    }
+
+
+    // 관리자 창에서 유저의 상태 환경을 변경할 때 사용
+    public void updateUserStatus(Integer userSeq, String action) {
+        UserEntity user = userRepository.findById(userSeq)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        switch (action) {
+            case "BAN" -> user.setIsBanned(true);
+            case "UNBAN" -> user.setIsBanned(false);
+            case "BLOCK" -> user.setUseYn("N");
+            case "UNBLOCK" -> user.setUseYn("Y");
+            case "DELETE" -> {
+                userRepository.deleteById(userSeq);
+                return; // 삭제 후 save 필요 없음
+            }
+            default -> throw new IllegalArgumentException("유효하지 않은 액션입니다.");
+        }
+        userRepository.save(user);
+    }
+
+    // 유저관리에서 닉네임 검색용으로 사용
+    public List<UserDTO> searchByNickname(String keyword) {
+        return userRepository.findByUserNicknameContaining(keyword)
+                .stream()
+                .map(UserEntity::toDTO) // 또는 직접 DTO로 매핑
+                .collect(Collectors.toList());
+    }
+
+    //  관리자 페이지에서 유저 정보 수정 - 닉네임, 권한
+    public void updateUserInfo(Integer userSeq, String nickname, String auth) {
+        UserEntity user = userRepository.findById(userSeq)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setUserNickname(nickname);
+        user.setUserAuth(auth);
+        userRepository.save(user);
     }
 }

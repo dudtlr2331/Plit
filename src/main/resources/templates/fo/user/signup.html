@@ -42,7 +42,7 @@
             <!-- STEP 3 -->
             <!-- STEP 3 -->
             <div class="form-step" id="step3">
-                <form action="/fo/signup" method="post">
+                <form action="/signup" method="post">
                     <input type="email" id="emailFinal" name="userId" class="form-control mb-3" readonly />
                     <input type="password" id="passwordInput" name="userPwd" class="form-control mb-2" placeholder="비밀번호" required />
 
@@ -74,7 +74,7 @@
 
 
             <div class="text-end mt-3">
-                <a href="/fo/login" class="text-decoration-none">이미 계정이 있으신가요? 로그인</a>
+                <a href="/login" class="text-decoration-none">이미 계정이 있으신가요? 로그인</a>
             </div>
 
         </div>
@@ -91,20 +91,29 @@
             }
 
             try {
-                const res = await fetch('/fo/check-id?userId=' + encodeURIComponent(email));
+                const res = await fetch('/check-id?userId=' + encodeURIComponent(email));
                 const { available } = await res.json();
                 if (!available) {
                     alert("이미 사용 중인 아이디입니다.");
                     return;
                 }
+
+                // ✅ 인증번호 메일 전송 요청
+                await fetch('/send-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ email })
+                });
+
             } catch (e) {
-                alert("중복 확인 중 오류가 발생했습니다.");
+                alert("오류가 발생했습니다.");
                 return;
             }
 
             document.getElementById('emailDisplay').value = email;
             document.getElementById('emailFinal').value = email;
         }
+
 
         if (step === 3) {
             const code = document.getElementById('codeInput').value.trim();
@@ -113,11 +122,24 @@
                 return;
             }
 
-            if (code !== "123456") {
-                alert("인증번호가 올바르지 않습니다. (가라코드: 123456)");
+            try {
+                const res = await fetch('/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ inputCode: code })
+                });
+
+                const resultText = await res.text();
+                if (resultText !== "인증 성공") {
+                    alert(resultText);
+                    return;
+                }
+            } catch (e) {
+                alert("인증 확인 중 오류가 발생했습니다.");
                 return;
             }
         }
+
 
         document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
         document.getElementById('step' + step).classList.add('active');

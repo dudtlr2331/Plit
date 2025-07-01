@@ -1,21 +1,98 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>문의 작성</title>
-</head>
-<body>
-<h2>문의 작성</h2>
+<div th:fragment="writeFragment">
+    <h2>문의 작성</h2>
 
-<form action="/fo/mypage/qna/write" method="post">
-    <label for="title">제목:</label><br>
-    <input type="text" id="title" name="title" th:value="${qnaDTO.title}"><br><br>
+    <div th:if="${error}" style="color: red; font-weight: bold;">
+        <p th:text="${error}"></p>
+    </div>
 
-    <label for="content">내용:</label><br>
-    <textarea id="content" name="content" rows="5" cols="40" th:text="${qnaDTO.content}"></textarea><br><br>
+    <form th:action="@{/mypage/qna/write}" method="post" enctype="multipart/form-data" id="qnaForm">
+        <div class="form-group">
+            <label for="title">제목</label>
+            <input type="text" id="title" name="title" th:value="${qnaDTO.title}" placeholder="ex) 신고 관련 문의" />
+            <div class="tooltip-error" id="title-error"> 제목을 작성해주세요.</div>
+        </div>
 
-    <button type="submit">등록</button>
-</form>
+        <div class="form-group">
+            <label for="category">문의 종류</label>
+            <select id="category" name="category" class="select-box">
+                <option value="">-- 선택하세요 --</option>
+                <option value="신고" th:selected="${qnaDTO.category == '신고'}">신고</option>
+                <option value="차단" th:selected="${qnaDTO.category == '차단'}">차단</option>
+                <option value="건의" th:selected="${qnaDTO.category == '건의'}">건의</option>
+                <option value="기타" th:selected="${qnaDTO.category == '기타'}">기타</option>
+            </select>
+            <div class="tooltip-error" id="category-error"> 문의 종류를 선택해주세요.</div>
+        </div>
 
-<a href="/fo/mypage/qna/list">내 문의 내역 보기</a>
-</body>
-</html>
+        <div class="form-group">
+            <label for="content">내용</label>
+            <textarea id="content" name="content" rows="5" placeholder="자세한 내용을 입력해주세요." th:text="${qnaDTO.content}"></textarea>
+            <div class="tooltip-error" id="content-error"> 내용을 작성해주세요.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="file">첨부파일</label>
+            <input type="file" id="file" name="file" />
+        </div>
+
+        <div class="privacy-check">
+            <label for="privacy">
+                <input type="checkbox" id="privacy" /> 개인정보 수집 및 이용 동의
+            </label>
+            <div class="tooltip-error" id="privacy-error">개인정보 수집 및 이용에 동의해주세요.</div>
+        </div>
+
+        <div class="qna-button-right">
+            <button type="submit" class="submit-button">제출하기</button>
+        </div>
+    </form>
+
+    <script>
+        document.getElementById("qnaForm").addEventListener("submit", function (e) {
+            const title = document.getElementById("title");
+            const category = document.getElementById("category");
+            const content = document.getElementById("content");
+            const privacy = document.getElementById("privacy");
+
+            const titleError = document.getElementById("title-error");
+            const categoryError = document.getElementById("category-error");
+            const contentError = document.getElementById("content-error");
+            const privacyError = document.getElementById("privacy-error");
+
+            // 기존 툴팁 모두 숨기기
+            titleError.classList.remove("show");
+            categoryError.classList.remove("show");
+            contentError.classList.remove("show");
+            privacyError.classList.remove("show");
+
+            // 검사 순서: 제목 > 종류 > 내용 > 동의
+            if (title.value.trim() === "") {
+                e.preventDefault();
+                titleError.classList.add("show");
+                title.focus();
+                return;
+            }
+
+            if (category.value === "") {
+                e.preventDefault();
+                categoryError.classList.add("show");
+                category.focus();
+                return;
+            }
+
+            if (content.value.trim() === "") {
+                e.preventDefault();
+                contentError.classList.add("show");
+                content.focus();
+                return;
+            }
+
+            if (!privacy.checked) {
+                e.preventDefault();
+                privacyError.classList.add("show");
+                privacy.focus();
+                return;
+            }
+        });
+    </script>
+</div>

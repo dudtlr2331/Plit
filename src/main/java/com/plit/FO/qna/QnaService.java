@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class QnaService {
@@ -24,19 +25,25 @@ public class QnaService {
         qna.setStatus("대기중");
         qna.setAskedAt(LocalDateTime.now());
 
+        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+            String originalFilename = dto.getFile().getOriginalFilename();
+            String savedName = UUID.randomUUID() + "_" + originalFilename;
+            qna.setFileName(savedName); // DB 저장용
+        }
+
         qnaRepository.save(qna);
 
         System.out.println("문의 등록됨 → " + qna.getTitle());
     }
 
     public List<QnaEntity> getMyQuestions(Long userId) {
-        return qnaRepository.findByUserId(userId);
+        return qnaRepository.findByUserIdAndDeleteYnOrderByAskedAtDesc(userId, "N");
     }
 
     public void deleteQna(Long id, Long userId) {
         qnaRepository.findById(id).ifPresent(qna -> {
             if (qna.getUserId().equals(userId)) {
-                qnaRepository.delete(qna);
+                qnaRepository.softDelete(id, userId);
                 System.out.println("문의 삭제됨: " + id);
             } else {
                 System.out.println("삭제 권한 없음: " + userId);
@@ -44,9 +51,13 @@ public class QnaService {
         });
     }
 
+
+    //관리자
+
     // 관리자 전체 문의 내역 조회
     public List<QnaEntity> getAllQuestions() {
-        return qnaRepository.findAll();
+        return qnaRepository.findByDeleteYnOrderByAskedAtDesc("N");
+//        return qnaRepository.findAll();
     }
     // 관리자용 - 특정 문의글 조회
     public QnaEntity findById(Long id) {
