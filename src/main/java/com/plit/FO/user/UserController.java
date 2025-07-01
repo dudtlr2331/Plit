@@ -97,8 +97,76 @@ public class UserController {
             return "redirect:/main";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/mypage/mypage";
+            return "redirect:fo/mypage/mypage";
         }
     }
+
+    /// 비밀번호 변경
+    @PostMapping("/mypage/change-password")
+    public String changePassword(@RequestParam String currentPwd,
+                                 @RequestParam String newPwd,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+
+        if (loginUser == null) {
+            redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
+            return "redirect:/login";
+        }
+
+        boolean isChanged = userService.changePassword(loginUser.getUserId(), currentPwd, newPwd);
+
+        if (isChanged) {
+            redirectAttributes.addFlashAttribute("message", "비밀번호가 변경되었습니다.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        return "redirect:/mypage";
+    }
+
+    /// 인증번호 전송
+    @PostMapping("/send-code")
+    @ResponseBody
+    public String sendCode(@RequestParam String email, HttpSession session) {
+
+        String code = userService.sendEmailCode(email);
+
+        session.setAttribute("emailCode", code);
+        session.setAttribute("codeExpireTime",
+                System.currentTimeMillis() + 3 * 60 * 1000);   // 3분
+
+        return "인증번호가 전송되었습니다.";
+    }
+
+
+    /// 인증번호 확인
+    @PostMapping("/verify-code")
+    @ResponseBody
+    public String verifyCode(@RequestParam String inputCode, HttpSession session) {
+
+        Long expire = (Long) session.getAttribute("codeExpireTime");
+        if (expire == null || System.currentTimeMillis() > expire) {
+            return "만료된 인증번호입니다.";
+        }
+
+        String savedCode = (String) session.getAttribute("emailCode");
+        boolean ok = userService.verifyEmailCode(inputCode, savedCode);
+
+        return ok ? "인증 성공" : "인증 실패";
+    }
+
+    /// 닉네임 변경
+    @PostMapping("/mypage/change-nickname")
+    public String changeNickname(@RequestParam("newNickname") String nickname, HttpSession session) {
+        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+        userService.updateNickname(loginUser.getUserId(), nickname);
+
+        loginUser.setUserNickname(nickname); // ✅ 세션 정보 갱신
+
+        return "redirect:/mypage";
+    }
+
+
 
 }

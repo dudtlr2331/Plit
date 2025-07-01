@@ -35,10 +35,8 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-dependencies {
-	implementation 'org.springframework.security:spring-security-crypto:6.3.0'
+	implementation 'org.springframework.security:spring-security-crypto:6.3.0' // 암호화 해싱
+	implementation 'org.springframework.boot:spring-boot-starter-mail' // 메일
 }
 
 tasks.named('test') {
