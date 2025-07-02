@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>관리자 대시보드</title>
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+    <link href="/css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+</head>
+<body class="sb-nav-fixed">
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand ps-3" href="/index">1:1 문의</a>
+    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+</nav>
+
+<div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+            <div class="sb-sidenav-menu">
+                <div class="nav">
+                    <div class="sb-sidenav-menu-heading">Core</div>
+                    <a th:if="${session.loginUser.userAuth == 'master'}" class="nav-link" href="/index">
+                        <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        Dashboard
+                    </a>
+                    <div class="sb-sidenav-menu-heading">고객문의</div>
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseQna">
+                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                        고객문의
+                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                    </a>
+                    <div class="collapse" id="collapseQna" data-bs-parent="#sidenavAccordion">
+                        <nav class="sb-sidenav-menu-nested nav">
+                            <a class="nav-link" href="/bo/personal_qna">1:1 문의</a>
+                            <a class="nav-link" href="/bo/unprocessed_qna">미처리 문의</a>
+                        </nav>
+                    </div>
+                    <div class="sb-sidenav-menu-heading">유저 관리</div>
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUser">
+                        <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
+                        유저 관리
+                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                    </a>
+                    <div class="collapse" id="collapseUser" data-bs-parent="#sidenavAccordion">
+                        <nav class="sb-sidenav-menu-nested nav">
+                            <a class="nav-link" href="/bo/trol">트롤 신고 관리</a>
+                            <a class="nav-link" href="/bo/manage_user">유저 관리</a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <div class="sb-sidenav-footer">
+                <div class="small">로그인 계정:</div>
+                <span th:text="${session.loginUser.userNickname}">닉네임</span>
+            </div>
+        </nav>
+    </div>
+
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="container-fluid px-4">
+                <h1 class="mt-4">트롤 신고 관리</h1>
+                <!-- 컨텐츠 추가 부분-->
+
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap" style="gap: 10px;">
+                    <div class="btn-group" role="group">
+                        <a th:href="@{/bo/trol(status='ALL', keyword=${keyword})}"
+                           th:classappend="${status == 'ALL' or status == null} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                           class="btn">전체</a>
+
+                        <a th:href="@{/bo/trol(status='PENDING', keyword=${keyword})}"
+                           th:classappend="${status == 'PENDING'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                           class="btn">대기</a>
+
+                        <a th:href="@{/bo/trol(status='ACCEPTED', keyword=${keyword})}"
+                           th:classappend="${status == 'ACCEPTED'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                           class="btn">수락</a>
+
+                        <a th:href="@{/bo/trol(status='DECLINED', keyword=${keyword})}"
+                           th:classappend="${status == 'DECLINED'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                           class="btn">거절</a>
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 6px; max-width: 300px; flex: 1;">
+                        <input type="text" id="searchInput" class="form-control form-control-sm"
+                               placeholder="키워드 검색" style="height: 32px; flex: 1;" />
+                    </div>
+                </div>
+
+
+                <div class="card-body">
+                        <table id="datatablesSimple" class="table table-bordered">
+                            <thead>
+                            <tr>
+                                <th>제보자</th>
+                                <th>신고 대상</th>
+                                <th>신고 횟수</th>
+                                <th>신고 사유</th>
+                                <th>상태</th>
+                                <th>신고 시간</th>
+                                <th>처리자</th>
+                                <th>처리 시간</th>
+                                <th>관리</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- ACCEPTED -->
+                            <tr th:each="item : ${blacklistList}"
+                                th:attr="data-status=${item.status}"
+                                th:if="${item.status == 'ACCEPTED'}"
+                                style="background-color: #d4edda;">
+                                <td th:text="${item.reporterNickname}">제보자</td>
+                                <td>
+                                    <a href="javascript:void(0)"
+                                       style="text-decoration: none; color: inherit;"
+                                       th:text="${item.reportedNickname}"
+                                       th:attr="data-user-id=${item.reportedUserId}, data-nickname=${item.reportedNickname}"
+                                       onclick="showReportHistoryByElement(this)">
+                                    </a>
+                                </td>
+                                <td th:text="'[' + ${item.reportedCount} + '회]'">[n회]</td>
+                                <td th:text="${item.reason}">신고 사유</td>
+                                <td>수락</td>
+                                <td th:text="${item.reportedAt}">신고 시간</td>
+                                <td th:text="${item.handledByNickname != null ? item.handledByNickname : '-'}">처리자</td>
+                                <td th:text="${item.handledAt != null ? item.handledAt : '-'}">처리 시간</td>
+                                <td>처리 완료</td>
+                            </tr>
+
+                            <!-- DECLINED -->
+                            <tr th:each="item : ${blacklistList}"
+                                th:attr="data-status=${item.status}"
+                                th:if="${item.status == 'DECLINED'}"
+                                style="background-color: #f8d7da;">
+                                <td th:text="${item.reporterNickname}">제보자</td>
+                                <td>
+                                    <a href="javascript:void(0)"
+                                       style="text-decoration: none; color: inherit;"
+                                       th:text="${item.reportedNickname}"
+                                       th:attr="data-user-id=${item.reportedUserId}, data-nickname=${item.reportedNickname}"
+                                       onclick="showReportHistoryByElement(this)">
+                                    </a>
+                                </td>
+                                <td th:text="'[' + ${item.reportedCount} + '회]'">[n회]</td>
+                                <td th:text="${item.reason}">신고 사유</td>
+                                <td>거절</td>
+                                <td th:text="${item.reportedAt}">신고 시간</td>
+                                <td th:text="${item.handledByNickname != null ? item.handledByNickname : '-'}">처리자</td>
+                                <td th:text="${item.handledAt != null ? item.handledAt : '-'}">처리 시간</td>
+                                <td>처리 완료</td>
+                            </tr>
+
+                            <!-- PENDING -->
+                            <tr th:each="item : ${blacklistList}"
+                                th:attr="data-status=${item.status}"
+                                th:if="${item.status == 'PENDING'}">
+                                <td th:text="${item.reporterNickname}">제보자</td>
+                                <td>
+                                    <a href="javascript:void(0)"
+                                       style="text-decoration: none; color: inherit;"
+                                       th:text="${item.reportedNickname}"
+                                       th:attr="data-user-id=${item.reportedUserId}, data-nickname=${item.reportedNickname}"
+                                       onclick="showReportHistoryByElement(this)">
+                                    </a>
+                                </td>
+                                <td th:text="'[' + ${item.reportedCount} + '회]'">[n회]</td>
+                                <td th:text="${item.reason}">신고 사유</td>
+                                <td>대기</td>
+                                <td th:text="${item.reportedAt}">신고 시간</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm"
+                                            th:onclick="'handleReport(' + ${item.blackListNo} + ', \'ACCEPTED\')'">수락</button>
+                                    <button class="btn btn-danger btn-sm"
+                                            th:onclick="'handleReport(' + ${item.blackListNo} + ', \'DECLINED\')'">거절</button>
+                                </td>
+                            </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+<!--                </div>-->
+
+            </div>
+        </main>
+
+        <footer class="py-4 bg-light mt-auto">
+            <div class="container-fluid px-4">
+                <div class="d-flex justify-content-between small">
+                    <div class="text-muted">Copyright &copy; 관리자 페이지 2025</div>
+                    <div>
+                        <a href="#">Privacy Policy</a>
+                        &middot;
+                        <a href="#">Terms & Conditions</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- 신고 이력 팝업 -->
+<div id="reportHistoryModal" class="modal"
+     style="display:none; position:fixed; top:10%; left:20%; width:60%; height:60%; overflow-y:auto;
+            background:#fff; border:1px solid #ccc; z-index:9999; padding:20px;">
+    <h5 id="reportTargetNickname" style="margin-bottom: 20px;">신고 대상: 닉네임</h5>
+    <h5>신고 이력</h5>
+    <table class="table table-bordered mt-3">
+        <thead>
+        <tr>
+            <th>제보자</th>
+            <th>신고 사유</th>
+            <th>신고 시간</th>
+        </tr>
+        </thead>
+        <tbody id="reportHistoryBody">
+        <!-- JavaScript로 동적 삽입 -->
+        </tbody>
+    </table>
+    <div class="text-end">
+        <button onclick="closeModal()" class="btn btn-secondary">닫기</button>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const userAuth = /*[[${session.loginUser.userAuth}]]*/ "guest";
+    if (userAuth !== "admin" && userAuth !== "master") {
+        alert("접근 권한이 없습니다.");
+        location.href = "/main";
+    }
+    /*]]>*/
+
+    function handleReport(blacklistNo, action) {
+        if (!confirm(action === 'ACCEPTED' ? '이 신고를 수락하시겠습니까?' : '이 신고를 거절하시겠습니까?')) return;
+
+        fetch('/api/bo/admin/report/' + blacklistNo + '/' + action, {
+            method: 'POST'
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert('처리되었습니다.');
+                    location.reload();
+                } else {
+                    alert('처리에 실패했습니다.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('서버 오류가 발생했습니다.');
+            });
+    }
+
+    function showReportHistoryByElement(element) {
+        const userId = element.getAttribute('data-user-id');
+        const nickname = element.getAttribute('data-nickname');
+        showReportHistory(userId, nickname);
+    }
+
+
+    function showReportHistory(userId, nickname) {
+        document.getElementById('reportTargetNickname').innerText = '신고 대상: ' + nickname;
+
+        fetch('/api/bo/admin/report/history/' + userId)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('reportHistoryBody');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">신고 이력이 없습니다.</td></tr>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${item.reporterNickname}</td>
+                                 <td>${item.reason}</td>
+                                 <td>${item.reportedAt}</td>`;
+                    tbody.appendChild(row);
+                });
+            });
+
+        document.getElementById('reportHistoryModal').style.display = 'block';
+    }
+
+
+    function closeModal() {
+        document.getElementById('reportHistoryModal').style.display = 'none';
+    }
+
+    // 검색
+    function searchReports() {
+        const query = document.getElementById("searchInput").value.toLowerCase();
+        const rows = document.querySelectorAll("table tbody tr");
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(query)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+        const keyword = this.value.toLowerCase();
+        const rows = document.querySelectorAll("tbody tr");
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(keyword) ? "" : "none";
+        });
+    });
+</script>
+
+</body>
+</html>

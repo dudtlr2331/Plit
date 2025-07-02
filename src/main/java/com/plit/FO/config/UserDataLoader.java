@@ -38,7 +38,7 @@ public class UserDataLoader {
                         .userNickname(nickname)
                         .useYn("Y")
                         .isBanned(false)
-                        .userAuth("user")
+                        .userAuth("USER") // 대문자로 들어가야함
                         .userModiId(null)
                         .userModiDate(null)
                         .userCreateDate(LocalDate.now())

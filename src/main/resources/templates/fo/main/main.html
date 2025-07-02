@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>플레이어 매칭 UI</title>
@@ -122,8 +123,8 @@
         <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
         <!-- 로그인 상태인 경우 -->
-        <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
-            <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+        <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
+            <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
 
             <button onclick="location.href='/mypage'"
                     style="background: white; color: #ff5a5a; border: 2px solid #ff5a5a;
@@ -144,8 +145,9 @@
             </button>
         </div>
 
+
         <!-- 비로그인 상태인 경우 -->
-        <div th:if="${session.loginUser == null}">
+        <div sec:authorize="isAnonymous()">
             <button onclick="location.href='/login'"
                     style="background: white; color: #ff5a5a; border: 1px solid #ff5a5a;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
