@@ -110,7 +110,7 @@
                         </td>
 
                         <td>
-                            <span th:text="${user.useYn == 'N'} ? '미사용' : (user.isBanned ? '차단' : '정상')"></span>
+                            <span th:text="${user.useYn == 'N'} ? '미사용' : (${user.isBanned} == true ? '차단' : '정상')"></span>
                         </td>
 
                         <td th:text="${user.userCreateDate}"></td>
