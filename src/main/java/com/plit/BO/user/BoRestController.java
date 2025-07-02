@@ -1,5 +1,8 @@
 package com.plit.BO.user;
 
+import com.plit.FO.blacklist.BlacklistDTO;
+import com.plit.FO.blacklist.BlacklistEntity;
+import com.plit.FO.blacklist.BlacklistRepository;
 import com.plit.FO.blacklist.BlacklistService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
@@ -12,8 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/bo/admin")
@@ -23,6 +28,7 @@ public class BoRestController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final BlacklistService blacklistService;
+    private final BlacklistRepository blacklistRepository;
 
     @PostMapping("/add")
     public ResponseEntity<?> addAdminAccount(@RequestBody UserDTO userDTO) {
@@ -111,6 +117,24 @@ public class BoRestController {
         String newStatus = action.equals("ACCEPTED") ? "ACCEPTED" : "DECLINED";
         blacklistService.updateReportStatus(blacklistNo, newStatus, loginUser.getUserSeq());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/report/history/{reportedUserId}")
+    public List<BlacklistDTO> getReportHistory(@PathVariable Integer reportedUserId) {
+        List<BlacklistEntity> list = blacklistRepository.findByReportedUserId(reportedUserId);
+
+        return list.stream().map(entity -> {
+            BlacklistDTO dto = new BlacklistDTO();
+            dto.setReason(entity.getReason());
+            dto.setReportedAt(entity.getReportedAt());
+
+            String reporterNickname = userRepository.findById(entity.getReporterId())
+                    .map(UserEntity::getUserNickname)
+                    .orElse("알 수 없음");
+            dto.setReporterNickname(reporterNickname);
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 
 }

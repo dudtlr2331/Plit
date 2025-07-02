@@ -44,29 +44,59 @@ public class BlacklistService {
         entity.setHandledBy(handlerId);
         entity.setHandledAt(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         blacklistRepository.save(entity);
+
+        // 상태가 ACCEPTED인 경우 해당 유저 is_banned 처리
+        if ("ACCEPTED".equals(status)) {
+            UserEntity reportedUser = userRepository.findById(entity.getReportedUserId())
+                    .orElseThrow(() -> new RuntimeException("신고당한 유저 정보를 찾을 수 없습니다."));
+            reportedUser.setIsBanned(true);
+            userRepository.save(reportedUser);
+        }
     }
 
-    public List<BlacklistDTO> getAllReports() {
+
+    // 트롤 신고 관리 데이터
+    public List<BlacklistDTO> getAllReportsWithCount() {
         List<BlacklistEntity> entities = blacklistRepository.findAll();
 
         return entities.stream().map(entity -> {
             BlacklistDTO dto = new BlacklistDTO();
+
+            // 기본 정보
             dto.setBlackListNo(entity.getBlacklistNo());
+            dto.setReporterId(entity.getReporterId());
+            dto.setReportedUserId(entity.getReportedUserId());
             dto.setReason(entity.getReason());
             dto.setStatus(entity.getStatus());
             dto.setReportedAt(entity.getReportedAt());
             dto.setHandledAt(entity.getHandledAt());
+            dto.setHandledBy(entity.getHandledBy());
 
-            // 유저 정보 매핑 (예: 닉네임)
-            dto.setReporterNickname(userRepository.findById(entity.getReporterId())
-                    .map(UserEntity::getUserNickname).orElse("알 수 없음"));
-            dto.setReportedNickname(userRepository.findById(entity.getReportedUserId())
-                    .map(UserEntity::getUserNickname).orElse("알 수 없음"));
-            dto.setHandledByNickname(entity.getHandledBy() != null
-                    ? userRepository.findById(entity.getHandledBy()).map(UserEntity::getUserNickname).orElse("-")
-                    : null);
+            // 닉네임 매핑
+            String reporterNickname = userRepository.findById(entity.getReporterId())
+                    .map(UserEntity::getUserNickname)
+                    .orElse("알 수 없음");
+
+            String reportedNickname = userRepository.findById(entity.getReportedUserId())
+                    .map(UserEntity::getUserNickname)
+                    .orElse("알 수 없음");
+
+            String handledByNickname = (entity.getHandledBy() != null)
+                    ? userRepository.findById(entity.getHandledBy())
+                    .map(UserEntity::getUserNickname)
+                    .orElse("알 수 없음")
+                    : null;
+
+            dto.setReporterNickname(reporterNickname);
+            dto.setReportedNickname(reportedNickname);
+            dto.setHandledByNickname(handledByNickname);
+
+            // 신고당한 횟수 조회
+            int count = blacklistRepository.countByReportedUserId(entity.getReportedUserId());
+            dto.setReportedCount(count);
 
             return dto;
         }).collect(Collectors.toList());
     }
+
 }

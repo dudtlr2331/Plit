@@ -25,4 +25,7 @@ public class BlacklistDTO {
 
     // 처리자 닉네임
     private String handledByNickname;
+
+    // 신고 횟수
+    private Integer reportedCount;
 }

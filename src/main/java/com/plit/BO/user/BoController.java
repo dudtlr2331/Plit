@@ -74,7 +74,7 @@ public class BoController {
     }
     @GetMapping("bo/trol")
     public String trol(HttpSession session, Model model) {
-        List<BlacklistDTO> blacklistList = blacklistService.getAllReports(); // ← 서비스에서 가져옴
+        List<BlacklistDTO> blacklistList = blacklistService.getAllReportsWithCount(); // ← 서비스에서 가져옴
         model.addAttribute("blacklistList", blacklistList);
         return "bo/admin/trol";
     }

@@ -74,6 +74,7 @@
                             <tr>
                                 <th>제보자</th>
                                 <th>신고 대상</th>
+                                <th>신고 횟수</th>
                                 <th>신고 사유</th>
                                 <th>상태</th>
                                 <th>신고 시간</th>
@@ -86,7 +87,15 @@
                             <!-- ACCEPTED -->
                             <tr th:each="item : ${blacklistList}" th:if="${item.status == 'ACCEPTED'}" style="background-color: #d4edda;">
                                 <td th:text="${item.reporterNickname}">제보자</td>
-                                <td th:text="${item.reportedNickname}">신고 대상</td>
+                                <td>
+                                    <a href="javascript:void(0)"
+                                       style="text-decoration: none; color: inherit;"
+                                       th:text="${item.reportedNickname}"
+                                       th:attr="data-user-id=${item.reportedUserId}, data-nickname=${item.reportedNickname}"
+                                       onclick="showReportHistoryByElement(this)">
+                                    </a>
+                                </td>
+                                <td th:text="'[' + ${item.reportedCount} + '회]'">[n회]</td>
                                 <td th:text="${item.reason}">신고 사유</td>
                                 <td>수락</td>
                                 <td th:text="${item.reportedAt}">신고 시간</td>
@@ -98,7 +107,15 @@
                             <!-- DECLINED -->
                             <tr th:each="item : ${blacklistList}" th:if="${item.status == 'DECLINED'}" style="background-color: #f8d7da;">
                                 <td th:text="${item.reporterNickname}">제보자</td>
-                                <td th:text="${item.reportedNickname}">신고 대상</td>
+                                <td>
+                                    <a href="javascript:void(0)"
+                                       style="text-decoration: none; color: inherit;"
+                                       th:text="${item.reportedNickname}"
+                                       th:attr="data-user-id=${item.reportedUserId}, data-nickname=${item.reportedNickname}"
+                                       onclick="showReportHistoryByElement(this)">
+                                    </a>
+                                </td>
+                                <td th:text="'[' + ${item.reportedCount} + '회]'">[n회]</td>
                                 <td th:text="${item.reason}">신고 사유</td>
                                 <td>거절</td>
                                 <td th:text="${item.reportedAt}">신고 시간</td>
@@ -110,7 +127,15 @@
                             <!-- PENDING -->
                             <tr th:each="item : ${blacklistList}" th:if="${item.status == 'PENDING'}">
                                 <td th:text="${item.reporterNickname}">제보자</td>
-                                <td th:text="${item.reportedNickname}">신고 대상</td>
+                                <td>
+                                    <a href="javascript:void(0)"
+                                       style="text-decoration: none; color: inherit;"
+                                       th:text="${item.reportedNickname}"
+                                       th:attr="data-user-id=${item.reportedUserId}, data-nickname=${item.reportedNickname}"
+                                       onclick="showReportHistoryByElement(this)">
+                                    </a>
+                                </td>
+                                <td th:text="'[' + ${item.reportedCount} + '회]'">[n회]</td>
                                 <td th:text="${item.reason}">신고 사유</td>
                                 <td>대기</td>
                                 <td th:text="${item.reportedAt}">신고 시간</td>
@@ -147,6 +172,29 @@
     </div>
 </div>
 
+<!-- 신고 이력 팝업 -->
+<div id="reportHistoryModal" class="modal"
+     style="display:none; position:fixed; top:10%; left:20%; width:60%; height:60%; overflow-y:auto;
+            background:#fff; border:1px solid #ccc; z-index:9999; padding:20px;">
+    <h5 id="reportTargetNickname" style="margin-bottom: 20px;">신고 대상: 닉네임</h5>
+    <h5>신고 이력</h5>
+    <table class="table table-bordered mt-3">
+        <thead>
+        <tr>
+            <th>제보자</th>
+            <th>신고 사유</th>
+            <th>신고 시간</th>
+        </tr>
+        </thead>
+        <tbody id="reportHistoryBody">
+        <!-- JavaScript로 동적 삽입 -->
+        </tbody>
+    </table>
+    <div class="text-end">
+        <button onclick="closeModal()" class="btn btn-secondary">닫기</button>
+    </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="/js/scripts.js"></script>
@@ -177,6 +225,44 @@
                 console.error(err);
                 alert('서버 오류가 발생했습니다.');
             });
+    }
+
+    function showReportHistoryByElement(element) {
+        const userId = element.getAttribute('data-user-id');
+        const nickname = element.getAttribute('data-nickname');
+        showReportHistory(userId, nickname);
+    }
+
+
+    function showReportHistory(userId, nickname) {
+        document.getElementById('reportTargetNickname').innerText = '신고 대상: ' + nickname;
+
+        fetch('/api/bo/admin/report/history/' + userId)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('reportHistoryBody');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">신고 이력이 없습니다.</td></tr>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${item.reporterNickname}</td>
+                                 <td>${item.reason}</td>
+                                 <td>${item.reportedAt}</td>`;
+                    tbody.appendChild(row);
+                });
+            });
+
+        document.getElementById('reportHistoryModal').style.display = 'block';
+    }
+
+
+    function closeModal() {
+        document.getElementById('reportHistoryModal').style.display = 'none';
     }
 </script>
 
