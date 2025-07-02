@@ -1,5 +1,7 @@
 package com.plit.BO.user;
 
+import com.plit.FO.blacklist.BlacklistDTO;
+import com.plit.FO.blacklist.BlacklistService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
 public class BoController {
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BlacklistService blacklistService;
 
     @GetMapping("/bo")
     public String boIndex() {
@@ -66,6 +71,12 @@ public class BoController {
     @GetMapping("bo/unprocessed_qna")
     public String unprocessedQna(HttpSession session, Model model) {
         return "bo/admin/unprocessed_qna";
+    }
+    @GetMapping("bo/trol")
+    public String trol(HttpSession session, Model model) {
+        List<BlacklistDTO> blacklistList = blacklistService.getAllReports(); // ← 서비스에서 가져옴
+        model.addAttribute("blacklistList", blacklistList);
+        return "bo/admin/trol";
     }
 
 

@@ -1,10 +1,13 @@
 package com.plit.BO.user;
 
+import com.plit.FO.blacklist.BlacklistService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
 import com.plit.FO.user.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +22,7 @@ public class BoRestController {
 
     private final UserService userService;
     private final UserRepository userRepository;
+    private final BlacklistService blacklistService;
 
     @PostMapping("/add")
     public ResponseEntity<?> addAdminAccount(@RequestBody UserDTO userDTO) {
@@ -56,9 +60,7 @@ public class BoRestController {
     }
 
     @PostMapping("/update/{userSeq}")
-    public String updateAdminByForm(@PathVariable Integer userSeq,
-                                    @RequestParam String userNickname,
-                                    @RequestParam String userAuth) {
+    public String updateAdminByForm(@PathVariable Integer userSeq, @RequestParam String userNickname, @RequestParam String userAuth) {
         UserDTO dto = new UserDTO();
         dto.setUserNickname(userNickname);
         dto.setUserAuth(userAuth);
@@ -101,6 +103,14 @@ public class BoRestController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/report/{blacklistNo}/{action}")
+    public ResponseEntity<Void> handleReportStatus(@PathVariable Integer blacklistNo, @PathVariable String action, HttpSession session) {
+        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+        if (loginUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
+        String newStatus = action.equals("ACCEPTED") ? "ACCEPTED" : "DECLINED";
+        blacklistService.updateReportStatus(blacklistNo, newStatus, loginUser.getUserSeq());
+        return ResponseEntity.ok().build();
+    }
 
 }

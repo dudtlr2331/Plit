@@ -22,4 +22,7 @@ public class BlacklistDTO {
     
     // 신고당한 유저 닉네임
     private String reportedNickname;
+
+    // 처리자 닉네임
+    private String handledByNickname;
 }
