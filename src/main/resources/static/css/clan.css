@@ -8,11 +8,16 @@ body {
     font-family: 'Noto Sans KR', sans-serif;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
     background: #fff;
 }
 
+main {
+    flex: 1;
+}
+
 header {
-    background: #ff5c5c;
+    background: linear-gradient(to right, #7c4798, #6570b4);
     padding: 10px 40px;
     display: flex;
     justify-content: space-between;
@@ -57,16 +62,6 @@ header nav a:nth-child(3) {
     gap: 10px;
 }
 
-.search-btn {
-    background: #ff5c5c;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 8px;
-}
-
 select,
 input[type="text"] {
     padding: 8px 12px;
@@ -83,14 +78,22 @@ input[type="text"] {
     width: 250px;
 }
 
-.register-btn {
-    background: #ff5c5c;
+/* 공통 버튼 클래스 */
+.btn {
+    background: #6570b4;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 16px;
+    font-size: 14px;
     font-weight: bold;
+    border-radius: 8px;
     cursor: pointer;
-    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.2s ease-in-out;
+}
+
+.btn:hover {
+    background: #7c4798;
 }
 
 .clan-grid {
@@ -104,19 +107,19 @@ input[type="text"] {
     flex-direction: column;
     justify-content: space-between;
     aspect-ratio: 1 / 1;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 12px;
     background: #fff;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.05);
     border: 1px solid #ccc;
     position: relative;
-    text-decoration: none; /* 링크 스타일 제거 */
-    color: inherit; /* 글씨 색 유지 */
+    text-decoration: none;
+    color: inherit;
 }
 
 .clan-image-placeholder {
     width: 100%;
-    height: 100px; /* 원하는 크기로 */
+    height: 100px;
     overflow: hidden;
     border-radius: 8px;
 }
@@ -150,17 +153,11 @@ input[type="text"] {
     font-size: 14px;
     color: #444;
     background: #f3f3f3;
-    padding: 10px;
-    padding-bottom: 12px;
+    padding: 10px 10px 12px;
     border-radius: 6px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.5;
-    max-height: calc(1.5em * 2);
-    margin-bottom: 0;
 }
 
 .clan-card small {
@@ -169,6 +166,17 @@ input[type="text"] {
     display: block;
     margin-top: 8px;
     align-self: flex-start;
+}
+
+.social-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.clan-links {
+    display: flex;
+    gap: 0px;
 }
 
 footer {
@@ -189,15 +197,6 @@ footer .footer-nav {
     margin-bottom: 10px;
 }
 
-.social-icon {
-    width: 16px;
-    height: 16px;
-    margin-left: 4px;
-    vertical-align: middle;
-}
-
-/*클랜등록*/
-
 .modal {
     display: none;
     position: fixed;
@@ -213,11 +212,12 @@ footer .footer-nav {
 .modal-content {
     background-color: #1f1f1f;
     margin: 100px auto;
-    padding: 30px;
+    padding: 30px 24px;
     border-radius: 12px;
     width: 400px;
     color: white;
     position: relative;
+    box-sizing: border-box;
 }
 
 .modal-content input,
@@ -228,10 +228,40 @@ footer .footer-nav {
     padding: 10px;
     border-radius: 6px;
     border: none;
+    box-sizing: border-box;
 }
 
 .modal-content h2 {
     margin-top: 0;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+}
+
+.modal-btn-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.submit-btn {
+    composes: btn;
+}
+
+.cancel-btn {
+    background-color: #666;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    margin-left: 8px;
 }
 
 .close {
@@ -242,39 +272,27 @@ footer .footer-nav {
     cursor: pointer;
 }
 
-.cancel-btn {
-    background: #666;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    margin-left: 8px;
-}
-
-/*상세페이지*/
-
-/* 상세페이지 컨테이너 */
 .detail-container {
     width: 100%;
     max-width: 800px;
-    margin: 40px auto;
-    padding: 30px;
+    margin: 60px auto;
+    padding: 40px;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
-/* 제목과 인원수 */
 .detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 .detail-header h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 32px;
+    color: #333;
 }
 
 .member-count {
@@ -284,28 +302,125 @@ footer .footer-nav {
     border-radius: 12px;
 }
 
-/* 소개, 조건, 링크 구역 */
+.detail-category {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.detail-category a {
+    font-size: 16px;
+    color: #666;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.detail-category a:hover,
+.detail-category a.active {
+    background: #ffecec;
+    color: #ff5c5c;
+    font-weight: bold;
+}
+
 .detail-section {
-    margin-bottom: 20px;
+    margin-bottom: 28px;
 }
 
 .detail-section h2 {
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-
-/* 링크 버튼 */
-.link-buttons a {
-    display: inline-block;
-    margin-right: 10px;
-    padding: 10px 14px;
-    background: #ff5c5c;
-    color: white;
-    border-radius: 8px;
     font-size: 14px;
-    text-decoration: none;
+    margin-bottom: 10px;
+    color: #555;
 }
 
-.link-buttons a:hover {
-    background: #e44d4d;
+.detail-image {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.detail-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.detail-intro,
+.detail-tier,
+.detail-links {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.detail-links,
+.link-buttons {
+    margin-top: 10px;
+}
+
+.link-buttons a,
+.detail-links a {
+    composes: btn;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.action-buttons a,
+.action-buttons button {
+    composes: btn;
+}
+
+.action-buttons a:hover,
+.action-buttons button:hover {
+    background-color: #7c4798;
+}
+
+.social-icon-header {
+    width: 28px;
+    height: 28px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.social-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0;
+}
+
+.social-links a {
+    font-size: 14px;
+}
+
+.detail-header > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.clan-social-icon {
+    width: 40px;
+    height: 40px;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.detail-intro img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
 }

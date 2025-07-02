@@ -1,57 +1,98 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
-    <title>클랜 상세</title>
-    <link rel="stylesheet" href="/css/clan.css" />
+    <meta charset="UTF-8">
+    <title th:text="${clan.name} + ' - 클랜 정보'">클랜 정보</title>
+    <link rel="stylesheet" href="/css/clan.css">
 </head>
 <body>
+
+<!-- 상단 헤더 -->
 <header>
+    <div class="logo" onclick="location.href='/main'">plit</div>
     <nav>
-        <a href="#">파티찾기</a>
-        <a href="#">내전찾기</a>
-        <a href="/clan" style="color: yellow">클랜찾기</a>
-        <a href="#">트롤신고</a>
+        <a href="/party">파티찾기</a>
+        <a href="/record">내전찾기</a>
+        <a href="/clan" style="color: yellow;">클랜찾기</a>
+        <a href="/report">트롤신고</a>
     </nav>
-    <div class="top-right">🔴 로그인</div>
-</header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
-<div class="detail-container">
-    <div class="detail-header">
-        <h1 th:text="${clan.name}">클랜 이름</h1>
-        <span class="member-count">0명</span>
-    </div>
+        <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+            <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+            <button onclick="location.href='/mypage'">마이페이지</button>
+            <button onclick="location.href='/logout'">로그아웃</button>
+        </div>
 
-    <div class="detail-section">
-        <h2>소개</h2>
-        <p th:text="${clan.intro}">클랜 소개 내용입니다.</p>
-    </div>
-
-    <div class="detail-section">
-        <h2>가입 조건</h2>
-        <p th:text="'최소 티어: ' + ${clan.minTier}">브론즈 이상</p>
-    </div>
-
-    <div class="detail-section">
-        <h2>오픈채팅</h2>
-        <div class="link-buttons">
-            <!-- 카카오톡 링크가 있을 때만 버튼 보이기 -->
-            <a href="#"
-               th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
-               data-type="kakao"
-               th:data-url="${clan.kakaoLink}"
-               onclick="handleLink(this)">카카오톡 오픈채팅</a>
-
-            <!-- 디스코드 링크가 있을 때만 버튼 보이기 -->
-            <a href="#"
-               th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
-               data-type="discord"
-               th:data-url="${clan.discordLink}"
-               onclick="handleLink(this)">디스코드 초대링크</a>
+        <div th:if="${session.loginUser == null}">
+            <button onclick="location.href='/login'">로그인</button>
         </div>
     </div>
-</div>
+</header>
 
+<!-- 상세 페이지 컨테이너 -->
+<main class="detail-container">
+    <div class="detail-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <h1 th:text="${clan.name}" style="margin: 0;">클랜 이름</h1>
+            <div class="social-links" style="display: flex; gap: 12px;">
+                <a th:if="${clan.discordLink != null}" th:href="${clan.discordLink}" target="_blank">
+                    <img src="/uploads/discord-icon.png" alt="Discord" class="clan-social-icon"/>
+                </a>
+                <a th:if="${clan.kakaoLink != null}" th:href="${clan.kakaoLink}" target="_blank">
+                    <img src="/uploads/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon"/>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 클랜 탭 메뉴 -->
+    <div class="clan-tabs">
+        <a class="tab active" href="#">소개</a>
+        <th:block th:if="${role == 'LEADER'}">
+            <a class="tab" href="#">멤버</a>
+            <a class="tab" href="#">수락 대기</a>
+        </th:block>
+    </div>
+
+    <!-- 이미지 -->
+    <div class="detail-image">
+        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}" alt="클랜 이미지">
+    </div>
+
+    <!-- 소개 -->
+    <div class="detail-intro">
+        <h2>소개</h2>
+        <div class="intro-content" th:utext="${clan.intro}"></div>
+    </div>
+
+    <!-- 최소 티어 -->
+    <div class="detail-tier">
+        <h2>가입 최소 티어</h2>
+        <p th:text="${clan.minTier}">골드</p>
+    </div>
+
+    <!-- 하단 버튼 -->
+    <div class="action-buttons">
+        <th:block th:if="${role == 'LEADER'}">
+            <a th:href="@{/clan/edit/{id}(id=${clan.id})}" class="btn">수정</a>
+            <form th:action="@{/clan/delete/{id}(id=${clan.id})}" method="post" style="display: inline;">
+                <button type="submit" class="btn">삭제</button>
+            </form>
+        </th:block>
+
+        <th:block th:if="${role == 'MEMBER'}">
+            <button class="btn">클랜 탈퇴</button>
+        </th:block>
+
+        <th:block th:if="${role == 'GUEST'}">
+            <button class="btn">가입 신청</button>
+        </th:block>
+    </div>
+</main>
+
+<!-- 푸터 -->
 <footer>
     <div class="container">
         <div class="footer-nav">
@@ -69,16 +110,15 @@
     </div>
 </footer>
 
+</body>
+
 <script>
-    function handleLink(el) {
-        const url = el.dataset.url;
-        const type = el.dataset.type;
-        if (!url || url === 'null') {
-            alert(type === 'kakao' ? '카카오톡 링크가 등록되어 있지 않습니다.' : '디스코드 링크가 등록되어 있지 않습니다.');
-            return;
-        }
-        window.open(url, '_blank');
+    function showTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-section').forEach(section => section.classList.add('hidden'));
+
+        document.querySelector(`.tab-btn[onclick*='${tab}']`).classList.add('active');
+        document.getElementById(tab).classList.remove('hidden');
     }
 </script>
-</body>
 </html>

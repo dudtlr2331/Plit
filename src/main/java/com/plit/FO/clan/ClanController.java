@@ -27,6 +27,7 @@ public class ClanController {
                             Model model) {
         List<ClanEntity> clans = clanService.searchClansByKeywordAndTier(keyword, tier);
         model.addAttribute("clans", clans);
+        model.addAttribute("tier", tier);
         return "fo/clan/clan-list";
     }
 
@@ -58,10 +59,10 @@ public class ClanController {
 
             } catch (IOException e) {
                 e.printStackTrace();
-                clan.setImageUrl("/images/default.png"); // 실패 시 기본 이미지
+                clan.setImageUrl("/uploads/default.png"); // 실패 시 기본 이미지
             }
         } else {
-            clan.setImageUrl("/images/default.png"); // 업로드 안 했을 때 기본 이미지
+            clan.setImageUrl("/uploads/default.png"); // 업로드 안 했을 때 기본 이미지
         }
 
         clanService.createClan(clan);
@@ -73,6 +74,11 @@ public class ClanController {
     public String viewClan(@PathVariable Long id, Model model) {
         ClanEntity clan = clanService.getClanById(id);
         model.addAttribute("clan", clan);
+
+        // [임시로 하드코딩] 추후 로그인 연결 시 로직 변경
+        String role = "LEADER"; // 또는 MEMBER, GUEST
+        model.addAttribute("role", role);
+
         return "fo/clan/clan-detail";
     }
 

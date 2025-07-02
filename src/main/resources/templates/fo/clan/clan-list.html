@@ -7,13 +7,24 @@
 </head>
 <body>
 <header>
+  <div class="logo" onclick="location.href='/main'">plit</div>
   <nav>
-    <a href="#">파티찾기</a>
-    <a href="#">내전찾기</a>
-    <a href="/clan" style="color: yellow">클랜찾기</a>
-    <a href="#">트롤신고</a>
+    <a href="/party">파티찾기</a>
+    <a href="/record">내전찾기</a>
+    <a href="/clan" style="color: yellow;">클랜찾기</a>
+    <a href="/report">트롤신고</a>
   </nav>
-  <div class="top-right">🔴 로그인</div>
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
+    <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+      <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+      <button onclick="location.href='/mypage'">마이페이지</button>
+      <button onclick="location.href='/logout'">로그아웃</button>
+    </div>
+    <div th:if="${session.loginUser == null}">
+      <button onclick="location.href='/login'">로그인</button>
+    </div>
+  </div>
 </header>
 
 <div class="container">
@@ -22,29 +33,32 @@
     <form method="get" action="/clan" id="searchForm">
       <div class="search-left">
         <select name="tier" onchange="document.getElementById('searchForm').submit()">
-          <option value="">티어 전체</option>
-          <option value="언랭크">언랭크</option>
-          <option value="브론즈">브론즈</option>
-          <option value="실버">실버</option>
-          <option value="골드">골드</option>
-          <option value="플레티넘">플레티넘</option>
-          <option value="다이아">다이아</option>
-          <option value="마스터">마스터</option>
-          <option value="챌린저">챌린저</option>
+          <option value="" th:selected="${tier == null or tier == ''}">티어 전체</option>
+          <option value="상관없음" th:selected="${tier == '상관없음'}">티어 상관 없음</option>
+          <option value="아이언" th:selected="${tier == '아이언'}">아이언</option>
+          <option value="브론즈" th:selected="${tier == '브론즈'}">브론즈</option>
+          <option value="실버" th:selected="${tier == '실버'}">실버</option>
+          <option value="골드" th:selected="${tier == '골드'}">골드</option>
+          <option value="플레티넘" th:selected="${tier == '플레티넘'}">플레티넘</option>
+          <option value="에메랄드" th:selected="${tier == '에메랄드'}">에메랄드</option>
+          <option value="다이아" th:selected="${tier == '다이아'}">다이아</option>
+          <option value="마스터" th:selected="${tier == '마스터'}">마스터</option>
+          <option value="그랜드마스터" th:selected="${tier == '그랜드마스터'}">그랜드마스터</option>
+          <option value="챌린저" th:selected="${tier == '챌린저'}">챌린저</option>
         </select>
         <input type="text" name="keyword" placeholder="클랜명 또는 소개 검색" />
-        <!-- 이 검색 버튼은 선택사항이지만 남겨둬도 무방 -->
-        <button type="submit" class="register-btn">검색</button>
+
+        <button type="submit" class="btn">검색</button>
       </div>
     </form>
 
-    <a href="javascript:void(0);" class="register-btn" onclick="openModal()">클랜등록</a>
+    <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
     <div id="clanModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
 
         <h2>클랜 등록하기</h2>
-        <form method="post" action="/clan/register" enctype="multipart/form-data">
+        <form method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
           <input type="text" name="name" placeholder="클랜 이름" required />
           <input type="text" name="summonerName" placeholder="소환사 이름" required />
           <label for="imageUpload" class="image-label">이미지 등록하기</label>
@@ -55,13 +69,16 @@
 
           <select name="minTier" required>
             <option value="">티어 선택</option>
-            <option value="언랭크">언랭크</option>
+            <option value="상관없음">티어 상관 없음</option>
+            <option value="아이언">아이언</option>
             <option value="브론즈">브론즈</option>
             <option value="실버">실버</option>
             <option value="골드">골드</option>
             <option value="플레티넘">플레티넘</option>
+            <option value="에메랄드">에메랄드</option>
             <option value="다이아">다이아</option>
             <option value="마스터">마스터</option>
+            <option value="그랜드마스터">그랜드마스터</option>
             <option value="챌린저">챌린저</option>
           </select>
 
@@ -69,8 +86,8 @@
           <input type="text" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
 
           <div style="text-align: right;">
-            <button type="submit" class="register-btn">등록하기</button>
-            <button type="button" class="cancel-btn" onclick="closeModal()">취소</button>
+            <button type="submit" class="btn">등록하기</button>
+            <button type="button" class="btn" onclick="closeModal()">취소</button>
           </div>
         </form>
       </div>
@@ -90,16 +107,26 @@
         <span class="clan-member-count">0명</span>
       </div>
       <p th:text="${clan.intro}">소개글</p>
-      <small>
-        <span th:text="'티어 ' + ${clan.minTier} + ' 이상'">티어 브론즈 이상</span>
-        <span class="clan-links" style="float: right;">
+      <small style="display: flex; align-items: center; width: 100%;">
+        <!-- 왼쪽 티어 텍스트 -->
+        <span style="padding-left: 0.75rem; flex-shrink: 0;"
+              th:text="${clan.minTier == '챌린저' ? '챌린저' :
+               (clan.minTier == '상관없음' ? '티어 상관 없음' :
+               clan.minTier + ' 이상')}">
+</span>
+
+
+        <div style="flex-grow: 1;"></div>
+
+
+        <span class="clan-links" style="padding-right: 0.75rem; display: flex; gap: 4px;">
     <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
        th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
-      <img src="/images/discord-icon.png" alt="" class="social-icon" />
+      <img src="/uploads/discord-icon.png" alt="Discord" class="social-icon" />
     </a>
     <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
        th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
-      <img src="/images/kakao-icon.png" alt="" class="social-icon" />
+      <img src="/uploads/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
     </a>
   </span>
       </small>

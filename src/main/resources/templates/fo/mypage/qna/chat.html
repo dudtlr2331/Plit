@@ -1,76 +1,90 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
-    <title>실시간 문의</title>
     <meta charset="UTF-8">
+    <title>실시간 문의</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
         }
-        #chat {
+        .chat-container {
+            max-width: 500px;
+            margin: 60px auto;
             border: 1px solid #ccc;
-            padding: 10px;
-            height: 400px;
+            border-radius: 10px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .chat-header {
+            background: #ff4d4d;
+            color: #fff;
+            padding: 16px;
+            font-weight: bold;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
             overflow-y: auto;
-            margin-bottom: 10px;
         }
-        .message {
-            margin: 5px 0;
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #eee;
         }
-        .me {
-            color: blue;
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-bottom-left-radius: 10px;
         }
-        .admin {
-            color: green;
+        .chat-input button {
+            background: #ff4d4d;
+            color: #fff;
+            border: none;
+            padding: 0 20px;
+            border-bottom-right-radius: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-<h2>실시간 문의 채팅</h2>
-
-<div id="chat"></div>
-
-<input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
-<button id="sendBtn">전송</button>
+<div class="chat-container">
+    <div class="chat-header">실시간 문의</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="메시지를 입력하세요...">
+        <button onclick="sendMessage()">전송</button>
+    </div>
+</div>
 
 <script>
-    const roomId = [[${roomId}]];
-    const userId = [[${userId}]];
-    const socket = new WebSocket(`ws://localhost:8080/ws/chat/${roomId}/${userId}`);
+    const roomId = "admin-room";
+    const userId = "user1"; // 이건 실제 로그인 유저 id로 교체 가능
 
-    const chatBox = document.getElementById("chat");
-    const input = document.getElementById("messageInput");
-    const sendBtn = document.getElementById("sendBtn");
+    const ws = new WebSocket(`wss://${location.host}/ws/chat?roomId=${roomId}&userId=${userId}`);
 
-    socket.onmessage = function(event) {
-        const msg = document.createElement("div");
-        msg.className = "message";
-        msg.textContent = event.data;
-
-        if (event.data.startsWith(userId)) {
-            msg.classList.add("me");
-        } else {
-            msg.classList.add("admin");
-        }
-
-        chatBox.appendChild(msg);
-        chatBox.scrollTop = chatBox.scrollHeight;
+    ws.onmessage = (event) => {
+        const msgBox = document.getElementById("chatMessages");
+        const div = document.createElement("div");
+        div.textContent = event.data;
+        msgBox.appendChild(div);
+        msgBox.scrollTop = msgBox.scrollHeight;
     };
 
-    sendBtn.onclick = function() {
-        const message = input.value.trim();
-        if (message !== "") {
-            socket.send(message);
+    function sendMessage() {
+        const input = document.getElementById("messageInput");
+        if (input.value.trim()) {
+            ws.send(input.value);
             input.value = "";
         }
-    };
-
-    input.addEventListener("keyup", function(event) {
-        if (event.key === "Enter") {
-            sendBtn.click();
-        }
-    });
+    }
 </script>
 </body>
 </html>
