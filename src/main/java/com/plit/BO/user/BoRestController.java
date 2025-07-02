@@ -1,16 +1,24 @@
 package com.plit.BO.user;
 
+import com.plit.FO.blacklist.BlacklistDTO;
+import com.plit.FO.blacklist.BlacklistEntity;
+import com.plit.FO.blacklist.BlacklistRepository;
+import com.plit.FO.blacklist.BlacklistService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
 import com.plit.FO.user.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/bo/admin")
@@ -19,6 +27,8 @@ public class BoRestController {
 
     private final UserService userService;
     private final UserRepository userRepository;
+    private final BlacklistService blacklistService;
+    private final BlacklistRepository blacklistRepository;
 
     @PostMapping("/add")
     public ResponseEntity<?> addAdminAccount(@RequestBody UserDTO userDTO) {
@@ -56,9 +66,7 @@ public class BoRestController {
     }
 
     @PostMapping("/update/{userSeq}")
-    public String updateAdminByForm(@PathVariable Integer userSeq,
-                                    @RequestParam String userNickname,
-                                    @RequestParam String userAuth) {
+    public String updateAdminByForm(@PathVariable Integer userSeq, @RequestParam String userNickname, @RequestParam String userAuth) {
         UserDTO dto = new UserDTO();
         dto.setUserNickname(userNickname);
         dto.setUserAuth(userAuth);
@@ -101,6 +109,33 @@ public class BoRestController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/report/{blacklistNo}/{action}")
+    public ResponseEntity<Void> handleReportStatus(@PathVariable Integer blacklistNo, @PathVariable String action, HttpSession session) {
+        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+        if (loginUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        String newStatus = action.equals("ACCEPTED") ? "ACCEPTED" : "DECLINED";
+        blacklistService.updateReportStatus(blacklistNo, newStatus, loginUser.getUserSeq());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/report/history/{reportedUserId}")
+    public List<BlacklistDTO> getReportHistory(@PathVariable Integer reportedUserId) {
+        List<BlacklistEntity> list = blacklistRepository.findByReportedUserId(reportedUserId);
+
+        return list.stream().map(entity -> {
+            BlacklistDTO dto = new BlacklistDTO();
+            dto.setReason(entity.getReason());
+            dto.setReportedAt(entity.getReportedAt());
+
+            String reporterNickname = userRepository.findById(entity.getReporterId())
+                    .map(UserEntity::getUserNickname)
+                    .orElse("알 수 없음");
+            dto.setReporterNickname(reporterNickname);
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
 
 
 }

@@ -1,5 +1,7 @@
 package com.plit.BO.user;
 
+import com.plit.FO.blacklist.BlacklistDTO;
+import com.plit.FO.blacklist.BlacklistService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
 public class BoController {
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BlacklistService blacklistService;
 
     @GetMapping("/bo")
     public String boIndex() {
@@ -43,21 +48,6 @@ public class BoController {
         return "bo/admin/index";
     }
 
-    @GetMapping("/bo/manage_user")
-    public String manageUser(@RequestParam(required = false) String keyword, Model model) {
-        List<UserDTO> userList;
-
-        if (keyword != null && !keyword.isBlank()) {
-            userList = userService.searchByNickname(keyword);
-        } else {
-            userList = userService.getAllUsers();
-        }
-
-        model.addAttribute("userList", userList);
-        model.addAttribute("keyword", keyword);
-        return "bo/admin/manage_user";
-    }
-
     @GetMapping("/bo/personal_qna")
     public String personalQna(HttpSession session, Model model) {
         return "bo/admin/personal_qna";
@@ -67,6 +57,72 @@ public class BoController {
     public String unprocessedQna(HttpSession session, Model model) {
         return "bo/admin/unprocessed_qna";
     }
+    @GetMapping("bo/trol")
+    public String trol(HttpSession session,
+                       @RequestParam(required = false, defaultValue = "ALL") String status,
+                       @RequestParam(required = false) String keyword,
+                       Model model) {
+        List<BlacklistDTO> allReports = blacklistService.getAllReportsWithCount();
+
+        // 키워드 필터링
+        if (keyword != null && !keyword.isBlank()) {
+            allReports = allReports.stream()
+                    .filter(dto ->
+                            dto.getReporterNickname().toLowerCase().contains(keyword.toLowerCase()) ||
+                                    dto.getReportedNickname().toLowerCase().contains(keyword.toLowerCase()) ||
+                                    dto.getReason().toLowerCase().contains(keyword.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        // 상태 필터링
+        List<BlacklistDTO> filteredReports = allReports.stream()
+                .filter(dto -> {
+                    if ("ALL".equals(status)) return true;
+                    return status.equals(dto.getStatus());
+                })
+                .collect(Collectors.toList());
+
+        model.addAttribute("blacklistList", filteredReports);
+        model.addAttribute("status", status);
+        model.addAttribute("keyword", keyword);
+        return "bo/admin/trol";
+    }
+
+    @GetMapping("/bo/manage_user")
+    public String manageUser(@RequestParam(required = false) String keyword,
+                             @RequestParam(required = false, defaultValue = "ALL") String status,
+                             Model model) {
+
+        List<UserDTO> allUsers;
+
+        // 1. 키워드가 존재하면 닉네임으로 검색
+        if (keyword != null && !keyword.isBlank()) {
+            allUsers = userService.searchByNickname(keyword);
+        } else {
+            allUsers = userService.getAllUsers();
+        }
+
+        // 2. 상태 필터링
+        List<UserDTO> filteredUsers = allUsers.stream()
+                .filter(user -> {
+                    return switch (status) {
+                        case "NORMAL" -> "Y".equals(user.getUseYn()) && !Boolean.TRUE.equals(user.getIsBanned());
+                        case "BLOCKED" -> Boolean.TRUE.equals(user.getIsBanned());
+                        case "INACTIVE" -> "N".equals(user.getUseYn());
+                        case "ALL" -> true;
+                        default -> true;
+                    };
+                })
+                .collect(Collectors.toList());
+
+        // 3. 모델에 데이터 전달
+        model.addAttribute("userList", filteredUsers);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("status", status);
+
+        return "bo/admin/manage_user";
+    }
+
 
 
     @GetMapping("/401")
