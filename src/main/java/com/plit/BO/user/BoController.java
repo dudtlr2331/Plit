@@ -58,54 +58,31 @@ public class BoController {
         return "bo/admin/manage_user";
     }
 
-    @GetMapping("/layout-static")
-    public String layoutStatic() {
-        return "bo/test/layout-static";
+    @GetMapping("/bo/personal_qna")
+    public String personalQna(HttpSession session, Model model) {
+        return "bo/admin/personal_qna";
     }
 
-    @GetMapping("/layout-sidenav-light")
-    public String layoutSidenavLight() {
-        return "bo/test/layout-sidenav-light";
+    @GetMapping("bo/unprocessed_qna")
+    public String unprocessedQna(HttpSession session, Model model) {
+        return "bo/admin/unprocessed_qna";
     }
 
-    @GetMapping("/bo/login")
-    public String boLogin() {
-        return "bo/test/login";
-    }
-
-    @GetMapping("/bo/register")
-    public String boRegister() {
-        return "bo/test/register";
-    }
-
-    @GetMapping("/bo/password")
-    public String boPassword() {
-        return "bo/test/password";
-    }
 
     @GetMapping("/401")
     public String bo401() {
-        return "bo/test/401";
+        return "bo/admin/401";
     }
 
     @GetMapping("/404")
     public String bo404() {
-        return "bo/test/404";
+        return "bo/admin/404";
     }
 
     @GetMapping("/500")
     public String bo500() {
-        return "bo/test/500";
+        return "bo/admin/500";
     }
 
-    @GetMapping("/charts")
-    public String charts() {
-        return "bo/test/charts";
-    }
-
-    @GetMapping("/tables")
-    public String tables() {
-        return "bo/test/tables";
-    }
 
 }
