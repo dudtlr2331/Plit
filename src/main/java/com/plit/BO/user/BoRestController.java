@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -95,8 +97,8 @@ public class BoRestController {
 
         userRepository.save(user);
 
-        // ✅ 해결 핵심: 변경된 상태를 클라이언트에 반환하거나, 성공 상태만 확실히 반환
-        return ResponseEntity.ok().build(); // 또는 상태 메시지 포함
+        // 변경된 상태를 클라이언트에 반환하거나, 성공 상태만 확실히 반환
+        return ResponseEntity.ok().build();
     }
 
 
@@ -110,8 +112,8 @@ public class BoRestController {
     }
 
     @PostMapping("/report/{blacklistNo}/{action}")
-    public ResponseEntity<Void> handleReportStatus(@PathVariable Integer blacklistNo, @PathVariable String action, HttpSession session) {
-        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+    public ResponseEntity<Void> handleReportStatus(@PathVariable Integer blacklistNo, @PathVariable String action, @AuthenticationPrincipal User user) {
+        UserDTO loginUser = userService.findByUserId(user.getUsername());
         if (loginUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         String newStatus = action.equals("ACCEPTED") ? "ACCEPTED" : "DECLINED";
