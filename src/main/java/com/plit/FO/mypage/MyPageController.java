@@ -1,6 +1,6 @@
 package com.plit.FO.mypage;
 
-import com.plit.FO.qna.QnaService;
+import com.plit.FO.qna.service.QnaService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;

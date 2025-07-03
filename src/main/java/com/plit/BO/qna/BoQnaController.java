@@ -1,7 +1,7 @@
 package com.plit.BO.qna;
 
-import com.plit.FO.qna.QnaEntity;
-import com.plit.FO.qna.QnaService;
+import com.plit.FO.qna.entity.QnaEntity;
+import com.plit.FO.qna.service.QnaService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
