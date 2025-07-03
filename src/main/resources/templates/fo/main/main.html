@@ -14,7 +14,7 @@
             align-items: center;
             color: white;
         }
-        header .logo { font-weight: bold; cursor: pointer; }
+        header .logo { font-weight: bold; cursor: pointer; text-decoration: none; color: inherit; }
         header nav a {
             margin: 0 10px;
             color: white;
@@ -109,20 +109,30 @@
             padding: 10px;
         }
     </style>
+
+    <!-- 로그인 필요 팝업 스크립트 -->
+    <script th:if="${popup}" defer>
+        window.addEventListener('DOMContentLoaded', () => {
+            alert([[${popup}]]);
+        });
+    </script>
 </head>
 <body>
 
 <header>
-    <div class="logo" onclick="location.href='/main'">Logo</div>
+    <!-- 로고 클릭 시 메인으로 이동 -->
+    <a th:href="@{/fo/main}" class="logo">Logo</a>
+
     <nav>
         <a onclick="location.href='/party'">파티찾기</a>
         <a onclick="location.href='/clan'">클랜찾기</a>
         <a onclick="location.href='/report'">트롤신고</a>
     </nav>
+
     <div style="display: flex; align-items: center; gap: 15px;">
         <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
-        <!-- 로그인 상태인 경우 -->
+        <!-- 로그인 상태 -->
         <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
             <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
 
@@ -145,8 +155,7 @@
             </button>
         </div>
 
-
-        <!-- 비로그인 상태인 경우 -->
+        <!-- 비로그인 상태 -->
         <div sec:authorize="isAnonymous()">
             <button onclick="location.href='/login'"
                     style="background: white; color: #ff5a5a; border: 1px solid #ff5a5a;
@@ -209,6 +218,13 @@
         <p>파티 하실래요?</p>
     </div>
     <input type="text" placeholder="메시지 입력..." style="width: 100%; padding: 10px;">
+</div>
+
+<!-- 팝업 메시지 -->
+<div th:if="${popup}">
+    <script>
+        alert([[${popup}]]);
+    </script>
 </div>
 
 <script>

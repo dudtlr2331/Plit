@@ -291,7 +291,7 @@
                 <form th:if="${session.loginUser != null}"
                       th:action="@{/user/delete}" method="post"
                       onsubmit="return confirm('정말 탈퇴하시겠습니까?');">
-                    <input type="hidden" name="userSeq" th:value="${session.loginUser.userSeq}" />
+                    <input type="hidden" name="userSeq" th:if="${session.loginUser != null}" th:value="${session.loginUser.userSeq}" />
                     <button type="submit" class="withdraw-link">회원 탈퇴</button>
                 </form>
             </li>
@@ -308,11 +308,11 @@
             <div class="info-row" id="nicknameRow" style="justify-content: space-between;">
                 <label>닉네임</label>
                 <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
-                    <span th:text="${session.loginUser.userNickname}">닉네임</span>
+                    <span th:if="${session.loginUser != null}" th:text="${session.loginUser.userNickname}">닉네임</span>
+                    <span th:unless="${session.loginUser != null}">로그인이 필요합니다</span>
                     <button type="button" onclick="showNicknameInput()">변경</button>
                 </div>
             </div>
-
 
             <!-- 닉네임 수정 줄 -->
             <div class="info-row" id="nicknameEditRow" style="display: none; justify-content: space-between;">
@@ -326,9 +326,6 @@
                     </div>
                 </form>
             </div>
-
-
-
 
             <!-- 비밀번호 변경 섹션 -->
             <div class="info-group" style="margin-top: 40px;">
@@ -349,35 +346,24 @@
                     </div>
                 </form>
             </div>
-
         </div>
 
-
-
-
-            <!-- QnA -->
+        <!-- QnA -->
         <div th:if="${viewSection == 'qna'}">
-
             <div th:if="${viewMode == 'list'}" th:insert="~{fo/mypage/qna/list :: listFragment}"></div>
             <div th:if="${viewMode == 'write'}" th:insert="~{fo/mypage/qna/write :: writeFragment}"></div>
             <div th:if="${viewMode == 'view'}" th:insert="~{fo/mypage/qna/view :: viewFragment}"></div>
         </div>
 
-
-    </div>
-
-        <!-- 3) 친구 목록 -->
+        <!-- 친구 목록 -->
         <div th:if="${viewSection=='friends'}">
             <h2>친구 목록</h2>
-            <!-- UI 구성 -->
         </div>
 
-        <!-- 4) 차단 목록 -->
+        <!-- 차단 목록 -->
         <div th:if="${viewSection=='blocked'}">
             <h2>차단 목록</h2>
-            <!-- UI 구성 -->
         </div>
-
     </div>
 </div>
 
@@ -392,8 +378,6 @@
         document.getElementById("nicknameEditRow").style.display = "none";
     }
 </script>
-
-
 
 </body>
 </html>
