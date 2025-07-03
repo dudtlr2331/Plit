@@ -35,6 +35,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/party/new").authenticated()
                     .requestMatchers(HttpMethod.POST, "/party/edit/**").authenticated()
                     .requestMatchers(HttpMethod.POST, "/party/delete/**").authenticated() // 로그인한 사용자만 사용 가능하게 설정
+                    .requestMatchers(HttpMethod.POST, "/clan/register").authenticated()
 
                     .anyRequest().permitAll() //위에 명시하지 않은 모든 요청은 기본적으로 인증 없이 접근 허용
             )

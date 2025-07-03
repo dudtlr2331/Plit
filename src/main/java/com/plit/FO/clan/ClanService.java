@@ -8,7 +8,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ClanService {
+
     private final ClanRepository clanRepository;
+    private final ClanMemberRepository clanMemberRepository;
 
     public List<ClanEntity> getAllClans() {
         return clanRepository.findAllByOrderByCreatedAtDesc();
@@ -62,5 +64,8 @@ public class ClanService {
                     return tierMatch && keywordMatch;
                 })
                 .toList();
+    }
+    public boolean isMember(Long clanId, Long userId) {
+        return clanMemberRepository.existsByClanIdAndUserId(clanId, userId);
     }
 }
