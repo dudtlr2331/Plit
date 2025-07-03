@@ -1,5 +1,12 @@
-package com.plit.FO.party;
+package com.plit.FO.party.service;
 
+import com.plit.FO.party.PositionEnum;
+import com.plit.FO.party.dto.PartyDTO;
+import com.plit.FO.party.dto.PartyFindPositionDTO;
+import com.plit.FO.party.entity.PartyEntity;
+import com.plit.FO.party.entity.PartyFindPositionEntity;
+import com.plit.FO.party.repository.PartyFindPositionRepository;
+import com.plit.FO.party.repository.PartyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -8,39 +15,62 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class PartyService {
+public class PartyServiceImpl implements PartyService {
 
     private final PartyRepository partyRepository;
     private final PartyFindPositionRepository positionRepository;
+    private final PartyFindPositionRepository partyFindPositionRepository;
 
-    public PartyService(PartyRepository partyRepository, PartyFindPositionRepository positionRepository) {
+    public PartyServiceImpl(PartyRepository partyRepository, PartyFindPositionRepository positionRepository, PartyFindPositionRepository partyFindPositionRepository) {
         this.partyRepository = partyRepository;
         this.positionRepository = positionRepository;
+        this.partyFindPositionRepository = partyFindPositionRepository;
     }
 
-    /** 타입별 파티 조회 (REST API용) */
+    @Override
     public List<PartyDTO> findByPartyType(String partyType) {
         return partyRepository.findByPartyType(partyType).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    /** 파티 단건 조회 (수정 폼 등에 사용) */
+    @Override
     public PartyDTO getParty(Long id) {
         PartyEntity party = partyRepository.findById(id).orElseThrow();
         return toDTO(party);
     }
 
-    /** 파티 등록 */
+    @Override
     @Transactional
-    public void saveParty(PartyDTO dto) {
-        PartyEntity party = toEntity(dto);
-        party.setPartyCreateDate(LocalDateTime.now());
-        PartyEntity saved = partyRepository.save(party);
-        savePositions(saved, dto.getPositions());
+    public void saveParty(PartyDTO dto, String userId) {
+        PartyEntity party = PartyEntity.builder()
+                .partyName(dto.getPartyName())
+                .partyType(dto.getPartyType())
+                .partyStatus(dto.getPartyStatus())
+                .partyCreateDate(LocalDateTime.now())
+                .partyEndTime(dto.getPartyEndTime())
+                .partyHeadcount(dto.getPartyHeadcount())
+                .partyMax(dto.getPartyMax())
+                .memo(dto.getMemo())
+                .mainPosition(dto.getMainPosition())
+                .createdBy(userId)
+                .build();
+
+        partyRepository.save(party);
+
+        if (dto.getPositions() != null) {
+            List<PartyFindPositionEntity> positionEntities = dto.getPositions().stream()
+                    .map(pos -> PartyFindPositionEntity.builder()
+                            .party(party)
+                            .position(PositionEnum.valueOf(pos))
+                            .build())
+                    .toList();
+
+            partyFindPositionRepository.saveAll(positionEntities);
+        }
     }
 
-    /** 파티 수정 */
+    @Override
     @Transactional
     public void updateParty(Long id, PartyDTO dto) {
         PartyEntity party = partyRepository.findById(id).orElseThrow();
@@ -54,12 +84,11 @@ public class PartyService {
         party.setMemo(dto.getMemo());
         party.setMainPosition(dto.getMainPosition());
 
-        // 연관된 모집 포지션 재등록
         positionRepository.deleteByParty(party);
         savePositions(party, dto.getPositions());
     }
 
-    /** 파티 삭제 */
+    @Override
     @Transactional
     public void deleteParty(Long id) {
         PartyEntity party = partyRepository.findById(id).orElseThrow();
@@ -67,7 +96,6 @@ public class PartyService {
         partyRepository.delete(party);
     }
 
-    /** 파티 → DTO 변환 */
     private PartyDTO toDTO(PartyEntity entity) {
         PartyDTO dto = new PartyDTO();
         dto.setPartySeq(entity.getPartySeq());
@@ -80,15 +108,15 @@ public class PartyService {
         dto.setPartyMax(entity.getPartyMax());
         dto.setMemo(entity.getMemo());
         dto.setMainPosition(entity.getMainPosition());
+        dto.setCreatedBy(entity.getCreatedBy());
         dto.setPositions(
                 positionRepository.findByParty(entity).stream()
-                        .map(PartyFindPositionEntity::getPosition)
+                        .map(p -> p.getPosition().name()) // enum → String
                         .collect(Collectors.toList())
         );
         return dto;
     }
 
-    /** DTO → 파티 엔티티 변환 (생성 시 사용) */
     private PartyEntity toEntity(PartyDTO dto) {
         PartyEntity entity = new PartyEntity();
         entity.setPartyName(dto.getPartyName());
@@ -99,18 +127,18 @@ public class PartyService {
         entity.setPartyMax(dto.getPartyMax());
         entity.setMemo(dto.getMemo());
         entity.setMainPosition(dto.getMainPosition());
+        entity.setCreatedBy(dto.getCreatedBy());
         return entity;
     }
 
-    /** 모집 포지션 저장 */
-    private void savePositions(PartyEntity party, List<PositionEnum> positions) {
-        if (positions != null) {
-            for (PositionEnum pos : positions) {
-                PartyFindPositionEntity p = new PartyFindPositionEntity();
-                p.setParty(party);
-                p.setPosition(pos);
-                positionRepository.save(p);
-            }
-        }
+    private void savePositions(PartyEntity party, List<String> positions) {
+        List<PartyFindPositionEntity> entities = positions.stream()
+                .map(posStr -> PartyFindPositionEntity.builder()
+                        .party(party)
+                        .position(PositionEnum.valueOf(posStr)) // 여기서 변환
+                        .build())
+                .collect(Collectors.toList());
+
+        positionRepository.saveAll(entities);
     }
 }
