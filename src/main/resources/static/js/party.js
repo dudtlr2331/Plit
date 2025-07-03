@@ -161,14 +161,42 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
         memo: memo,
         mainPosition: mainPosition,
         positions: positions.split(',').map(p => p.trim())
-    }))}')">수정</button>
-      <form action="/party/delete/${seq}" method="post" style="display:inline;">
-        <button type="submit" onclick="return confirm('정말 삭제할까요?')">삭제</button>
-      </form>
+        }))}')">수정</button>
+      
+      <button onclick="deleteParty(${seq})">삭제</button>
       <button onclick="closePartyDetail()">닫기</button>
     </div>
   `;
     popup.style.display = 'block';
+}
+
+function deleteParty(partyId) {
+    if (!confirm("정말 삭제할까요?")) return;
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${partyId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                alert("삭제되었습니다.");
+                closePartyDetail(); // 상세 팝업 닫기
+                const activeTab = document.querySelector('.tab.active').id;
+                const type = activeTab === 'freeTab' ? 'team' : 'solo';
+                loadParties(type); // 목록 새로고침
+            } else {
+                alert("삭제 실패");
+            }
+        })
+        .catch(() => {
+            alert("서버 오류로 삭제에 실패했습니다.");
+        });
 }
 
 function closePartyDetail() {
@@ -188,49 +216,120 @@ function handleEditFromDetail(partyJson) {
 }
 
 function openPartyFormPopup(party = null) {
+    const csrfParam = document.querySelector('meta[name="_csrf_parameter"]').getAttribute('content');
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+
     const popup = document.getElementById('recruitPopup');
     const isEdit = party !== null;
-    const action = isEdit ? `/party/edit/${party.partySeq}` : '/party/new';
 
     popup.innerHTML = `
     <h3>${isEdit ? '파티 수정하기' : '새 파티 등록하기'}</h3>
-    <form action="${action}" method="post">
-      <label>파티 이름: <input type="text" name="partyName" value="${party?.partyName ?? ''}" required></label><br>
-      <label>타입:
-          <select name="partyType" required>
-            <option value="solo" ${party?.partyType === 'solo' ? 'selected' : ''}>솔로랭크</option>
-            <option value="team" ${party?.partyType === 'team' ? 'selected' : ''}>자유랭크</option>
-          </select>
+    <div class="party-form">
+        <input type="hidden" name="${csrfParam}" value="${csrfToken}" />
+        ${isEdit ? `<input type="hidden" name="partySeq" value="${party.partySeq}">` : ''}
+        
+        <label>파티 이름: <input type="text" name="partyName" value="${party?.partyName ?? ''}" required></label><br>
+        
+        <label>타입:
+            <select name="partyType" required>
+                <option value="solo" ${party?.partyType === 'solo' ? 'selected' : ''}>솔로랭크</option>
+                <option value="team" ${party?.partyType === 'team' ? 'selected' : ''}>자유랭크</option>
+            </select>
         </label><br>
-      ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
-      <label>종료일자: <input type="datetime-local" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
-      <label>상태: <input type="text" name="partyStatus" value="${party?.partyStatus ?? 'WAITING'}" required></label><br>
-      <label>현재 인원: <input type="number" name="partyHeadcount" value="${party?.partyHeadcount ?? 1}" min="1" required></label><br>
-      <label>최대 인원: <input type="number" name="partyMax" value="${party?.partyMax ?? 5}" min="1" required></label><br>
-      <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
-      <label>주 포지션:
-        <select name="mainPosition" required>
-          ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].map(pos => `
-            <option value="${pos}" ${party?.mainPosition === pos ? 'selected' : ''}>${pos}</option>
-          `).join('')}
-        </select>
-      </label><br>
-      <label>모집 포지션:<br/>
-        <div class="position-group">
-          ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].map(pos => `
-            <label>
-              <input type="checkbox" name="positions" value="${pos}" ${party?.positions?.includes(pos) ? 'checked' : ''}>
-              <i class="${getPositionIconClass(pos)}" title="${pos}"></i>
-            </label>
-          `).join('')}
-        </div>
-      </label><br>
-      <button type="submit">${isEdit ? '수정 완료' : '모집 시작'}</button>
-      <button type="button" onclick="closePartyPopup()">닫기</button>
-    </form>
-  `;
+        
+        ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
+        
+        <label>종료일자: <input type="datetime-local" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
+        <label>상태: <input type="text" name="partyStatus" value="${party?.partyStatus ?? 'WAITING'}" required></label><br>
+        <label>현재 인원: <input type="number" name="partyHeadcount" value="${party?.partyHeadcount ?? 1}" min="1" required></label><br>
+        <label>최대 인원: <input type="number" name="partyMax" value="${party?.partyMax ?? 5}" min="1" required></label><br>
+        <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
+        
+        <label>주 포지션:
+            <select name="mainPosition" required>
+                ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].map(pos => `
+                    <option value="${pos}" ${party?.mainPosition === pos ? 'selected' : ''}>${pos}</option>
+                `).join('')}
+            </select>
+        </label><br>
+        
+        <label>모집 포지션:<br/>
+            <div class="position-group">
+                ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].map(pos => `
+                    <label>
+                        <input type="checkbox" name="positions" value="${pos}" ${party?.positions?.includes(pos) ? 'checked' : ''}>
+                        <i class="${getPositionIconClass(pos)}" title="${pos}"></i>
+                    </label>
+                `).join('')}
+            </div>
+        </label><br>
+        
+        <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
+        <button type="button" onclick="closePartyPopup()">닫기</button>
+    </div>
+    `;
+
     popup.style.display = 'block';
     addPositionCheckboxBehavior(popup);
+}
+
+function submitPartyForm() {
+    const popup = document.getElementById('recruitPopup');
+    const isEdit = popup.querySelector('h3').textContent.includes('수정');
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    const partySeq = popup.querySelector('input[name="partySeq"]')?.value;
+    const partyName = popup.querySelector('input[name="partyName"]').value;
+    const partyType = popup.querySelector('select[name="partyType"]').value;
+    const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
+    const partyStatus = popup.querySelector('input[name="partyStatus"]').value;
+    const partyHeadcount = parseInt(popup.querySelector('input[name="partyHeadcount"]').value);
+    const partyMax = parseInt(popup.querySelector('input[name="partyMax"]').value);
+    const memo = popup.querySelector('textarea[name="memo"]').value;
+    const mainPosition = popup.querySelector('select[name="mainPosition"]').value;
+    const positions = Array.from(popup.querySelectorAll('input[name="positions"]:checked'))
+        .map(cb => cb.value);
+
+    const data = {
+        partyName,
+        partyType,
+        partyEndTime,
+        partyStatus,
+        partyHeadcount,
+        partyMax,
+        memo,
+        mainPosition,
+        positions
+    };
+
+    const url = isEdit ? `/api/parties/${partySeq}` : '/api/parties';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                alert(isEdit ? '수정 완료!' : '등록 완료!');
+                closePartyPopup();
+                const activeTab = document.querySelector('.tab.active').id;
+                const type = activeTab === 'freeTab' ? 'team' : 'solo';
+                loadParties(type);
+            } else {
+                alert('실패했습니다.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('서버 오류');
+        });
 }
 
 function getPositionIconClass(pos) {

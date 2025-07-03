@@ -1,7 +1,7 @@
 package com.plit.FO.config;
 
-import com.plit.FO.party.PartyEntity;
-import com.plit.FO.party.PartyRepository;
+import com.plit.FO.party.entity.PartyEntity;
+import com.plit.FO.party.repository.PartyRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +26,7 @@ public class PartyDataLoader {
                         .partyMax(5)
                         .memo("첫 번째 파티입니다.")
                         .mainPosition("TOP")
+                        .createdBy("test1@test.com")
                         .build());
 
                 repository.save(PartyEntity.builder()
@@ -38,6 +39,7 @@ public class PartyDataLoader {
                         .partyMax(5)
                         .memo("풀파티 완료")
                         .mainPosition("ADC")
+                        .createdBy("test1@test.com")
                         .build());
             }
         };
