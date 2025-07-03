@@ -62,11 +62,7 @@ public class BoController {
                        @RequestParam(required = false, defaultValue = "ALL") String status,
                        @RequestParam(required = false) String keyword,
                        Model model) {
-
-        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
-        Integer currentUserSeq = (loginUser != null) ? loginUser.getUserSeq() : -1;
-
-        List<BlacklistDTO> allReports = blacklistService.getAllReportsWithCount(currentUserSeq);
+        List<BlacklistDTO> allReports = blacklistService.getAllReportsWithCount();
 
         // 키워드 필터링
         if (keyword != null && !keyword.isBlank()) {
