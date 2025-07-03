@@ -5,9 +5,7 @@ import com.plit.FO.clan.service.ClanService;
 import com.plit.FO.user.UserService;
 import com.plit.FO.user.UserDTO;
 
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,7 +31,7 @@ public class ClanController {
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
 
-    // ✅ 클랜 목록 조회
+    // 클랜 목록 조회
     @GetMapping
     public String listClans(@RequestParam(required = false) String keyword,
                             @RequestParam(required = false) String tier,
@@ -44,19 +42,18 @@ public class ClanController {
         return "fo/clan/clan-list";
     }
 
-    // ✅ 클랜 등록 처리 (POST)
+    // 클랜 등록 처리 (POST)
     @PostMapping("/register")
     public String registerClan(@ModelAttribute ClanEntity clan,
                                @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                                Principal principal,
                                RedirectAttributes redirectAttributes) {
 
-        // 로그인 안 되어 있으면 로그인 페이지로
+        // 로그인 확인
         if (principal == null) {
             return "redirect:/login";
         }
 
-        // 로그인된 사용자 정보 가져오기
         String userId = principal.getName();
         Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
         if (optionalUser.isEmpty()) {
@@ -65,27 +62,10 @@ public class ClanController {
 
         UserDTO loginUser = optionalUser.get();
 
-        // ✅ URL 형식 체크
-        String urlRegex = "^(https?://).+";
-
-        boolean hasValidKakao = clan.getKakaoLink() != null &&
-                !clan.getKakaoLink().isBlank() &&
-                clan.getKakaoLink().matches(urlRegex);
-
-        boolean hasValidDiscord = clan.getDiscordLink() != null &&
-                !clan.getDiscordLink().isBlank() &&
-                clan.getDiscordLink().matches(urlRegex);
-
-        // ❌ 유효하지 않으면 → 경고 메시지와 함께 리디렉션
-        if (!hasValidKakao && !hasValidDiscord) {
-            redirectAttributes.addFlashAttribute("clan", clan); // 입력값 유지
-            return "redirect:/clan#openModal"; // ✅ 모달 자동 열기!
-        }
-
-        // 👑 리더 ID 설정
+        // 리더 ID 설정
         clan.setLeaderId(loginUser.getUserSeq().longValue());
 
-        // 🖼️ 이미지 업로드
+        // 이미지 업로드
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
@@ -101,13 +81,12 @@ public class ClanController {
             clan.setImageUrl("/images/default.png");
         }
 
-        // 💾 클랜 저장
         clanService.createClan(clan);
 
         return "redirect:/clan";
     }
 
-    // ✅ 클랜 상세 보기
+    // 클랜 상세 보기
     @GetMapping("/{id}")
     public String viewClan(@PathVariable Long id, Model model, Principal principal) {
         ClanEntity clan = clanService.getClanById(id);

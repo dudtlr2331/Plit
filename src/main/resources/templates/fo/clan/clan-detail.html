@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title th:text="${clan.name} + ' - 클랜 정보'">클랜 정보</title>
@@ -18,14 +18,12 @@
     </nav>
     <div style="display: flex; align-items: center; gap: 15px;">
         <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
-
-        <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
-            <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+        <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
+            <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
             <button onclick="location.href='/mypage'">마이페이지</button>
             <button onclick="location.href='/logout'">로그아웃</button>
         </div>
-
-        <div th:if="${session.loginUser == null}">
+        <div sec:authorize="isAnonymous()">
             <button onclick="location.href='/login'">로그인</button>
         </div>
     </div>
@@ -114,9 +112,11 @@
     </div>
 </footer>
 
-</body>
-
 <script>
+    function toggleChatList() {
+        alert('채팅 리스트 열기 구현 필요');
+    }
+
     function showTab(tab) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-section').forEach(section => section.classList.add('hidden'));
@@ -125,4 +125,6 @@
         document.getElementById(tab).classList.remove('hidden');
     }
 </script>
+
+</body>
 </html>
