@@ -29,7 +29,7 @@ public class QnaController {
 
     private final QnaService qnaService;
 
-    @Value("${custom.upload-path}")
+    @Value("${custom.upload-path.qna}")
     private String uploadDir;
 
     @GetMapping("/write")

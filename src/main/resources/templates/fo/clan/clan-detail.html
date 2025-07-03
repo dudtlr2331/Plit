@@ -33,47 +33,51 @@
 
 <!-- 상세 페이지 컨테이너 -->
 <main class="detail-container">
+    <!-- 상단 제목 -->
     <div class="detail-header">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <h1 th:text="${clan.name}" style="margin: 0;">클랜 이름</h1>
             <div class="social-links" style="display: flex; gap: 12px;">
                 <a th:if="${clan.discordLink != null}" th:href="${clan.discordLink}" target="_blank">
-                    <img src="/uploads/discord-icon.png" alt="Discord" class="clan-social-icon"/>
+                    <img src="/images/discord-icon.png" alt="Discord" class="clan-social-icon"/>
                 </a>
                 <a th:if="${clan.kakaoLink != null}" th:href="${clan.kakaoLink}" target="_blank">
-                    <img src="/uploads/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon"/>
+                    <img src="/images/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon"/>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- 클랜 탭 메뉴 -->
-    <div class="clan-tabs">
-        <a class="tab active" href="#">소개</a>
-        <th:block th:if="${role == 'LEADER'}">
-            <a class="tab" href="#">멤버</a>
-            <a class="tab" href="#">수락 대기</a>
-        </th:block>
+    <!-- 중간 내용 전체 감싸는 영역 -->
+    <div class="detail-content">
+        <!-- 탭 -->
+        <div class="clan-tabs">
+            <a class="tab active" href="#">소개</a>
+            <th:block th:if="${role == 'LEADER'}">
+                <a class="tab" href="#">멤버</a>
+                <a class="tab" href="#">수락 대기</a>
+            </th:block>
+        </div>
+
+        <!-- 이미지 -->
+        <div class="detail-image">
+            <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}" alt="클랜 이미지">
+        </div>
+
+        <!-- 소개 -->
+        <div class="detail-intro">
+            <h2>소개</h2>
+            <div class="intro-content" th:utext="${clan.intro}"></div>
+        </div>
+
+        <!-- 최소 티어 -->
+        <div class="detail-tier">
+            <h2>가입 최소 티어</h2>
+            <p th:text="${clan.minTier}">골드</p>
+        </div>
     </div>
 
-    <!-- 이미지 -->
-    <div class="detail-image">
-        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}" alt="클랜 이미지">
-    </div>
-
-    <!-- 소개 -->
-    <div class="detail-intro">
-        <h2>소개</h2>
-        <div class="intro-content" th:utext="${clan.intro}"></div>
-    </div>
-
-    <!-- 최소 티어 -->
-    <div class="detail-tier">
-        <h2>가입 최소 티어</h2>
-        <p th:text="${clan.minTier}">골드</p>
-    </div>
-
-    <!-- 하단 버튼 -->
+    <!-- 아래 고정 버튼 -->
     <div class="action-buttons">
         <th:block th:if="${role == 'LEADER'}">
             <a th:href="@{/clan/edit/{id}(id=${clan.id})}" class="btn">수정</a>

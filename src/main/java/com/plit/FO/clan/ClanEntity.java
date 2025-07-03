@@ -47,4 +47,7 @@ public class ClanEntity {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now(); // 생성될 때 시간 자동 설정
     }
+
+    @Column(name = "leader_id", nullable = false)
+    private Long leaderId;
 }

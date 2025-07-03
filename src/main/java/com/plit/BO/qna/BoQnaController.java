@@ -25,7 +25,7 @@ public class BoQnaController {
 
     private final QnaService qnaService;
 
-    @Value("${custom.upload-path}")
+    @Value("${custom.upload-path.qna}")
     private String uploadDir;
 
     // 전체 문의 목록

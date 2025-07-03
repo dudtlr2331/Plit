@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8" />
   <title>클랜 찾기</title>
@@ -16,12 +16,12 @@
   </nav>
   <div style="display: flex; align-items: center; gap: 15px;">
     <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
-    <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
-      <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+    <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
+      <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
       <button onclick="location.href='/mypage'">마이페이지</button>
       <button onclick="location.href='/logout'">로그아웃</button>
     </div>
-    <div th:if="${session.loginUser == null}">
+    <div sec:authorize="isAnonymous()">
       <button onclick="location.href='/login'">로그인</button>
     </div>
   </div>
@@ -29,7 +29,6 @@
 
 <div class="container">
   <div class="search-bar">
-
     <form method="get" action="/clan" id="searchForm">
       <div class="search-left">
         <select name="tier" onchange="document.getElementById('searchForm').submit()">
@@ -47,26 +46,30 @@
           <option value="챌린저" th:selected="${tier == '챌린저'}">챌린저</option>
         </select>
         <input type="text" name="keyword" placeholder="클랜명 또는 소개 검색" />
-
         <button type="submit" class="btn">검색</button>
       </div>
     </form>
 
-    <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
+    <!-- 클랜 등록 버튼 -->
+    <div th:if="${session.loginUser != null}">
+      <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
+    </div>
+    <div th:if="${session.loginUser == null}">
+      <a href="/login" class="btn">클랜등록</a>
+    </div>
+
     <div id="clanModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
-
         <h2>클랜 등록하기</h2>
         <form method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <input type="text" name="name" placeholder="클랜 이름" required />
           <input type="text" name="summonerName" placeholder="소환사 이름" required />
           <label for="imageUpload" class="image-label">이미지 등록하기</label>
           <input type="file" id="imageUpload" name="imageFile" accept="image/*" onchange="previewImage(event)" />
           <img id="imagePreview" style="max-width: 100%; margin-top: 10px;" />
-
           <textarea name="intro" placeholder="클랜 소개" required></textarea>
-
           <select name="minTier" required>
             <option value="">티어 선택</option>
             <option value="상관없음">티어 상관 없음</option>
@@ -81,10 +84,8 @@
             <option value="그랜드마스터">그랜드마스터</option>
             <option value="챌린저">챌린저</option>
           </select>
-
           <input type="text" name="discordLink" placeholder="디스코드 초대 주소" />
           <input type="text" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
-
           <div style="text-align: right;">
             <button type="submit" class="btn">등록하기</button>
             <button type="button" class="btn" onclick="closeModal()">취소</button>
@@ -95,12 +96,9 @@
   </div>
 
   <div class="clan-grid">
-
     <div class="clan-card" th:each="clan : ${clans}" th:onclick="|location.href='/clan/${clan.id}'|" style="cursor: pointer;">
       <div class="clan-image-placeholder">
-        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}"
-             alt="클랜 이미지"
-             style="width: 100%; height: 100%; object-fit: cover;" />
+        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/images/default.png'}" alt="클랜 이미지" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
       <div class="clan-title-box">
         <h3 th:text="${clan.name}">클랜이름</h3>
@@ -108,27 +106,19 @@
       </div>
       <p th:text="${clan.intro}">소개글</p>
       <small style="display: flex; align-items: center; width: 100%;">
-        <!-- 왼쪽 티어 텍스트 -->
         <span style="padding-left: 0.75rem; flex-shrink: 0;"
               th:text="${clan.minTier == '챌린저' ? '챌린저' :
-               (clan.minTier == '상관없음' ? '티어 상관 없음' :
-               clan.minTier + ' 이상')}">
-</span>
-
-
+                       (clan.minTier == '상관없음' ? '티어 상관 없음' :
+                       clan.minTier + ' 이상')}"></span>
         <div style="flex-grow: 1;"></div>
-
-
         <span class="clan-links" style="padding-right: 0.75rem; display: flex; gap: 4px;">
-    <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
-       th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
-      <img src="/uploads/discord-icon.png" alt="Discord" class="social-icon" />
-    </a>
-    <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
-       th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
-      <img src="/uploads/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
-    </a>
-  </span>
+          <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}" th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+            <img src="/images/discord-icon.png" alt="Discord" class="social-icon" />
+          </a>
+          <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}" th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+            <img src="/images/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+          </a>
+        </span>
       </small>
     </div>
   </div>
@@ -155,22 +145,20 @@
   function openModal() {
     document.getElementById("clanModal").style.display = "block";
   }
-
   function closeModal() {
     document.getElementById("clanModal").style.display = "none";
   }
-
-
-    // 이미지 미리보기 함수
-    function previewImage(event) {
+  function previewImage(event) {
     const reader = new FileReader();
     reader.onload = function () {
-    const output = document.getElementById('imagePreview');
-    output.src = reader.result;
-  };
+      const output = document.getElementById('imagePreview');
+      output.src = reader.result;
+    };
     reader.readAsDataURL(event.target.files[0]);
   }
-
+  function toggleChatList() {
+    alert('채팅 리스트 열기 구현 필요');
+  }
 </script>
 </body>
 </html>

@@ -24,3 +24,4 @@ public interface ClanRepository extends JpaRepository<ClanEntity, Long> {
     List<ClanEntity> searchByTierAndKeyword(@Param("tier") String tier,
                                             @Param("keyword") String keyword);
 }
+

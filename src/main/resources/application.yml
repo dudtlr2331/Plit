@@ -5,6 +5,11 @@ spring:
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
@@ -38,8 +43,13 @@ logging:
 
 riot:
   api:
-    key: RGAPI-8e8a8e36-6299-411d-b7b5-feeffa18856b
+    key: RGAPI-2614a893-0fa2-48cd-975d-3810b82647c9
 
 # 파일 업로드 경로 설정
 custom:
-  upload-path: /Users/minseok/qna/uploads
+  upload-path:
+    qna: /Users/minseok/qna/uploads
+    clan: /Users/minseok/dev/plit-image/
+
+
+
