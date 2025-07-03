@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,6 +25,12 @@ public class BlacklistService {
         // 신고 대상 유저 닉네임 → ID 매핑
         UserEntity reportedUser = userRepository.findByUserNickname(dto.getReportedNickname())
                 .orElseThrow(() -> new IllegalArgumentException("신고 대상 유저를 찾을 수 없습니다."));
+
+        // 이미 테이블에 신고자와 피신고자의 정보가 동일하게 들어있으면 중복
+        boolean alreadyReported = blacklistRepository.existsByReporterIdAndReportedUserId(reporter.getUserSeq(), reportedUser.getUserSeq());
+        if (alreadyReported) {
+            throw new IllegalArgumentException("이미 신고한 유저입니다.");
+        }
 
         BlacklistEntity entity = BlacklistEntity.builder()
                 .reporterId(reporter.getUserSeq())
@@ -56,7 +63,7 @@ public class BlacklistService {
 
 
     // 트롤 신고 관리 데이터
-    public List<BlacklistDTO> getAllReportsWithCount() {
+    public List<BlacklistDTO> getAllReportsWithCount(Integer currentUserSeq) {
         List<BlacklistEntity> entities = blacklistRepository.findAll();
 
         return entities.stream().map(entity -> {
@@ -94,6 +101,33 @@ public class BlacklistService {
             // 신고당한 횟수 조회
             int count = blacklistRepository.countByReportedUserId(entity.getReportedUserId());
             dto.setReportedCount(count);
+
+            // 시간 계산 (초/분/시간/일 단위)
+            try {
+                LocalDateTime reportedTime = LocalDateTime.parse(entity.getReportedAt(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                Duration duration = Duration.between(reportedTime, LocalDateTime.now());
+                long seconds = duration.getSeconds();
+
+                String timeAgo;
+                if (seconds < 60) {
+                    timeAgo = seconds + "초 전";
+                } else if (seconds < 3600) {
+                    timeAgo = (seconds / 60) + "분 전";
+                } else if (seconds < 86400) {
+                    timeAgo = (seconds / 3600) + "시간 전";
+                } else {
+                    timeAgo = (seconds / 86400) + "일 전";
+                }
+
+                dto.setTimeAgo(timeAgo);
+            } catch (Exception e) {
+                dto.setTimeAgo("알 수 없음");
+            }
+
+
+            // 동일 인물을 신고했는지 여부
+            boolean alreadyReported = entity.getReporterId().equals(currentUserSeq);
+            dto.setAlreadyReportedByCurrentUser(alreadyReported);
 
             return dto;
         }).collect(Collectors.toList());
