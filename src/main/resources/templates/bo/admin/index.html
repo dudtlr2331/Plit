@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>관리자 대시보드</title>
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
     <link href="/css/styles.css" rel="stylesheet" />
@@ -21,7 +25,7 @@
             <div class="sb-sidenav-menu">
                 <div class="nav">
                     <div class="sb-sidenav-menu-heading">Core</div>
-                    <a th:if="${session.loginUser.userAuth == 'master'}" class="nav-link" href="/index">
+                    <a th:if="${loginUser.userAuth == 'master' || loginUser.userAuth == 'admin'}" class="nav-link" href="/index">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                         Dashboard
                     </a>
@@ -53,7 +57,7 @@
             </div>
             <div class="sb-sidenav-footer">
                 <div class="small">로그인 계정:</div>
-                <span th:text="${session.loginUser.userNickname}">닉네임</span>
+                <span th:text="${loginUser.userNickname}">닉네임</span>
             </div>
         </nav>
     </div>
@@ -89,8 +93,8 @@
 
                         <td>
                             <button type="button" th:onclick="'submitEdit(' + ${admin.userSeq} + ')'" class="btn btn-sm btn-success">수정</button>
-                            <a th:href="@{'/api/bo/admin/delete/' + ${admin.userSeq}}" class="btn btn-sm btn-danger"
-                               onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                            <button type="button" class="btn btn-sm btn-danger"
+                                    th:onclick="'deleteAdmin(' + ${admin.userSeq} + ')'">삭제</button>
                         </td>
                     </tr>
                     </tbody>
@@ -118,7 +122,7 @@
 <script src="/js/scripts.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    const userAuth = /*[[${session.loginUser.userAuth}]]*/ "guest";
+    const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
     if (userAuth !== "admin" && userAuth !== "master") {
         alert("접근 권한이 없습니다.");
         location.href = "/main";
@@ -129,6 +133,10 @@
         const nickname = document.getElementById(`nickname-${userSeq}`).value;
         const auth = document.getElementById(`auth-select-${userSeq}`).value;
 
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+
         if (!nickname.trim()) {
             alert("닉네임을 입력해주세요.");
             return;
@@ -136,7 +144,7 @@
 
         fetch(`/api/bo/admin/update/${userSeq}`, {
             method: "PUT",
-            headers: {"Content-Type": "application/json"},
+            headers: {"Content-Type": "application/json", [csrfHeader]: csrfToken},
             body: JSON.stringify({userNickname: nickname, userAuth: auth})
         })
             .then(res => {
@@ -148,6 +156,28 @@
                 }
             })
             .catch(err => alert("수정 실패: " + err.message));
+    }
+
+
+    function deleteAdmin(userSeq) {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(`/api/bo/admin/delete/${userSeq}`, {
+            method: "DELETE",
+            headers: { [csrfHeader]: csrfToken }
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("삭제 완료");
+                    location.reload();
+                } else {
+                    return res.text().then(msg => { throw new Error(msg); });
+                }
+            })
+            .catch(err => alert("삭제 실패: " + err.message));
     }
 </script>
 </body>

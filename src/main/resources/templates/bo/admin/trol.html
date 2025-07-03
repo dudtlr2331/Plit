@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>관리자 대시보드</title>
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
     <link href="/css/styles.css" rel="stylesheet" />
@@ -21,7 +25,7 @@
             <div class="sb-sidenav-menu">
                 <div class="nav">
                     <div class="sb-sidenav-menu-heading">Core</div>
-                    <a th:if="${session.loginUser.userAuth == 'master'}" class="nav-link" href="/index">
+                    <a th:if="${loginUser.userAuth == 'master'}" class="nav-link" href="/index">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                         Dashboard
                     </a>
@@ -53,7 +57,7 @@
             </div>
             <div class="sb-sidenav-footer">
                 <div class="small">로그인 계정:</div>
-                <span th:text="${session.loginUser.userNickname}">닉네임</span>
+                <span th:text="${loginUser.userNickname}">닉네임</span>
             </div>
         </nav>
     </div>
@@ -230,7 +234,7 @@
 <script src="/js/scripts.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    const userAuth = /*[[${session.loginUser.userAuth}]]*/ "guest";
+    const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
     if (userAuth !== "admin" && userAuth !== "master") {
         alert("접근 권한이 없습니다.");
         location.href = "/main";
@@ -238,9 +242,14 @@
     /*]]>*/
 
     function handleReport(blacklistNo, action) {
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
         if (!confirm(action === 'ACCEPTED' ? '이 신고를 수락하시겠습니까?' : '이 신고를 거절하시겠습니까?')) return;
 
         fetch('/api/bo/admin/report/' + blacklistNo + '/' + action, {
+            headers: {[csrfHeader]: csrfToken },
             method: 'POST'
         })
             .then(res => {
@@ -265,9 +274,15 @@
 
 
     function showReportHistory(userId, nickname) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
         document.getElementById('reportTargetNickname').innerText = '신고 대상: ' + nickname;
 
-        fetch('/api/bo/admin/report/history/' + userId)
+        fetch('/api/bo/admin/report/history/' + userId, {
+            headers: {[csrfHeader]: csrfToken },
+            method: 'POST'
+        })
             .then(res => res.json())
             .then(data => {
                 const tbody = document.getElementById('reportHistoryBody');
