@@ -28,8 +28,8 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(
-                            "/login", "/register",
-                            "/css/**", "/js/**", "/images/**"  // 이 경로는 로그인하지 않아도 접근 허용
+                            "/login", "/register", "/signup",
+                            "/css/**", "/js/**", "/images/**"
                     ).permitAll()
 
                     .requestMatchers(HttpMethod.POST, "/party/new").authenticated()
