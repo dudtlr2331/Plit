@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequiredArgsConstructor
@@ -17,7 +18,12 @@ public class MyPageController {
 
     // 마이페이지 기본 탭 (계정 정보)
     @GetMapping({"", "/"})
-    public String showMypage(Model model) {
+    public String showMypage(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("loginUser") == null) {
+            redirectAttributes.addFlashAttribute("popup", "로그인이 필요합니다.");
+            return "redirect:/main";
+        }
+
         model.addAttribute("viewSection", "account");
         return "fo/mypage/mypage";
     }
@@ -30,6 +36,15 @@ public class MyPageController {
         model.addAttribute("viewSection", "qna");
         model.addAttribute("viewMode", "list");
         model.addAttribute("questions", qnaService.getMyQuestions(userId));
+        return "fo/mypage/mypage";
+    }
+
+    @GetMapping("/mypage")
+    public String mypage(HttpSession session, RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("loginUser") == null) {
+            redirectAttributes.addFlashAttribute("popup", "로그인이 필요합니다.");
+            return "redirect:/fo/main";
+        }
         return "fo/mypage/mypage";
     }
 }

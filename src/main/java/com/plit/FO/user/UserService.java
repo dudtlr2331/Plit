@@ -48,8 +48,9 @@ public class UserService {
 
     /// 랜덤 닉네임 생성 메서드
     private String generateRandomNickname() {
-        String[] adjectives = {"용감한", "귀여운", "빛나는", "지혜로운", "날쌘", "우아한", "행복한"};
-        String[] nouns = {"토끼", "호랑이", "펭귄", "여우", "늑대", "부엉이", "고양이"};
+        String[] adjectives = {"암흑의", "불꽃의", "서리 내린", "고요한", "광기의", "신속한", "잊혀진", "밤하늘의", "차원의", "황혼의"};
+        String[] nouns = {"탈리아", "야스오", "제드", "아리", "이렐리아", "카타리나", "아칼리", "모르가나", "카직스", "에코",
+                "브랜드", "릴리아", "세라핀", "샤코", "피들스틱"};
         Random random = new Random();
 
         String adj = adjectives[random.nextInt(adjectives.length)];
