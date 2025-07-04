@@ -1,4 +1,4 @@
-package com.plit.FO.clan;
+package com.plit.FO.clan.dto;
 
 import lombok.*;
 

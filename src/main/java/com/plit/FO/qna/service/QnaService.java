@@ -1,5 +1,8 @@
-package com.plit.FO.qna;
+package com.plit.FO.qna.service;
 
+import com.plit.FO.qna.dto.QnaDTO;
+import com.plit.FO.qna.entity.QnaEntity;
+import com.plit.FO.qna.repository.QnaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

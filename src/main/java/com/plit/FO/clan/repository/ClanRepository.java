@@ -1,5 +1,6 @@
-package com.plit.FO.clan;
+package com.plit.FO.clan.repository;
 
+import com.plit.FO.clan.entity.ClanEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
