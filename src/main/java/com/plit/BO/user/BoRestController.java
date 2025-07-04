@@ -1,14 +1,13 @@
 package com.plit.BO.user;
 
-import com.plit.FO.blacklist.BlacklistDTO;
-import com.plit.FO.blacklist.BlacklistEntity;
-import com.plit.FO.blacklist.BlacklistRepository;
-import com.plit.FO.blacklist.BlacklistService;
+import com.plit.FO.blacklist.dto.BlacklistDTO;
+import com.plit.FO.blacklist.entity.BlacklistEntity;
+import com.plit.FO.blacklist.repository.BlacklistRepository;
+import com.plit.FO.blacklist.service.BlacklistService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
 import com.plit.FO.user.UserService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

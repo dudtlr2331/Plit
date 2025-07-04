@@ -1,4 +1,4 @@
-package com.plit.FO.block;
+package com.plit.FO.block.dto;
 
 import lombok.*;
 

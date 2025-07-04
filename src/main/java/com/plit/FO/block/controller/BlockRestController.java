@@ -1,5 +1,6 @@
-package com.plit.FO.block;
+package com.plit.FO.block.controller;
 
+import com.plit.FO.block.service.BlockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

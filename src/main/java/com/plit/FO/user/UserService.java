@@ -251,4 +251,10 @@ public class UserService {
         user.setUserAuth(auth);
         userRepository.save(user);
     }
+
+    public UserDTO findByUserId(String userId) {
+        return userRepository.findByUserId(userId)
+                .map(UserEntity::toDTO)
+                .orElse(null);
+    }
 }

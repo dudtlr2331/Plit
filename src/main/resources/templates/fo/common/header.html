@@ -1,0 +1,28 @@
+<div th:fragment="header"
+     xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+    <header>
+        <a th:href="@{/main}" class="logo">Logo</a>
+
+        <nav>
+            <a th:href="@{/party}">파티찾기</a>
+            <a th:href="@{/clan}">클랜찾기</a>
+            <a th:href="@{/report}">트롤신고</a>
+        </nav>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
+
+            <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
+                <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
+                <button th:onclick="|location.href='@{/mypage}'|" class="mypage-btn">마이페이지</button>
+                <button th:onclick="|location.href='@{/logout}'|" class="logout-btn">로그아웃</button>
+            </div>
+
+            <div sec:authorize="isAnonymous()">
+                <button th:onclick="|location.href='@{/login}'|" class="login-btn">로그인</button>
+            </div>
+        </div>
+    </header>
+</div>

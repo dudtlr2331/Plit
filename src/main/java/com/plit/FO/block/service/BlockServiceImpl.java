@@ -1,5 +1,8 @@
-package com.plit.FO.block;
+package com.plit.FO.block.service;
 
+import com.plit.FO.block.dto.BlockDTO;
+import com.plit.FO.block.entity.BlockEntity;
+import com.plit.FO.block.repository.BlockRepository;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class BlockService {
+public class BlockServiceImpl implements BlockService {
 
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
