@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>마이페이지</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/qna.css}">
@@ -308,8 +312,8 @@
             <div class="info-row" id="nicknameRow" style="justify-content: space-between;">
                 <label>닉네임</label>
                 <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
-                    <span th:if="${session.loginUser != null}" th:text="${session.loginUser.userNickname}">닉네임</span>
-                    <span th:unless="${session.loginUser != null}">로그인이 필요합니다</span>
+                    <span th:if="${loginUser != null}" th:text="${loginUser.userNickname}">닉네임</span>
+                    <span th:unless="${loginUser != null}">로그인이 필요합니다</span>
                     <button type="button" onclick="showNicknameInput()">변경</button>
                 </div>
             </div>

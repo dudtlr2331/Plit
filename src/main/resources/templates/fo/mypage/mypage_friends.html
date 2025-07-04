@@ -2,6 +2,9 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <title>마이페이지 - 친구 목록</title>
   <link rel="stylesheet" href="/css/mypageFriends.css" />
 </head>
@@ -9,7 +12,7 @@
 <div class="container">
   <div class="sidebar">
     <ul>
-      <li><a href="/mypage/account">계정 관리</a></li>
+      <li><a href="/mypage">계정 관리</a></li>
       <li><a href="/mypage/qna">문의하기</a></li>
       <li><a href="/mypage/friends" class="active">친구 목록</a></li>
       <li><a href="/mypage/blocked">차단 목록</a></li>
@@ -91,6 +94,9 @@
 </div>
 
 <script>
+  const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
   function toggleRequestPopup() {
     const popup = document.getElementById('requestPopup');
     popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
@@ -101,7 +107,11 @@
 
   function loadFriendRequests() {
     fetch('/api/friends/requests')
-            .then(res => res.json())
+            .then(async res => {
+              if (!res.ok) throw new Error('요청 실패: ' + res.status);
+              const text = await res.text();
+              return text ? JSON.parse(text) : [];
+            })
             .then(data => {
               const container = document.getElementById('requestList');
               container.innerHTML = '';
@@ -166,7 +176,8 @@
     fetch(`/api/friends/${friendNo}/memo`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        [csrfHeader]: csrfToken
       },
       body: JSON.stringify({ memo: newMemo })
     })
@@ -240,6 +251,9 @@
   // 친구신청 수락 및 거절
   function handleFriendAction(friendNo, action) {
     fetch(`/api/friends/${friendNo}/${action}`, {
+      headers: {
+        [csrfHeader]: csrfToken
+      },
       method: "POST"
     }).then(res => {
       if (res.ok) {
@@ -265,6 +279,9 @@
     if (!confirm('정말 이 친구를 차단하시겠습니까?')) return;
 
     fetch(`/api/friends/${friendNo}/block`, {
+      headers: {
+        [csrfHeader]: csrfToken
+      },
       method: "POST"
     })
             .then(res => {
@@ -282,6 +299,9 @@
     if (!confirm('정말 이 친구를 삭제하시겠습니까?')) return;
 
     fetch(`/api/friends/${friendNo}`, {
+      headers: {
+        [csrfHeader]: csrfToken
+      },
       method: "DELETE"
     })
             .then(res => {

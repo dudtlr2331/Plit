@@ -2,6 +2,10 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>마이페이지 - 차단 목록</title>
     <link rel="stylesheet" href="/css/mypageFriends.css" />
 </head>
@@ -9,7 +13,7 @@
 <div class="container">
     <div class="sidebar">
         <ul>
-            <li><a href="/mypage/account">계정 관리</a></li>
+            <li><a href="/mypage">계정 관리</a></li>
             <li><a href="/mypage/qna">문의하기</a></li>
             <li><a href="/mypage/friends">친구 목록</a></li>
             <li><a href="/mypage/blocked" class="active">차단 목록</a></li>
@@ -50,11 +54,17 @@
 </div>
 
 <script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
     // 차단 해제
     function unblockFriend(blockNo) {
         if (!confirm('정말 이 친구의 차단을 해제하시겠습니까?')) return;
 
         fetch(`/api/blocks/${blockNo}/release`, {
+            headers: {
+                [csrfHeader]: csrfToken
+            },
             method: "POST"
         }).then(res => {
             if (res.ok) {
