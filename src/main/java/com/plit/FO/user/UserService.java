@@ -49,8 +49,7 @@ public class UserService {
     /// 랜덤 닉네임 생성 메서드
     private String generateRandomNickname() {
         String[] adjectives = {"암흑의", "불꽃의", "서리 내린", "고요한", "광기의", "신속한", "잊혀진", "밤하늘의", "차원의", "황혼의"};
-        String[] nouns = {"탈리아", "야스오", "제드", "아리", "이렐리아", "카타리나", "아칼리", "모르가나", "카직스", "에코",
-                "브랜드", "릴리아", "세라핀", "샤코", "피들스틱"};
+        String[] nouns = {"탈리아", "야스오", "제드", "아리", "이렐리아", "카타리나", "아칼리", "모르가나", "카직스", "에코", "브랜드", "릴리아", "세라핀", "샤코", "피들스틱"};
         Random random = new Random();
 
         String adj = adjectives[random.nextInt(adjectives.length)];
@@ -63,15 +62,23 @@ public class UserService {
     /// 회원가입 - 인증번호 메일 발송
     public String sendEmailCode(String toEmail) {
         String code = String.format("%06d", new Random().nextInt(1_000_000));
-
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(toEmail);
         msg.setSubject("회원가입 인증번호");
         msg.setText("인증번호: " + code + " (유효시간 3분)");
+        msg.setFrom("doormouse149@gmail.com");
         mailSender.send(msg);
-
         return code;          // 컨트롤러에서 세션에 저장
     }
+
+
+    /// 관리자 페이지 - 유저 조회
+    public UserDTO findByUserId(String userId) {
+        return userRepository.findByUserId(userId)
+                .map(UserEntity::toDTO)
+                .orElse(null);
+    }
+
 
     /// 회원가입 - 인증번호 검증
     public boolean verifyEmailCode(String inputCode, String savedCode) {
