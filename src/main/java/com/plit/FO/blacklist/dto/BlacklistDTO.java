@@ -1,4 +1,4 @@
-package com.plit.FO.blacklist;
+package com.plit.FO.blacklist.dto;
 
 import lombok.*;
 

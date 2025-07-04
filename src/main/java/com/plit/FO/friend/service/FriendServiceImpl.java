@@ -1,7 +1,10 @@
-package com.plit.FO.friend;
+package com.plit.FO.friend.service;
 
-import com.plit.FO.block.BlockEntity;
-import com.plit.FO.block.BlockRepository;
+import com.plit.FO.block.entity.BlockEntity;
+import com.plit.FO.block.repository.BlockRepository;
+import com.plit.FO.friend.dto.FriendDTO;
+import com.plit.FO.friend.entity.FriendEntity;
+import com.plit.FO.friend.repository.FriendRepository;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
@@ -16,7 +19,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-public class FriendService {
+public class FriendServiceImpl implements FriendService {
 
     @Autowired
     private FriendRepository friendRepository;

@@ -1,4 +1,4 @@
-package com.plit.FO.friend;
+package com.plit.FO.friend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
