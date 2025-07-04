@@ -37,6 +37,18 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/party/delete/**").authenticated() // 로그인한 사용자만 사용 가능하게 설정
                     .requestMatchers(HttpMethod.POST, "/clan/register").authenticated()
 
+                    .requestMatchers(HttpMethod.POST, "/mypage").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/mypage/**").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/friends/**").authenticated()
+
+                    .requestMatchers(HttpMethod.POST, "/index").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/bo/admin/update/**").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/bo/manage_user").authenticated()
+                    .requestMatchers(HttpMethod.DELETE, "/api/bo/admin/delete/**").authenticated()
+                    .requestMatchers(HttpMethod.PUT, "/api/bo/admin/put/**").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/bo/trol/**").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/bo/admin/report/**").authenticated()
+
                     .anyRequest().permitAll() //위에 명시하지 않은 모든 요청은 기본적으로 인증 없이 접근 허용
             )
             .formLogin(form -> form
