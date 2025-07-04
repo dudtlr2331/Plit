@@ -10,23 +10,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-<header>
-  <nav>
-    <a href="/main">Logo</a>
-    <a href="/party">파티찾기</a>
-    <a href="/clan">클랜찾기</a>
-    <a href="/report">트롤신고</a>
-  </nav>
-  <nav>
-    <button class="chat-button" onclick="toggleChatList()">💬</button>
-    <a href="/login">로그인</a>
-  </nav>
-  <div id="chatList" class="chat-popup">
-    <div onclick="toggleChatBox('user1')">플레이어1</div>
-    <div onclick="toggleChatBox('user2')">플레이어2</div>
-    <div onclick="toggleChatBox('user3')">플레이어3</div>
-  </div>
-</header>
+
+<div th:replace="fo/common/header :: header"></div>
 
 <div class="tab-container">
   <div class="tab" id="soloTab">솔로 랭크</div>

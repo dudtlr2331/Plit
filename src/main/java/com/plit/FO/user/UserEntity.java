@@ -43,7 +43,7 @@ public class UserEntity {
     @Column(name = "user_create_date", nullable = false)
     private LocalDate userCreateDate;
 
-    @Column(name = "user_auth", nullable = false, length = 5)
+    @Column(name = "user_auth", nullable = false, length = 6)
     private String userAuth;
 
     public UserDTO toDTO() {

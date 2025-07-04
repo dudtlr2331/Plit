@@ -68,6 +68,7 @@ public class UserService {
         msg.setTo(toEmail);
         msg.setSubject("회원가입 인증번호");
         msg.setText("인증번호: " + code + " (유효시간 3분)");
+        msg.setFrom("doormouse149@gmail.com");
         mailSender.send(msg);
 
         return code;          // 컨트롤러에서 세션에 저장
@@ -250,5 +251,11 @@ public class UserService {
         user.setUserNickname(nickname);
         user.setUserAuth(auth);
         userRepository.save(user);
+    }
+
+    public UserDTO findByUserId(String userId) {
+        return userRepository.findByUserId(userId)
+                .map(UserEntity::toDTO)
+                .orElse(null);
     }
 }

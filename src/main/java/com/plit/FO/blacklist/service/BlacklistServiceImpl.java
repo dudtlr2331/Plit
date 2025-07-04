@@ -1,5 +1,8 @@
-package com.plit.FO.blacklist;
+package com.plit.FO.blacklist.service;
 
+import com.plit.FO.blacklist.dto.BlacklistDTO;
+import com.plit.FO.blacklist.entity.BlacklistEntity;
+import com.plit.FO.blacklist.repository.BlacklistRepository;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserEntity;
 import com.plit.FO.user.UserRepository;
@@ -15,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class BlacklistService {
+public class BlacklistServiceImpl implements BlacklistService {
 
     private final BlacklistRepository blacklistRepository;
     private final UserRepository userRepository; // User 닉네임 → ID 매핑용
