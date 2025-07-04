@@ -1,10 +1,13 @@
 package com.plit.FO.blacklist;
 
 import com.plit.FO.user.UserDTO;
+import com.plit.FO.user.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,10 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class BlacklistRestController {
 
     private final BlacklistService blacklistService;
+    private final UserService userService;
 
     @PostMapping("/report")
-    public ResponseEntity<?> report(@RequestBody BlacklistDTO dto, HttpSession session) {
-        UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
+    public ResponseEntity<?> report(@RequestBody BlacklistDTO dto, @AuthenticationPrincipal User user) {
+        UserDTO loginUser = userService.findByUserId(user.getUsername());
         if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }

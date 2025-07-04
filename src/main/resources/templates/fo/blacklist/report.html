@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="loginUserNickname" th:content="${loginUser != null} ? ${loginUser.userNickname} : ''">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>트롤 신고</title>
     <style>
         html, body {
@@ -188,8 +192,8 @@
             <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
             <!-- 로그인 상태 -->
-            <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
-                <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+            <div th:if="${loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+                <span th:text="${loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
 
                 <button onclick="location.href='/mypage'"
                         style="background: white; color: #ff5c5c; border: 2px solid #ff5c5c;
@@ -205,7 +209,7 @@
             </div>
 
             <!-- 비로그인 상태 -->
-            <div th:if="${session.loginUser == null}">
+            <div th:if="${loginUser == null}">
                 <button onclick="location.href='/login'"
                         style="background: white; color: #ff5c5c; border: 1px solid #ff5c5c;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
@@ -213,6 +217,7 @@
                 </button>
             </div>
         </div>
+    </div>
 </header>
 
 <div class="container">
@@ -283,7 +288,7 @@
 
         <div style="margin-top:20px; width:90%; display:flex; justify-content:flex-end; gap:10px;">
             <button onclick="closePopup()" style="background:#eee; border:none; padding:10px 20px; border-radius:6px;">취소</button>
-            <button onclick="submitReport()" style="background:#ff5c5c; color:white; border:none; padding:10px 20px; border-radius:6px;">신고</button>
+            <button type="button" onclick="submitReport()" style="background:#ff5c5c; color:white; border:none; padding:10px 20px; border-radius:6px;">신고</button>
         </div>
     </div>
 </div>
@@ -360,6 +365,8 @@
 </body>
 
 <script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
     const nicknameMeta = document.querySelector('meta[name="loginUserNickname"]');
     const nickname = nicknameMeta ? nicknameMeta.content : null;
@@ -402,7 +409,8 @@
 
         fetch("/api/blacklist/report", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", [csrfHeader]: csrfToken },
+            credentials: "same-origin",
             body: JSON.stringify({
                 reporterNickname: reporter,
                 reportedNickname: reportedPlayer,

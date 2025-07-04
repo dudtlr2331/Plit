@@ -64,7 +64,7 @@ public class BlacklistService {
 
     // 트롤 신고 관리 데이터
     public List<BlacklistDTO> getAllReportsWithCount(Integer currentUserSeq) {
-        List<BlacklistEntity> entities = blacklistRepository.findAll();
+        List<BlacklistEntity> entities = blacklistRepository.findAllByOrderByReportedAtDesc();
 
         return entities.stream().map(entity -> {
             BlacklistDTO dto = new BlacklistDTO();

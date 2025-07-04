@@ -12,4 +12,5 @@ public interface BlacklistRepository extends JpaRepository<BlacklistEntity, Inte
     int countByReportedUserId(Integer reportedUserId);
     List<BlacklistEntity> findByReportedUserId(Integer reportedUserId);
     boolean existsByReporterIdAndReportedUserId(Integer reporterId, Integer reportedUserId);
+    List<BlacklistEntity> findAllByOrderByReportedAtDesc();
 }
