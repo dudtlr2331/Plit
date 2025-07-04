@@ -14,13 +14,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        UserEntity user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자 없음: " + userId));
+        // 1. userId로 UserEntity 찾기
+        UserEntity entity = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자 없음: " + userId));
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUserId())
-                .password(user.getUserPwd()) // 인코딩된 비밀번호여야 함
-                .roles(user.getUserAuth())   // 예: "user", "admin"
-                .build();
+        // 2. UserEntity → UserDTO
+        UserDTO userDTO = entity.toDTO();
+
+        // 3. CustomUserDetails로 래핑해서 반환
+        return new CustomUserDetails(userDTO);
     }
 }

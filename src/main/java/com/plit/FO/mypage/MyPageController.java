@@ -30,6 +30,7 @@ public class MyPageController {
             return "redirect:/main";
         }
 
+        model.addAttribute("loginUser", loginUser);
         model.addAttribute("viewSection", "account");
         return "fo/mypage/mypage";
     }
