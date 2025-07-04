@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>유저 관리</title>
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
     <link href="/css/styles.css" rel="stylesheet" />
@@ -31,7 +35,7 @@
             <div class="sb-sidenav-menu">
                 <div class="nav">
                     <div class="sb-sidenav-menu-heading">Core</div>
-                    <a th:if="${session.loginUser.userAuth == 'master'}" class="nav-link" href="/index">
+                    <a th:if="${loginUser.userAuth == 'master'}" class="nav-link" href="/index">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                         Dashboard
                     </a>
@@ -63,7 +67,7 @@
             </div>
             <div class="sb-sidenav-footer">
                 <div class="small">로그인 계정:</div>
-                <span th:text="${session.loginUser.userNickname}">닉네임</span>
+                <span th:text="${loginUser.userNickname}">닉네임</span>
             </div>
         </nav>
     </div>
@@ -183,9 +187,12 @@
 <script src="/js/scripts.js"></script>
 <script th:inline="javascript">
     function updateStatus(userSeq, action) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
         fetch(`/api/bo/admin/user/status/${userSeq}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
             body: JSON.stringify({ action })
         })
             .then(res => {
@@ -211,6 +218,8 @@
     function submitEdit(userSeq) {
         const nickname = document.getElementById("nickname-input-" + userSeq).value;
         const auth = document.getElementById("auth-select-" + userSeq).value;
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
         if (!nickname.trim()) {
             alert("닉네임을 입력해주세요.");
@@ -219,7 +228,7 @@
 
         fetch(`/api/bo/admin/user/update/${userSeq}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
             body: JSON.stringify({ userNickname: nickname, userAuth: auth })
         })
             .then(res => {

@@ -28,4 +28,10 @@ public class BlacklistDTO {
 
     // 신고 횟수
     private Integer reportedCount;
+
+    // 게시 후 지난 시간
+    private String timeAgo;
+
+    // 중복 신고 방지용 신고이력
+    private boolean alreadyReportedByCurrentUser;
 }

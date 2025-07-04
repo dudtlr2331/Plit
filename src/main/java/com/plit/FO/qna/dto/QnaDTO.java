@@ -1,4 +1,4 @@
-package com.plit.FO.qna;
+package com.plit.FO.qna.dto;
 
 
 import lombok.Getter;

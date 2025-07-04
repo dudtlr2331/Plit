@@ -1,5 +1,6 @@
-package com.plit.FO.qna;
+package com.plit.FO.qna.repository;
 
+import com.plit.FO.qna.entity.QnaEntity;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

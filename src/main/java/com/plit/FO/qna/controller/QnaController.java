@@ -1,5 +1,8 @@
-package com.plit.FO.qna;
+package com.plit.FO.qna.controller;
 
+import com.plit.FO.qna.dto.QnaDTO;
+import com.plit.FO.qna.entity.QnaEntity;
+import com.plit.FO.qna.service.QnaService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -2,6 +2,9 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8" />
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <title>클랜 찾기</title>
   <link rel="stylesheet" href="/css/clan.css" />
 </head>
@@ -51,10 +54,10 @@
     </form>
 
     <!-- 클랜 등록 버튼 -->
-    <div th:if="${session.loginUser != null}">
+    <div sec:authorize="isAuthenticated()">
       <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
     </div>
-    <div th:if="${session.loginUser == null}">
+    <div sec:authorize="isAnonymous()">
       <a href="/login" class="btn">클랜등록</a>
     </div>
 
@@ -64,6 +67,10 @@
         <h2>클랜 등록하기</h2>
         <form method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+          <div th:if="${error}" style="color: red; text-align: center; margin: 10px 0;">
+            <p th:text="${error}"></p>
+          </div>
           <input type="text" name="name" placeholder="클랜 이름" required />
           <input type="text" name="summonerName" placeholder="소환사 이름" required />
           <label for="imageUpload" class="image-label">이미지 등록하기</label>
@@ -84,8 +91,8 @@
             <option value="그랜드마스터">그랜드마스터</option>
             <option value="챌린저">챌린저</option>
           </select>
-          <input type="text" name="discordLink" placeholder="디스코드 초대 주소" />
-          <input type="text" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
+          <input type="url" name="discordLink" placeholder="디스코드 초대 주소" />
+          <input type="url" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
           <div style="text-align: right;">
             <button type="submit" class="btn">등록하기</button>
             <button type="button" class="btn" onclick="closeModal()">취소</button>
@@ -100,6 +107,12 @@
       <div class="clan-image-placeholder">
         <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/images/default.png'}" alt="클랜 이미지" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
+
+      <!-- 클랜 등록 폼 내부 -->
+      <div th:if="${linkError}" class="error-msg" style="color: red; text-align: center; font-weight: bold;">
+        <p th:text="${linkError}"></p>
+      </div>
+
       <div class="clan-title-box">
         <h3 th:text="${clan.name}">클랜이름</h3>
         <span class="clan-member-count">0명</span>
@@ -159,6 +172,10 @@
   function toggleChatList() {
     alert('채팅 리스트 열기 구현 필요');
   }
+
+  document.querySelector("form[action='/clan/register']").addEventListener("submit", function (e) {
+    console.log("폼 제출됨!");
+  });
 </script>
 </body>
 </html>

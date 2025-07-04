@@ -1,4 +1,4 @@
-package com.plit.FO.qna;
+package com.plit.FO.qna.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

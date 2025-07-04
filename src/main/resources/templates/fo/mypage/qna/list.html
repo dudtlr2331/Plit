@@ -1,95 +1,180 @@
-<div th:fragment="listFragment">
-    <h2>나의 문의 내역</h2>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>클랜 찾기</title>
+    <link rel="stylesheet" href="/css/clan.css" />
+</head>
+<body>
+<header>
+    <div class="logo" onclick="location.href='/main'">plit</div>
+    <nav>
+        <a href="/party">파티찾기</a>
+        <a href="/record">내전찾기</a>
+        <a href="/clan" style="color: yellow;">클랜찾기</a>
+        <a href="/report">트롤신고</a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
+        <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+            <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+            <button onclick="location.href='/mypage'">마이페이지</button>
+            <button onclick="location.href='/logout'">로그아웃</button>
+        </div>
+        <div th:if="${session.loginUser == null}">
+            <button onclick="location.href='/login'">로그인</button>
+        </div>
+    </div>
+</header>
 
-    <table class="qna-table">
-        <thead>
-        <tr>
-            <th>번호</th>
-            <th>제목</th>
-            <th>첨부</th>
-            <th>상태</th>
-            <th>작성일</th>
-            <th>삭제</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="qna, stat : ${questions}">
-            <td th:text="${stat.index + 1}">1</td>
-            <td>
-                <a th:href="@{/mypage/qna/view/{id}(id=${qna.id})}"
-                   th:text="${qna.title}">제목</a>
-            </td>
-            <td>
-                <span th:if="${qna.fileName}">📎</span>
-            </td>
-            <td>
-                <span th:class="'qna-status-badge ' + (${qna.status} == '답변완료' ? 'completed' : 'pending')"
-                      th:text="${qna.status}">상태</span>
-            </td>
-            <td th:text="${#temporals.format(qna.askedAt, 'yyyy.MM.dd HH:mm')}">날짜</td>
-            <td>
-                <form th:action="@{/mypage/qna/delete/{id}(id=${qna.id})}" method="post">
-                    <button type="submit" class="qna-delete-btn"
-                            onclick="return confirm('정말 삭제할까요?')">삭제</button>
+<div class="container">
+    <div class="search-bar">
+
+        <form method="get" action="/clan" id="searchForm">
+            <div class="search-left">
+                <select name="tier" onchange="document.getElementById('searchForm').submit()">
+                    <option value="" th:selected="${tier == null or tier == ''}">티어 전체</option>
+                    <option value="상관없음" th:selected="${tier == '상관없음'}">티어 상관 없음</option>
+                    <option value="아이언" th:selected="${tier == '아이언'}">아이언</option>
+                    <option value="브론즈" th:selected="${tier == '브론즈'}">브론즈</option>
+                    <option value="실버" th:selected="${tier == '실버'}">실버</option>
+                    <option value="골드" th:selected="${tier == '골드'}">골드</option>
+                    <option value="플레티넘" th:selected="${tier == '플레티넘'}">플레티넘</option>
+                    <option value="에메랄드" th:selected="${tier == '에메랄드'}">에메랄드</option>
+                    <option value="다이아" th:selected="${tier == '다이아'}">다이아</option>
+                    <option value="마스터" th:selected="${tier == '마스터'}">마스터</option>
+                    <option value="그랜드마스터" th:selected="${tier == '그랜드마스터'}">그랜드마스터</option>
+                    <option value="챌린저" th:selected="${tier == '챌린저'}">챌린저</option>
+                </select>
+                <input type="text" name="keyword" placeholder="클랜명 또는 소개 검색" />
+
+                <button type="submit" class="btn">검색</button>
+            </div>
+        </form>
+
+        <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
+        <div id="clanModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+
+                <h2>클랜 등록하기</h2>
+                <form method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="text" name="name" placeholder="클랜 이름" required />
+                    <input type="text" name="summonerName" placeholder="소환사 이름" required />
+                    <label for="imageUpload" class="image-label">이미지 등록하기</label>
+                    <input type="file" id="imageUpload" name="imageFile" accept="image/*" onchange="previewImage(event)" />
+                    <img id="imagePreview" style="max-width: 100%; margin-top: 10px;" />
+
+                    <textarea name="intro" placeholder="클랜 소개" required></textarea>
+
+                    <select name="minTier" required>
+                        <option value="">티어 선택</option>
+                        <option value="상관없음">티어 상관 없음</option>
+                        <option value="아이언">아이언</option>
+                        <option value="브론즈">브론즈</option>
+                        <option value="실버">실버</option>
+                        <option value="골드">골드</option>
+                        <option value="플레티넘">플레티넘</option>
+                        <option value="에메랄드">에메랄드</option>
+                        <option value="다이아">다이아</option>
+                        <option value="마스터">마스터</option>
+                        <option value="그랜드마스터">그랜드마스터</option>
+                        <option value="챌린저">챌린저</option>
+                    </select>
+
+                    <input type="text" name="discordLink" placeholder="디스코드 초대 주소" />
+                    <input type="text" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
+
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn">등록하기</button>
+                        <button type="button" class="btn" onclick="closeModal()">취소</button>
+                    </div>
                 </form>
-            </td>
-        </tr>
-
-        <!-- 비어있을 때 -->
-        <tr th:if="${#lists.isEmpty(questions)}">
-            <td colspan="6">문의 내역이 없습니다.</td>
-        </tr>
-        </tbody>
-    </table>
-
-    <div class="qna-actions">
-        <a th:href="@{/mypage/qna/write}" class="qna-submit-button">➕ 새 문의</a>
-<!--        <button onclick="openChat()" class="qna-chat-btn">💬 실시간 문의</button>-->
-        <button onclick="requestChat()" class="qna-chat-btn">💬 실시간 문의</button>
-    </div>
-
-    <div id="chatPopup" class="chat-popup" style="display: none;">
-        <div class="chat-header">
-            실시간 문의
-            <button onclick="toggleChat()">✖</button>
-        </div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="메시지를 입력하세요...">
-            <button onclick="sendMessage()">전송</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        function toggleChat() {
-            const popup = document.getElementById("chatPopup");
-            popup.style.display = popup.style.display === "none" ? "flex" : "none";
-        }
+    <div class="clan-grid">
 
-        // 👉 버튼 클릭 시 팝업 열기용 함수
-        function requestChat() {
-            toggleChat(); // 나중에 여기에 서버에 요청 보내는 코드도 추가할 수 있어!
-        }
+        <div class="clan-card" th:each="clan : ${clans}" th:onclick="|location.href='/clan/${clan.id}'|" style="cursor: pointer;">
+            <div class="clan-image-placeholder">
+                <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}"
+                     alt="클랜 이미지"
+                     style="width: 100%; height: 100%; object-fit: cover;" />
+            </div>
+            <div class="clan-title-box">
+                <h3 th:text="${clan.name}">클랜이름</h3>
+                <span class="clan-member-count">0명</span>
+            </div>
+            <p th:text="${clan.intro}">소개글</p>
+            <small style="display: flex; align-items: center; width: 100%;">
+                <!-- 왼쪽 티어 텍스트 -->
+                <span style="padding-left: 0.75rem; flex-shrink: 0;"
+                      th:text="${clan.minTier == '챌린저' ? '챌린저' :
+               (clan.minTier == '상관없음' ? '티어 상관 없음' :
+               clan.minTier + ' 이상')}">
+</span>
 
-        const roomId = "admin-room";
-        const userId = "plit유저"; // TODO: 실제 로그인 사용자 ID로 대체하기
 
-        const ws = new WebSocket(`wss://${location.host}/ws/chat?roomId=${roomId}&userId=${userId}`);
+                <div style="flex-grow: 1;"></div>
 
-        ws.onmessage = (event) => {
-            const msgBox = document.getElementById("chatMessages");
-            const div = document.createElement("div");
-            div.textContent = event.data;
-            msgBox.appendChild(div);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        };
 
-        function sendMessage() {
-            const input = document.getElementById("messageInput");
-            if (input.value.trim()) {
-                ws.send(input.value);
-                input.value = "";
-            }
-        }
-    </script>
+                <span class="clan-links" style="padding-right: 0.75rem; display: flex; gap: 4px;">
+    <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+       th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+      <img src="/uploads/discord-icon.png" alt="Discord" class="social-icon" />
+    </a>
+    <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+       th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+      <img src="/uploads/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+    </a>
+  </span>
+            </small>
+        </div>
+    </div>
 </div>
+
+<footer>
+    <div class="container">
+        <div class="footer-nav">
+            <a href="#">공지사항</a>
+            <a href="#">사용방법</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">광고/제휴문의</a>
+            <a href="#">개발문의</a>
+            <a href="#">404 Squad</a>
+        </div>
+        <div>
+            lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn't reflect their views.
+            League of Legends is a trademark of Riot Games.
+        </div>
+    </div>
+</footer>
+
+<script>
+    function openModal() {
+        document.getElementById("clanModal").style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById("clanModal").style.display = "none";
+    }
+
+
+    // 이미지 미리보기 함수
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            const output = document.getElementById('imagePreview');
+            output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+</script>
+</body>
+</html>

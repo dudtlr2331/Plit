@@ -3,35 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>QnA 관리자 페이지</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            text-align: center;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 900px;
-            margin: 20px auto;
-        }
-        th, td {
-            border: 1px solid #aaa;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        .answered {
-            color: green;
-            font-weight: bold;
-        }
-        .waiting {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/qna.css}" />
 </head>
 <body>
 
@@ -83,7 +55,7 @@
         <td th:text="${room.inquiryRoomId}">채팅방 ID</td>
         <td th:text="${room.userId}">사용자 ID</td>
         <td th:text="${#temporals.format(room.createdAt, 'yyyy.MM.dd HH:mm')}"></td>
-            생성 시간
+        생성 시간
         </td>
         <td>
             <a href="#" class="chat-open-btn" th:attr="data-room-id=${room.inquiryRoomId}">
@@ -107,48 +79,8 @@
     </div>
 </div>
 
-<script>
-    let ws;
 
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".chat-open-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const roomId = btn.getAttribute("data-room-id");
-                openChatPopup(roomId);
-            });
-        });
-    });
-
-    function openChatPopup(roomId) {
-        document.getElementById("chatPopup").style.display = "block";
-        const userId = "admin"; // 로그인 사용자로 변경 필요
-
-        ws = new WebSocket(`wss://${location.host}/ws/chat?roomId=${roomId}&userId=${userId}`);
-
-        ws.onmessage = (event) => {
-            const msgBox = document.getElementById("chatMessages");
-            const div = document.createElement("div");
-            div.textContent = event.data;
-            msgBox.appendChild(div);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        };
-    }
-
-    function sendMessage() {
-        const input = document.getElementById("messageInput");
-        if (input.value.trim()) {
-            ws.send(input.value);
-            input.value = "";
-        }
-    }
-
-    function closeChatPopup() {
-        document.getElementById("chatPopup").style.display = "none";
-        if (ws) {
-            ws.close();
-        }
-    }
-</script>
+<script th:src="@{/js/admin-qna.js}"></script>
 
 </body>
 </html>
