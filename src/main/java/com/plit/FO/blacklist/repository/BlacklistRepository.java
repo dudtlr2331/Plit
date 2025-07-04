@@ -1,5 +1,6 @@
-package com.plit.FO.blacklist;
+package com.plit.FO.blacklist.repository;
 
+import com.plit.FO.blacklist.entity.BlacklistEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.plit.FO.blacklist;
+package com.plit.FO.blacklist.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

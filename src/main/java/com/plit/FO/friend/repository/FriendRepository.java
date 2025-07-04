@@ -1,5 +1,6 @@
-package com.plit.FO.friend;
+package com.plit.FO.friend.repository;
 
+import com.plit.FO.friend.entity.FriendEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,5 +1,6 @@
-package com.plit.FO.block;
+package com.plit.FO.block.repository;
 
+import com.plit.FO.block.entity.BlockEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

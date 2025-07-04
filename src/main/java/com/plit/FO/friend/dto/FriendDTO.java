@@ -1,4 +1,4 @@
-package com.plit.FO.friend;
+package com.plit.FO.friend.dto;
 
 import com.plit.FO.user.UserDTO;
 import lombok.*;

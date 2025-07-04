@@ -1,8 +1,9 @@
-package com.plit.FO.blacklist;
+package com.plit.FO.blacklist.controller;
 
+import com.plit.FO.blacklist.service.BlacklistService;
+import com.plit.FO.blacklist.dto.BlacklistDTO;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
