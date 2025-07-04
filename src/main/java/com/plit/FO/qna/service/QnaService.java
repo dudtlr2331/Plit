@@ -18,4 +18,6 @@ public interface QnaService {
     QnaEntity findById(Long id);
 
     void saveAnswer(Long id, String answer);
+
+    List<QnaEntity> getUnansweredQuestions();
 }

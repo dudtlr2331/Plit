@@ -34,7 +34,8 @@
                     <div class="collapse" id="collapseQna" data-bs-parent="#sidenavAccordion">
                         <nav class="sb-sidenav-menu-nested nav">
                             <a class="nav-link" href="/bo/personal_qna">1:1 문의</a>
-                            <a class="nav-link" href="/bo/unprocessed_qna">미처리 문의</a>
+                            <a class="nav-link" href="/bo/admin/qna/unprocessed">미처리 문의</a>
+                            <a class="nav-link" href="/bo/admin/qna/list">전체 문의</a>
                         </nav>
                     </div>
                     <div class="sb-sidenav-menu-heading">유저 관리</div>
@@ -62,7 +63,31 @@
         <main>
             <div class="container-fluid px-4">
                 <h1 class="mt-4">미처리 고객 문의</h1>
-                <!-- 컨텐츠 추가 부분-->
+
+                <!-- ✅ 미처리 QnA 목록 테이블 -->
+                <table class="table table-bordered mt-4">
+                    <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>작성일</th>
+                        <th>답변</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="qna : ${questions}">
+                        <td th:text="${qna.id}">1</td>
+                        <td>
+                            <a th:href="@{/bo/admin/qna/answer/{id}(id=${qna.id})}" th:text="${qna.title}">제목</a>
+                            <span th:if="${qna.fileName != null}">📎</span>
+                        </td>
+                        <td th:text="${qna.userId}">user123</td>
+                        <td th:text="${#temporals.format(qna.askedAt, 'yyyy-MM-dd HH:mm')}">날짜</td>
+                        <td><span class="badge bg-warning text-dark">미답변</span></td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </main>
 
@@ -92,7 +117,6 @@
         location.href = "/main";
     }
     /*]]>*/
-
 </script>
 </body>
 </html>

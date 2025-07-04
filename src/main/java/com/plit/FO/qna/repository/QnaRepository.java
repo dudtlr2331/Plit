@@ -16,6 +16,8 @@ public interface QnaRepository extends JpaRepository<QnaEntity,Long> {
     List<QnaEntity> findByUserIdOrderByAskedAtDesc(Long userId);
     List<QnaEntity> findByUserIdAndDeleteYnOrderByAskedAtDesc(Long userId, String deleteYn);
     List<QnaEntity> findByDeleteYnOrderByAskedAtDesc(String deleteYn);
+    List<QnaEntity> findByAnswerIsNull();
+    List<QnaEntity> findByAnswerIsNullAndDeleteYnOrderByAskedAtDesc(String deleteYn);
 
     @Modifying
     @Transactional

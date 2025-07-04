@@ -1,36 +1,45 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:fragment="layout (content)">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:fragment="layout (content)">
 <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
 
-    <title>관리자 대시보드</title>
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-    <link href="/css/styles.css" rel="stylesheet" />
+    <title>관리자 페이지</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+
+    <!-- FontAwesome -->
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
 </head>
+
 <body class="sb-nav-fixed">
+<!-- 상단 네비게이션 -->
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
     <a class="navbar-brand ps-3" href="/index">관리자 페이지</a>
-    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
 </nav>
 
+<!-- 전체 구조 -->
 <div id="layoutSidenav">
+    <!-- 사이드바 -->
     <div id="layoutSidenav_nav">
-        <!-- 사이드바 -->
         <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
             <div class="sb-sidenav-menu">
                 <div class="nav">
                     <div class="sb-sidenav-menu-heading">Core</div>
-                    <a th:if="${loginUser.userAuth == 'master' || loginUser.userAuth == 'admin'}" class="nav-link" href="/index">
+                    <a th:if="${loginUser.userAuth == 'master' || loginUser.userAuth == 'admin'}"
+                       class="nav-link" href="/index">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                         Dashboard
                     </a>
+
                     <div class="sb-sidenav-menu-heading">고객문의</div>
                     <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseQna">
                         <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
@@ -39,10 +48,11 @@
                     </a>
                     <div class="collapse" id="collapseQna" data-bs-parent="#sidenavAccordion">
                         <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link" href="/bo/qna/list"> 전체 문의 목록</a>
+                            <a class="nav-link" href="/bo/qna/list">전체 문의 목록</a>
                             <a class="nav-link" href="/bo/qna/unprocessed">미처리 문의 목록</a>
                         </nav>
                     </div>
+
                     <div class="sb-sidenav-menu-heading">유저 관리</div>
                     <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUser">
                         <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
@@ -57,6 +67,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="sb-sidenav-footer">
                 <div class="small">로그인 계정:</div>
                 <span th:text="${loginUser.userNickname}">닉네임</span>
@@ -64,11 +75,10 @@
         </nav>
     </div>
 
+    <!-- 본문 영역 -->
     <div id="layoutSidenav_content">
         <main>
-            <div class="container-fluid px-4" th:insert="${content}">
-                <!-- 각 페이지의 내용 -->
-            </div>
+            <div class="container-fluid px-4" th:replace="${content}"></div>
         </main>
 
         <footer class="py-4 bg-light mt-auto">
@@ -86,9 +96,10 @@
     </div>
 </div>
 
-<!-- Scripts -->
+<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="/js/scripts.js"></script>
+
 <script th:inline="javascript">
     /*<![CDATA[*/
     const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
@@ -98,5 +109,6 @@
     }
     /*]]>*/
 </script>
+
 </body>
 </html>

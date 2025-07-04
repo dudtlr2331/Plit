@@ -15,11 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
 
 @Controller
-@RequestMapping("/bo/qna")
+@RequestMapping("/bo/admin/qna")
 @RequiredArgsConstructor
 public class BoQnaController {
 
@@ -28,52 +27,48 @@ public class BoQnaController {
     @Value("${custom.upload-path.qna}")
     private String uploadDir;
 
-    // 전체 문의 목록
+    // ✅ 전체 문의 목록
     @GetMapping("/list")
     public String showAllQuestions(HttpSession session, Model model) {
-        String auth = "admin"; // 테스트용
-//        String auth = (String) session.getAttribute("userAuth");
-//        if (!"admin".equals(auth)) return "redirect:/fo/login";
+        if (!hasAdminPermission(session)) return "redirect:/login";
 
         List<QnaEntity> allQuestions = qnaService.getAllQuestions();
         model.addAttribute("questions", allQuestions);
-
-        // 테스트용 채팅방 목록 (실제 서비스에서는 DB 또는 세션 기반으로 대체)
-        List<Map<String, Object>> pendingRooms = new ArrayList<>();
-        Map<String, Object> testRoom = new HashMap<>();
-        testRoom.put("inquiryRoomId", "admin-room");
-        testRoom.put("userId", "user1");
-        testRoom.put("createdAt", LocalDateTime.now());
-        pendingRooms.add(testRoom);
-        model.addAttribute("pendingRooms", pendingRooms);
-
-        return "bo/qna/list";
+        return "bo/admin/qna/all_qna";
     }
 
-    // 답변 폼
+    // ✅ 미처리 문의 목록
+    @GetMapping("/unprocessed")
+    public String showUnprocessedQuestions(HttpSession session, Model model) {
+        if (!hasAdminPermission(session)) return "redirect:/login";
+
+        List<QnaEntity> unansweredQuestions = qnaService.getUnansweredQuestions();
+        model.addAttribute("questions", unansweredQuestions);
+        return "bo/admin/qna/unprocessed_qna";
+    }
+
+    // ✅ 답변 폼 페이지
     @GetMapping("/answer/{id}")
     public String showAnswerForm(@PathVariable Long id, HttpSession session, Model model) {
-        String auth = "admin"; // 테스트용
-//        String auth = (String) session.getAttribute("userAuth");
-//        if (!"admin".equals(auth)) return "redirect:/fo/login";
+        if (!hasAdminPermission(session)) return "redirect:/login";
 
         QnaEntity qna = qnaService.findById(id);
         model.addAttribute("qna", qna);
-        return "bo/qna/answer";
+        return "bo/admin/qna/answer";
     }
 
-    // 답변 저장 처리
+    // ✅ 답변 저장 처리
     @PostMapping("/answer/{id}")
-    public String saveAnswer(@PathVariable Long id, @RequestParam("answer") String answer, HttpSession session) {
-        String auth = "admin"; // 테스트용
-//        String auth = (String) session.getAttribute("userAuth");
-//        if (!"admin".equals(auth)) return "redirect:/fo/login";
+    public String saveAnswer(@PathVariable Long id,
+                             @RequestParam("answer") String answer,
+                             HttpSession session) {
+        if (!hasAdminPermission(session)) return "redirect:/login";
 
         qnaService.saveAnswer(id, answer);
-        return "redirect:/bo/qna/list";
+        return "redirect:/bo/admin/qna/list";
     }
 
-    // 첨부파일 다운로드
+    // ✅ 파일 다운로드
     @GetMapping("/download/{fileName}")
     @ResponseBody
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
@@ -86,7 +81,8 @@ public class BoQnaController {
             }
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + resource.getFilename() + "\"")
                     .body(resource);
 
         } catch (Exception e) {
@@ -94,18 +90,32 @@ public class BoQnaController {
         }
     }
 
-    // 관리자 채팅 화면 (팝업으로 오픈됨)
+    // ✅ 채팅 팝업 진입
     @GetMapping("/chat/inquiry/open/{roomId}")
-    public String openAdminChat(@PathVariable String roomId, Model model) {
+    public String openAdminChat(@PathVariable String roomId, HttpSession session, Model model) {
+        if (!hasAdminPermission(session)) return "redirect:/login";
+
+        Object userId = session.getAttribute("userId");
+        if (userId == null) return "redirect:/login";
+
         model.addAttribute("roomId", roomId);
-        model.addAttribute("userId", "admin"); // 테스트용
-        // model.addAttribute("userId", session.getAttribute("userId")); // 실사용 시
-        return "bo/qna/admchat";
+        model.addAttribute("userId", userId);
+        return "bo/admin/qna/admchat";
     }
 
-    // 관리자 채팅 HTML 단독 진입 (개별 테스트용)
+    // ✅ 단독 채팅 화면
     @GetMapping("/admchat")
-    public String showAdminChat() {
-        return "bo/qna/admchat";
+    public String showAdminChat(HttpSession session) {
+        if (!hasAdminPermission(session)) return "redirect:/login";
+        return "bo/admin/qna/admchat";
+    }
+
+    // ✅ 권한 체크 유틸 (null-safe)
+    private boolean hasAdminPermission(HttpSession session) {
+        Object authObj = session.getAttribute("userAuth");
+        if (authObj instanceof String auth) {
+            return "admin".equals(auth) || "master".equals(auth);
+        }
+        return false;
     }
 }

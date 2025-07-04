@@ -130,6 +130,13 @@ public class UserService {
         return userRepository.findByUserId(userId).map(this::convertToDto);
     }
 
+    public UserDTO findByUserId(String userId) {
+        return userRepository.findByUserId(userId)
+                .map(UserEntity::toDTO)
+                .orElse(null);
+    }
+
+
     @Transactional(readOnly = true)
     public Optional<UserDTO> getUserBySeq(Integer userSeq) {
         return userRepository.findById(userSeq).map(this::convertToDto);
