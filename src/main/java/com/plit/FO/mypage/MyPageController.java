@@ -1,6 +1,6 @@
 package com.plit.FO.mypage;
 
-import com.plit.FO.qna.QnaService;
+import com.plit.FO.qna.service.QnaService;
 import com.plit.FO.user.UserDTO;
 import com.plit.FO.user.UserService;
 import jakarta.servlet.http.HttpSession;
