@@ -1,4 +1,4 @@
-package com.plit.FO.party;
+package com.plit.FO.party.enums;
 
 public enum PositionEnum {
     TOP("탑"),

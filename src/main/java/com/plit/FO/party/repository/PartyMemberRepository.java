@@ -11,7 +11,9 @@ public interface PartyMemberRepository extends JpaRepository<PartyMemberEntity, 
 
     List<PartyMemberEntity> findByParty(PartyEntity party);
 
-    Optional<PartyMemberEntity> findByPartyAndUserId(PartyEntity party, Long userId);
+    Optional<PartyMemberEntity> findByPartyAndUserId(PartyEntity party, String userId);
 
     void deleteByParty(PartyEntity party);
+
+    boolean existsByParty_PartySeqAndUserId(Long party, String userId);
 }

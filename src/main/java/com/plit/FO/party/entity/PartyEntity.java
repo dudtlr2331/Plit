@@ -1,5 +1,6 @@
 package com.plit.FO.party.entity;
 
+import com.plit.FO.party.enums.PartyStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,8 +52,9 @@ public class PartyEntity {
     @Column(name = "party_end_time", nullable = false)
     private LocalDateTime partyEndTime;
 
-    @Column(name = "party_status", length = 7, nullable = false)
-    private String partyStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "party_status")
+    private PartyStatus partyStatus;
 
     @Column(name = "party_headcount", nullable = false)
     private Integer partyHeadcount;

@@ -1,6 +1,5 @@
 package com.plit.FO.party.dto;
 
-import com.plit.FO.party.PositionEnum;
 import com.plit.FO.party.entity.PartyFindPositionEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

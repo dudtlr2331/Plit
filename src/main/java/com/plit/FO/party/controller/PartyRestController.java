@@ -60,4 +60,11 @@ public class PartyRestController {
         partyService.deleteParty(id);
         return ResponseEntity.noContent().build();
     }
+
+    // 파티 참가
+    @PostMapping("/{partySeq}/join")
+    public ResponseEntity<?> joinParty(@PathVariable Long partySeq, @AuthenticationPrincipal User user) {
+        partyService.joinParty(partySeq, user.getUsername());
+        return ResponseEntity.ok().build();
+    }
 }

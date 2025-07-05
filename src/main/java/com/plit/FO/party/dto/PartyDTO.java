@@ -44,7 +44,7 @@ public class PartyDTO {
         this.partyType = entity.getPartyType();
         this.partyCreateDate = entity.getPartyCreateDate();
         this.partyEndTime = entity.getPartyEndTime();
-        this.partyStatus = entity.getPartyStatus();
+        this.partyStatus = entity.getPartyStatus().name();
         this.partyHeadcount = entity.getPartyHeadcount();
         this.partyMax = entity.getPartyMax();
         this.memo = entity.getMemo();
