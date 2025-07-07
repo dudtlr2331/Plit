@@ -12,6 +12,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+let selectedPartyId = null;
+
+function openJoinPopup(partyId) {
+    selectedPartyId = partyId;
+    document.getElementById('joinPopup').style.display = 'block';
+}
+
+function closeJoinPopup() {
+    selectedPartyId = null;
+    document.getElementById('joinPopup').style.display = 'none';
+}
+
+function submitJoinRequest() {
+    const position = document.querySelector('input[name="joinPosition"]:checked')?.value;
+    const message = document.getElementById('joinMessage').value;
+
+    if (!position) {
+        alert("포지션을 선택해주세요.");
+        return;
+    }
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${selectedPartyId}/join`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({ position, message })
+    })
+        .then(res => res.text())
+        .then(msg => {
+            alert(msg === 'OK' ? '참가 신청 완료!' : `신청 실패: ${msg}`);
+            closeJoinPopup();
+            closePartyDetail();
+            const activeTab = document.querySelector('.tab.active').id;
+            const type = activeTab === 'freeTab' ? 'team' : 'solo';
+            loadParties(type);
+        })
+        .catch(err => {
+            console.error(err);
+            alert('참가 신청 중 오류 발생');
+        });
+}
+
 const positionMap = {
     "전체": "ALL",
     "탑": "TOP",
@@ -77,6 +124,7 @@ function renderParties(data) {
         data-max="${party.partyMax}"
         data-memo="${party.memo}"
         data-main="${party.mainPosition}"
+        data-createdby="${party.createdBy}"
         data-positions="${party.positions.join(', ')}"
       >${party.partyName}</a></span>
       <span>${party.partyType}</span>
@@ -104,7 +152,8 @@ function renderParties(data) {
                 el.dataset.max,
                 el.dataset.memo,
                 el.dataset.main,
-                el.dataset.positions
+                el.dataset.positions,
+                el.dataset.createdby
             );
         });
     });
@@ -134,42 +183,82 @@ function selectPosition(element) {
     element.classList.add('selected');
 }
 
-function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions) {
+function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions, createdBy) {
     const popup = document.getElementById('partyDetailPopup');
-    popup.innerHTML = `
-    <h3>파티 상세 정보</h3>
-    <p><strong>이름:</strong> ${name}</p>
-    <p><strong>타입:</strong> ${type}</p>
-    <p><strong>생성일자:</strong> ${formatDateTime(createDate)}</p>
-    <p><strong>종료일자:</strong> ${formatDateTime(endDate)}</p>
-    <p><strong>상태:</strong> ${status}</p>
-    <p><strong>현재 인원:</strong> ${headcount}</p>
-    <p><strong>최대 인원:</strong> ${max}</p>
-    <p><strong>메모:</strong> ${memo}</p>
-    <p><strong>주 포지션:</strong> ${mainPosition}</p>
-    <p><strong>모집 포지션:</strong> ${positions}</p>
-    <div class="popup-buttons">
-      <button onclick="handleEditFromDetail('${encodeURIComponent(JSON.stringify({
-        partySeq: seq,
-        partyName: name,
-        partyType: type,
-        partyCreateDate: createDate,
-        partyEndTime: endDate,
-        partyStatus: status,
-        partyHeadcount: headcount,
-        partyMax: max,
-        memo: memo,
-        mainPosition: mainPosition,
-        positions: positions.split(',').map(p => p.trim())
-    }))}')">수정</button>
-      
-      <button onclick="deleteParty(${seq})">삭제</button>
-      <button onclick="closePartyDetail()">닫기</button>
-      ${type === 'team' && status === 'WAITING' ? `<button onclick="joinParty(${seq})">참가하기</button>` : ''}
-    </div>
-  `;
-    popup.style.display = 'block';
+    const currentUserId = document.querySelector('meta[name="user-id"]')?.getAttribute('content');
+    const isOwner = currentUserId && currentUserId === createdBy;
+
+    // 참가 여부 확인 후 팝업 그리기
+    checkJoined(seq).then(isJoined => {
+        const joinBtnHtml = (() => {
+            if (type !== 'team' || status !== 'WAITING') return '';
+            if (isJoined) {
+                return `<p style="color: green;"><strong>이미 참가한 파티입니다.</strong></p>`;
+            }
+            return `<button onclick="openJoinPopup(${seq})">참가하기</button>`;
+        })();
+
+        // 여기서 멤버 리스트를 추가로 불러와서 팝업에 삽입
+        fetchPartyMembers(seq).then(members => {
+            const memberListHtml = members.length > 0
+                ? members.map(m => `<li>${m}</li>`).join('')
+                : `<li>참가자가 없습니다.</li>`;
+
+            // 수정/삭제 버튼 조건부 생성
+            const ownerButtons = isOwner
+                ? `
+                <button onclick="handleEditFromDetail('${encodeURIComponent(JSON.stringify({
+                    partySeq: seq,
+                    partyName: name,
+                    partyType: type,
+                    partyCreateDate: createDate,
+                    partyEndTime: endDate,
+                    partyStatus: status,
+                    partyHeadcount: headcount,
+                    partyMax: max,
+                    memo: memo,
+                    mainPosition: mainPosition,
+                    positions: positions.split(',').map(p => p.trim())
+                }))}')">수정</button>
+                <button onclick="deleteParty(${seq})">삭제</button>
+                `
+                : '';
+
+            popup.innerHTML = `
+            <h3>파티 상세 정보</h3>
+            <p><strong>이름:</strong> ${name}</p>
+            <p><strong>타입:</strong> ${type}</p>
+            <p><strong>생성일자:</strong> ${formatDateTime(createDate)}</p>
+            <p><strong>종료일자:</strong> ${formatDateTime(endDate)}</p>
+            <p><strong>상태:</strong> ${status}</p>
+            <p><strong>현재 인원:</strong> ${headcount}</p>
+            <p><strong>최대 인원:</strong> ${max}</p>
+            <p><strong>메모:</strong> ${memo}</p>
+            <p><strong>주 포지션:</strong> ${mainPosition}</p>
+            <p><strong>모집 포지션:</strong> ${positions}</p>
+            <p><strong>참가 멤버:</strong></p>
+            <ul>${memberListHtml}</ul>
+            <div class="popup-buttons">
+              ${ownerButtons}
+              <button onclick="closePartyDetail()">닫기</button>
+              ${joinBtnHtml}
+            </div>
+            `;
+            popup.style.display = 'block';
+        });
+    });
 }
+
+const fetchPartyMembers = async (partyId) => {
+    try {
+        const res = await fetch(`/api/parties/${partyId}/members`);
+        if (!res.ok) throw new Error('멤버 조회 실패');
+        return await res.json(); // [ "user1", "user2", ... ]
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
 
 function joinParty(partySeq) {
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
@@ -182,17 +271,16 @@ function joinParty(partySeq) {
             [csrfHeader]: csrfToken
         }
     })
-        .then(res => {
-            if (res.ok) {
+        .then(res => res.text())  // 항상 text 응답 받기
+        .then(msg => {
+            if (msg === 'OK') {
                 alert('파티에 참가하였습니다!');
                 closePartyDetail();
                 const activeTab = document.querySelector('.tab.active').id;
                 const type = activeTab === 'freeTab' ? 'team' : 'solo';
                 loadParties(type);
             } else {
-                return res.text().then(msg => {
-                    alert(`참가 실패: ${msg}`);
-                });
+                alert(`참가 실패: ${msg}`);
             }
         })
         .catch(err => {
@@ -200,6 +288,27 @@ function joinParty(partySeq) {
             alert('참가 중 오류 발생');
         });
 }
+
+const checkJoined = async (partyId) => {
+    try {
+        const response = await fetch(`/api/party/${partyId}/joined`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            console.warn('참가 여부 확인 실패');
+            return false; // 기본값
+        }
+
+        return await response.json(); // true or false
+    } catch (err) {
+        console.error(err);
+        return false; // 오류 시 기본값
+    }
+};
 
 function deleteParty(partyId) {
     if (!confirm("정말 삭제할까요?")) return;
@@ -400,3 +509,4 @@ function formatDateTime(dateTimeStr) {
     if (!dateTimeStr) return '';
     return dateTimeStr.replace('T', ' ').slice(0, 16);
 }
+

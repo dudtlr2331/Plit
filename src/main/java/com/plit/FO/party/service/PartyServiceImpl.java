@@ -148,11 +148,11 @@ public class PartyServiceImpl implements PartyService {
 
     @Transactional
     @Override
-    public void joinParty(Long partySeq, String userId) {
+    public void joinParty(Long partySeq, String userId, String position, String message) {
         PartyEntity party = partyRepository.findById(partySeq)
                 .orElseThrow(() -> new IllegalArgumentException("해당 파티가 존재하지 않습니다."));
 
-        if (!"자유랭크".equals(party.getPartyType())) {
+        if (!"team".equals(party.getPartyType())) {
             throw new IllegalStateException("자유랭크 파티만 참가할 수 있습니다.");
         }
 
@@ -173,8 +173,13 @@ public class PartyServiceImpl implements PartyService {
                 .party(party)
                 .userId(userId)
                 .role("MEMBER")
+                .message(message)
                 .build();
+
         partyMemberRepository.save(member);
+        partyMemberRepository.flush();  // ★ 강제 flush
+
+        System.out.println(">>> [Join] member 저장됨: " + member.getId());
 
         // 현재 인원수 증가
         party.setPartyHeadcount(party.getPartyHeadcount() + 1);
@@ -184,5 +189,44 @@ public class PartyServiceImpl implements PartyService {
         }
 
         partyRepository.save(party);
+    }
+
+    @Transactional
+    public String tryJoinParty(Long partySeq, String userId) {
+        PartyEntity party = partyRepository.findById(partySeq)
+                .orElse(null);
+
+        if (party == null) return "해당 파티가 존재하지 않습니다.";
+        if (!"team".equals(party.getPartyType())) return "자유랭크 파티만 참가할 수 있습니다.";
+        if (party.getPartyStatus() == PartyStatus.FULL || party.getPartyStatus() == PartyStatus.CLOSED)
+            return "마감된 파티에는 참가할 수 없습니다.";
+        if (partyMemberRepository.existsByParty_PartySeqAndUserId(partySeq, userId))
+            return "이미 참가한 파티입니다.";
+        if (party.getPartyHeadcount() >= party.getPartyMax())
+            return "파티 인원이 가득 찼습니다.";
+
+        // 등록
+        PartyMemberEntity member = PartyMemberEntity.builder()
+                .party(party)
+                .userId(userId)
+                .role("MEMBER")
+                .build();
+        partyMemberRepository.save(member);
+
+        // 인원 증가 + 상태 변경
+        party.setPartyHeadcount(party.getPartyHeadcount() + 1);
+        if (party.getPartyHeadcount() >= party.getPartyMax()) {
+            party.setPartyStatus(PartyStatus.FULL);
+        }
+
+        partyRepository.save(party);
+        return "OK";
+    }
+
+    @Override
+    public List<String> getPartyMembers(Long partySeq) {
+        return partyMemberRepository.findByParty_PartySeq(partySeq).stream()
+                .map(PartyMemberEntity::getUserId)
+                .collect(Collectors.toList());
     }
 }

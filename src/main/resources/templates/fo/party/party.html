@@ -6,6 +6,7 @@
   <meta name="_csrf" th:content="${_csrf.token}">
   <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
   <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <meta name="user-id" th:content="${#authentication.name}">
   <link rel="stylesheet" href="/css/party-popup.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
@@ -86,6 +87,27 @@
 <div id="recruitPopup" class="recruit-popup"></div>
 <div id="partyDetailPopup" class="recruit-popup"></div>
 <div id="chatBox" class="chatbox">채팅창</div>
+
+<div id="joinPopup" class="recruit-popup" style="display:none;">
+  <h3>파티 참가 신청</h3>
+
+  <label>주 포지션 선택</label>
+  <div class="position-group">
+    <label><input type="radio" name="joinPosition" value="TOP"> 탑</label>
+    <label><input type="radio" name="joinPosition" value="JUNGLE"> 정글</label>
+    <label><input type="radio" name="joinPosition" value="MID"> 미드</label>
+    <label><input type="radio" name="joinPosition" value="ADC"> 원딜</label>
+    <label><input type="radio" name="joinPosition" value="SUPPORT"> 서포터</label>
+  </div>
+
+  <label>자기소개</label>
+  <textarea id="joinMessage" rows="3" placeholder="나를 소개해주세요"></textarea>
+
+  <div class="popup-buttons">
+    <button onclick="submitJoinRequest()">가입 신청</button>
+    <button onclick="closeJoinPopup()">취소</button>
+  </div>
+</div>
 
 <!-- JS 분리 -->
 <script src="/js/party.js"></script>

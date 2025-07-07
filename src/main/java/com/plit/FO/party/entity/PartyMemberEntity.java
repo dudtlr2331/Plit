@@ -32,4 +32,7 @@ public class PartyMemberEntity {
 
     @Column(name = "role", nullable = false, length = 10)
     private String role = "MEMBER";
+
+    @Column(name = "message")
+    private String message;
 }

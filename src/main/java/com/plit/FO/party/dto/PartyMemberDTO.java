@@ -15,11 +15,13 @@ public class PartyMemberDTO {
     private String userId;
     private LocalDateTime joinTime;
     private String role;
+    private String message;
 
     public PartyMemberDTO(PartyMemberEntity entity) {
         this.id = entity.getId();
         this.userId = entity.getUserId();
         this.joinTime = entity.getJoinTime();
         this.role = entity.getRole();
+        this.message = entity.getMessage();
     }
 }

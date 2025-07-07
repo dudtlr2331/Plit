@@ -10,5 +10,7 @@ public interface PartyService {
     void updateParty(Long id, PartyDTO dto);
     void deleteParty(Long id);
 
-    void joinParty(Long partySeq, String userId);
+    String tryJoinParty(Long partySeq, String username);
+    List<String> getPartyMembers(Long partySeq);
+    void joinParty(Long partyId, String username, String position, String message);
 }
