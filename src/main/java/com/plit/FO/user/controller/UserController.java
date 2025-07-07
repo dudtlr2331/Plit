@@ -24,8 +24,16 @@ public class UserController {
 
     /// 로그인 폼
     @GetMapping("/login")
-    public String showLoginForm(Model model) {
+    public String showLoginForm(HttpServletRequest request, Model model) {
         model.addAttribute("userDTO", new UserDTO());
+
+        // 로그인 실패 메시지 처리
+        String loginError = (String) request.getSession().getAttribute("loginError");
+        if (loginError != null) {
+            model.addAttribute("error", loginError);
+            request.getSession().removeAttribute("loginError");
+        }
+
         return "fo/user/login";
     }
 

@@ -1,6 +1,6 @@
 package com.plit.FO.qna.entity;
 
-import com.plit.FO.user.UserEntity;
+import com.plit.FO.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
