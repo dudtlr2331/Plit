@@ -213,11 +213,11 @@ public class UserService {
         return false;
     }
 
-    public UserDTO findByUserId(String userId) {
-        return userRepository.findByUserId(userId)
-                .map(UserEntity::toDTO)
-                .orElse(null);
-    }
+//    public UserDTO findByUserId(String userId) {
+//        return userRepository.findByUserId(userId)
+//                .map(UserEntity::toDTO)
+//                .orElse(null);
+//    }
 
     @Transactional
     public void updateNickname(String userId, String newNickname) {

@@ -29,7 +29,7 @@
                 <div class="nav">
                     <div class="sb-sidenav-menu-heading">Core</div>
 
-                    <!-- ✅ null 체크 추가 -->
+                    <!-- null 체크 추가 -->
                     <a th:if="${loginUser != null and (loginUser.userAuth == 'master' or loginUser.userAuth == 'admin')}"
                        class="nav-link" href="/index">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
