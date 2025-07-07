@@ -161,13 +161,44 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
         memo: memo,
         mainPosition: mainPosition,
         positions: positions.split(',').map(p => p.trim())
-        }))}')">수정</button>
+    }))}')">수정</button>
       
       <button onclick="deleteParty(${seq})">삭제</button>
       <button onclick="closePartyDetail()">닫기</button>
+      ${type === 'team' && status === 'WAITING' ? `<button onclick="joinParty(${seq})">참가하기</button>` : ''}
     </div>
   `;
     popup.style.display = 'block';
+}
+
+function joinParty(partySeq) {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${partySeq}/join`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                alert('파티에 참가하였습니다!');
+                closePartyDetail();
+                const activeTab = document.querySelector('.tab.active').id;
+                const type = activeTab === 'freeTab' ? 'team' : 'solo';
+                loadParties(type);
+            } else {
+                return res.text().then(msg => {
+                    alert(`참가 실패: ${msg}`);
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('참가 중 오류 발생');
+        });
 }
 
 function deleteParty(partyId) {

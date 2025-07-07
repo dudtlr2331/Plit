@@ -25,7 +25,7 @@ public class PartyMemberEntity {
     private PartyEntity party;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private String userId;
 
     @Column(name = "join_time")
     private LocalDateTime joinTime = LocalDateTime.now();

@@ -39,15 +39,19 @@
 
             <!-- STEP 2 -->
             <div class="form-step" id="step2">
-                <input type="email" id="emailDisplay" class="form-control mb-3" disabled />
+                <input type="email" id="emailDisplay" class="form-control mb-3" readonly />
                 <input type="text" id="codeInput" class="form-control mb-3" placeholder="인증번호 입력" required />
+
+                <!-- ✅ 인증번호 재전송 버튼 -->
+                <button id="sendCodeBtn" type="button" class="btn btn-outline-secondary w-100 mb-3" onclick="resendCode()">인증번호 다시 보내기</button>
+
                 <button class="btn btn-red w-100" onclick="nextStep(3)">계속하기</button>
             </div>
 
             <!-- STEP 3 -->
             <div class="form-step" id="step3">
                 <form action="/signup" method="post">
-                    <input type="email" id="emailFinal" name="userId" class="form-control mb-3" readonly />
+                    <input type="email" id="emailFinal" name="userId" class="form-control mb-3" readonly autocomplete="username" />
                     <input type="password" id="passwordInput" name="userPwd" class="form-control mb-2" placeholder="비밀번호" required autocomplete="new-password" />
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
@@ -85,15 +89,18 @@
 </div>
 
 <script>
-    // ✅ CSRF 토큰 추출
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
     async function nextStep(step) {
+        const btn = document.querySelector(`#step${step - 1} .btn-red`); // 현재 버튼
+        btn.disabled = true; // 버튼 비활성화
+
         if (step === 2) {
             const email = document.getElementById('emailInput').value.trim();
             if (!email) {
                 alert("이메일을 입력해주세요.");
+                btn.disabled = false;
                 return;
             }
 
@@ -102,10 +109,10 @@
                 const { available } = await res.json();
                 if (!available) {
                     alert("이미 사용 중인 아이디입니다.");
+                    btn.disabled = false;
                     return;
                 }
 
-                // ✅ 인증번호 메일 전송 요청
                 await fetch('/send-code', {
                     method: 'POST',
                     headers: {
@@ -115,17 +122,27 @@
                     body: new URLSearchParams({ email })
                 });
 
+                startCooldown(document.getElementById("sendCodeBtn"));
+
+                document.getElementById('emailDisplay').value = email;
+                document.getElementById('emailFinal').value = email;
+                document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+                document.getElementById('step' + step).classList.add('active');
+
             } catch (e) {
                 alert("오류가 발생했습니다.");
-                return;
+                console.error(e);
+            } finally {
+                btn.disabled = false; // 버튼 재활성화
             }
 
-            document.getElementById('emailDisplay').value = email;
-            document.getElementById('emailFinal').value = email;
+            return;
         }
 
         if (step === 3) {
             const code = document.getElementById('codeInput').value.trim();
+            const email = document.getElementById('emailFinal').value.trim();
+
             if (!code) {
                 alert("인증번호를 입력해주세요.");
                 return;
@@ -138,7 +155,10 @@
                         [csrfHeader]: csrfToken,
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: new URLSearchParams({ inputCode: code })
+                    body: new URLSearchParams({
+                        inputCode: code,
+                        email: email
+                    })
                 });
 
                 const resultText = await res.text();
@@ -146,14 +166,68 @@
                     alert(resultText);
                     return;
                 }
+
+                // ✅ 인증 성공 후에만 step3로 이동
+                document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+                document.getElementById('step' + step).classList.add('active');
+
             } catch (e) {
                 alert("인증 확인 중 오류가 발생했습니다.");
-                return;
+                console.error(e);
             }
+
+            return;
+        }
+    }
+
+    function resendCode() {
+        const email = document.getElementById('emailDisplay').value.trim();
+        const btn = document.getElementById('sendCodeBtn');
+
+        if (!email) {
+            alert("이메일이 비어있습니다.");
+            return;
         }
 
-        document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
-        document.getElementById('step' + step).classList.add('active');
+        btn.disabled = true;
+        btn.textContent = "잠시만 기다려주세요...";
+
+        fetch('/send-code', {
+            method: 'POST',
+            headers: {
+                [csrfHeader]: csrfToken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ email })
+        })
+            .then(res => {
+                if (!res.ok) return res.text().then(msg => { throw new Error(msg); });
+                return res.text();
+            })
+            .then(() => {
+                alert("인증번호가 재전송되었습니다.");
+                startCooldown(btn);
+            })
+            .catch(err => {
+                alert("오류: " + err.message);
+                btn.disabled = false;
+                btn.textContent = "인증번호 다시 보내기";
+            });
+    }
+
+    function startCooldown(button) {
+        let timeLeft = 180;
+        const originalText = "인증번호 다시 보내기";
+
+        const timer = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                button.disabled = false;
+                button.textContent = originalText;
+            } else {
+                button.textContent = `재전송 ${timeLeft--}초`;
+            }
+        }, 1000);
     }
 
     function isValidPassword(password, email) {

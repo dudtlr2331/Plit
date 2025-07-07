@@ -292,11 +292,9 @@
             <li><a th:href="@{/mypage/friends}" th:classappend="${viewSection=='friends'}?'active'">친구 목록</a></li>
             <li><a th:href="@{/mypage/blocked}" th:classappend="${viewSection=='blocked'}?'active'">차단 목록</a></li>
             <li>
-                <form th:if="${session.loginUser != null}"
-                      th:action="@{/user/delete}" method="post"
-                      onsubmit="return confirm('정말 탈퇴하시겠습니까?');">
-                    <input type="hidden" name="userSeq" th:if="${session.loginUser != null}" th:value="${session.loginUser.userSeq}" />
-                    <button type="submit" class="withdraw-link">회원 탈퇴</button>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('withdrawForm').submit();">회원 탈퇴</a>
+                <form id="withdrawForm" th:action="@{/user/delete}" method="post" style="display: none;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 </form>
             </li>
         </ul>

@@ -14,14 +14,48 @@
         <div style="display: flex; align-items: center; gap: 15px;">
             <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
+            <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
-                <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
-                <button th:onclick="|location.href='@{/mypage}'|" class="mypage-btn">마이페이지</button>
-                <button th:onclick="|location.href='@{/logout}'|" class="logout-btn">로그아웃</button>
+                <!-- 닉네임 표시 (Spring Security Dialect 사용) -->
+                <span th:text="${#authentication.principal.userNickname}">닉네임</span>
+
+                <button onclick="location.href='/mypage'"
+                        style="background: white; color: #ff5a5a; border: 2px solid #ff5a5a;
+                   padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+                   transition: all 0.2s ease;"
+                        onmouseover="this.style.backgroundColor='#ffebeb';"
+                        onmouseout="this.style.backgroundColor='white';">
+                    마이페이지
+                </button>
+
+                <form th:action="@{/logout}" method="post" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit"
+                            style="background: white;
+                   color: #ff5a5a;
+                   border: 2px solid #ff5a5a;
+                   padding: 6px 12px;
+                   border-radius: 6px;
+                   font-weight: bold;
+                   cursor: pointer;
+                   transition: all 0.2s ease;"
+                            onmouseover="this.style.backgroundColor='#ffebeb';"
+                            onmouseout="this.style.backgroundColor='white';">
+                        로그아웃
+                    </button>
+                </form>
             </div>
 
+            <!-- 비로그인 상태 -->
             <div sec:authorize="isAnonymous()">
-                <button th:onclick="|location.href='@{/login}'|" class="login-btn">로그인</button>
+                <button onclick="location.href='/login'"
+                        style="background: white; color: #ff5a5a; border: 1px solid #ff5a5a;
+                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+                           transition: all 0.2s ease;"
+                        onmouseover="this.style.backgroundColor='#ffebeb';"
+                        onmouseout="this.style.backgroundColor='white';">
+                    로그인
+                </button>
             </div>
         </div>
     </header>
