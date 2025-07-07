@@ -1,127 +1,72 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>전체 QnA 목록</title>
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-    <link href="/css/styles.css" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-</head>
-<body class="sb-nav-fixed">
-<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-    <a class="navbar-brand ps-3" href="/index">전체 문의</a>
-    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle"><i class="fas fa-bars"></i></button>
-</nav>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{bo/admin/admin_layout :: layout(~{::content})}">
 
-<div id="layoutSidenav">
-    <div id="layoutSidenav_nav">
-        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-            <div class="sb-sidenav-menu">
-                <div class="nav">
-                    <div class="sb-sidenav-menu-heading">Core</div>
-                    <a th:if="${session.loginUser.userAuth == 'master'}" class="nav-link" href="/index">
-                        <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                        Dashboard
+<div th:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">고객 문의 관리</h1>
+
+        <!-- 필터 버튼 -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap" style="gap: 10px;">
+            <div class="btn-group" role="group">
+                <a th:href="@{/bo/admin/qna/list(type='ALL')}"
+                   th:classappend="${type == 'ALL' or type == null} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                   class="btn">전체</a>
+
+                <a th:href="@{/bo/admin/qna/list(type='UNANSWERED')}"
+                   th:classappend="${type == 'UNANSWERED'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                   class="btn">미처리</a>
+
+                <a th:href="@{/bo/admin/qna/list(type='ANSWERED')}"
+                   th:classappend="${type == 'ANSWERED'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                   class="btn">답변완료</a>
+            </div>
+        </div>
+
+        <!-- 목록 테이블 -->
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>번호</th>
+                <th>제목</th>
+                <th>작성자</th>
+                <th>상태</th>
+                <th>작성일</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="qna : ${questions}">
+                <td th:text="${qna.id}">1</td>
+
+                <td>
+                    <span th:text="${qna.title}">제목</span>
+                    <span th:if="${qna.fileName != null}" title="첨부파일 있음">📎</span>
+                </td>
+
+                <td th:text="${qna.user != null ? qna.user.userId : '(탈퇴회원)'}">작성자</td>
+
+                <td>
+                    <span class="badge px-2 py-1"
+                          th:classappend="${qna.status == '답변완료'} ? 'bg-success' : (qna.status == '대기중' ? 'bg-warning text-dark' : 'bg-secondary')"
+                          th:text="${qna.status != null ? qna.status : '미상태'}">상태</span>
+                </td>
+
+                <td th:text="${#temporals.format(qna.askedAt, 'yyyy-MM-dd HH:mm')}">작성일</td>
+
+                <td>
+                    <a class="btn btn-sm"
+                       th:classappend="${qna.status == '답변완료'} ? 'btn-secondary disabled' : 'btn-primary'"
+                       th:href="${qna.status == '답변완료'} ? '#' : @{/bo/admin/qna/answer/{id}(id=${qna.id})}">
+                        답변하기
                     </a>
-                    <div class="sb-sidenav-menu-heading">고객문의</div>
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseQna">
-                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                        고객문의
-                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                    </a>
-                    <div class="collapse show" id="collapseQna" data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link" href="/bo/personal_qna">1:1 문의</a>
-                            <a class="nav-link" href="/bo/qna/unprocessed">미처리 문의</a>
-                            <a class="nav-link active" href="/bo/qna/list">전체 문의</a>
-                        </nav>
-                    </div>
-                    <div class="sb-sidenav-menu-heading">유저 관리</div>
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUser">
-                        <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
-                        유저 관리
-                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                    </a>
-                    <div class="collapse" id="collapseUser" data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link" href="/bo/trol">트롤 신고 관리</a>
-                            <a class="nav-link" href="/bo/manage_user">유저 관리</a>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <div class="sb-sidenav-footer">
-                <div class="small">로그인 계정:</div>
-                <span th:text="${session.loginUser.userNickname}">닉네임</span>
-            </div>
-        </nav>
-    </div>
-
-    <div id="layoutSidenav_content">
-        <main>
-            <div class="container-fluid px-4">
-                <h1 class="mt-4">전체 고객 문의</h1>
-
-                <table class="table table-bordered mt-4">
-                    <thead>
-                    <tr>
-                        <th>번호</th>
-                        <th>제목</th>
-                        <th>작성자</th>
-                        <th>상태</th>
-                        <th>작성일</th>
-                        <th>답변</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="qna : ${questions}">
-                        <td th:text="${qna.id}">1</td>
-                        <td>
-                            <span th:text="${qna.title}">제목</span>
-                            <span th:if="${qna.fileName != null}">📎</span>
-                        </td>
-                        <td th:text="${qna.userId}">user123</td>
-                        <td>
-                            <span class="badge" th:classappend="${qna.status == '답변완료'} ? ' bg-success' : ' bg-warning text-dark'" th:text="${qna.status}">상태</span>
-                        </td>
-                        <td th:text="${#temporals.format(qna.askedAt, 'yyyy-MM-dd HH:mm')}">날짜</td>
-                        <td>
-                            <a class="btn btn-sm btn-primary" th:href="@{/bo/qna/answer/{id}(id=${qna.id})}">답변하기</a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </main>
-
-        <footer class="py-4 bg-light mt-auto">
-            <div class="container-fluid px-4">
-                <div class="d-flex justify-content-between small">
-                    <div class="text-muted">Copyright &copy; 관리자 페이지 2025</div>
-                    <div>
-                        <a href="#">Privacy Policy</a>
-                        &middot;
-                        <a href="#">Terms & Conditions</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(questions)}">
+                <td colspan="6" class="text-center text-muted">문의 내역이 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="/js/scripts.js"></script>
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    const userAuth = /*[[${session.loginUser.userAuth}]]*/ "guest";
-    if (userAuth !== "admin" && userAuth !== "master") {
-        alert("접근 권한이 없습니다.");
-        location.href = "/main";
-    }
-    /*]]>*/
-</script>
-</body>
 </html>

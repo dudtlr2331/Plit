@@ -94,4 +94,15 @@ public class QnaServiceImpl implements QnaService {
     public List<QnaEntity> getUnansweredQuestions() {
         return qnaRepository.findByAnswerIsNullAndDeleteYnOrderByAskedAtDesc("N");
     }
+
+    @Override
+    public List<QnaEntity> getQuestionsByType(String type) {
+        if ("UNANSWERED".equalsIgnoreCase(type)) {
+            return qnaRepository.findByStatusAndDeleteYnOrderByAskedAtDesc("대기중", "N");
+        } else if ("ANSWERED".equalsIgnoreCase(type)) {
+            return qnaRepository.findByDeleteYnAndStatusOrderByAskedAtDesc("N", "답변완료");
+        } else {
+            return qnaRepository.findByDeleteYnOrderByAskedAtDesc("N"); // 전체
+        }
+    }
 }
