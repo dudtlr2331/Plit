@@ -1,5 +1,8 @@
-package com.plit.FO.user;
+package com.plit.FO.user.controller;
 
+import com.plit.FO.user.security.CustomUserDetails;
+import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +60,6 @@ public class UserController {
         }
     }
 
-
     /// 회원 탈퇴
     @PostMapping("/user/delete")
     public String deleteUser(@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -79,7 +81,6 @@ public class UserController {
             return "redirect:/mypage";
         }
     }
-
 
     /// 로그아웃
     @GetMapping("/logout")
@@ -119,9 +120,6 @@ public class UserController {
         }
     }
 
-
-
-
     /// 인증번호 확인
     @PostMapping("/verify-code")
     @ResponseBody
@@ -141,7 +139,4 @@ public class UserController {
 
         return "redirect:/mypage";
     }
-
-
-
 }

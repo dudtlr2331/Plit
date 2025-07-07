@@ -1,7 +1,7 @@
 package com.plit.FO.config;
 
-import com.plit.FO.user.UserEntity;
-import com.plit.FO.user.UserRepository;
+import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

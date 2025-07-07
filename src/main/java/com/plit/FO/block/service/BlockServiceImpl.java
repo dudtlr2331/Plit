@@ -3,8 +3,8 @@ package com.plit.FO.block.service;
 import com.plit.FO.block.dto.BlockDTO;
 import com.plit.FO.block.entity.BlockEntity;
 import com.plit.FO.block.repository.BlockRepository;
-import com.plit.FO.user.UserEntity;
-import com.plit.FO.user.UserRepository;
+import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package com.plit.FO.blacklist.service;
 
 import com.plit.FO.blacklist.dto.BlacklistDTO;
-import com.plit.FO.user.UserDTO;
+import com.plit.FO.user.dto.UserDTO;
 
 import java.util.List;
 

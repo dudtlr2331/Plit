@@ -2,8 +2,8 @@ package com.plit.FO.friend.controller;
 
 import com.plit.FO.friend.dto.FriendDTO;
 import com.plit.FO.friend.service.FriendService;
-import com.plit.FO.user.UserDTO;
-import com.plit.FO.user.UserService;
+import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;

@@ -2,9 +2,9 @@ package com.plit.BO.user;
 
 import com.plit.FO.blacklist.dto.BlacklistDTO;
 import com.plit.FO.blacklist.service.BlacklistService;
-import com.plit.FO.user.UserDTO;
-import com.plit.FO.user.UserRepository;
-import com.plit.FO.user.UserService;
+import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.repository.UserRepository;
+import com.plit.FO.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

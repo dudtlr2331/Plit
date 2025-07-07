@@ -1,6 +1,6 @@
 package com.plit.FO.friend.dto;
 
-import com.plit.FO.user.UserDTO;
+import com.plit.FO.user.dto.UserDTO;
 import lombok.*;
 
 @Getter

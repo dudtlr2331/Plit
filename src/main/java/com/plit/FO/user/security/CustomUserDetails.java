@@ -1,6 +1,6 @@
-package com.plit.FO.user;
+package com.plit.FO.user.security;
 
-import com.plit.FO.user.UserDTO;
+import com.plit.FO.user.dto.UserDTO;
 import org.springframework.security.core.userdetails.User;
 import java.util.List;
 

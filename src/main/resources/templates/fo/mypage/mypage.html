@@ -291,12 +291,6 @@
             <li><a th:href="@{/mypage/qna/list}" th:classappend="${viewSection=='qna'}?'active'">문의하기</a></li>
             <li><a th:href="@{/mypage/friends}" th:classappend="${viewSection=='friends'}?'active'">친구 목록</a></li>
             <li><a th:href="@{/mypage/blocked}" th:classappend="${viewSection=='blocked'}?'active'">차단 목록</a></li>
-            <li>
-                <a href="#" onclick="event.preventDefault(); document.getElementById('withdrawForm').submit();">회원 탈퇴</a>
-                <form id="withdrawForm" th:action="@{/user/delete}" method="post" style="display: none;">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                </form>
-            </li>
         </ul>
     </div>
 
@@ -348,6 +342,11 @@
                     </div>
                 </form>
             </div>
+            <form th:action="@{/user/delete}" method="post" style="margin-top: 30px; text-align: right;"
+                  onsubmit="return confirmWithdrawal();">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="password-change-btn">회원 탈퇴</button>
+            </form>
         </div>
 
         <!-- QnA -->
@@ -378,6 +377,11 @@
     function cancelNicknameEdit() {
         document.getElementById("nicknameRow").style.display = "flex";
         document.getElementById("nicknameEditRow").style.display = "none";
+    }
+
+    // 회원 탈퇴 재확인 팝업
+    function confirmWithdrawal() {
+        return confirm("정말 탈퇴하시겠습니까?\n탈퇴 후에는 복구가 불가능합니다.");
     }
 </script>
 

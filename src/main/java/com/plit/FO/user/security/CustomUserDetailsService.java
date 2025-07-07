@@ -1,5 +1,8 @@
-package com.plit.FO.user;
+package com.plit.FO.user.security;
 
+import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

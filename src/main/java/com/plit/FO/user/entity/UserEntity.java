@@ -1,5 +1,6 @@
-package com.plit.FO.user;
+package com.plit.FO.user.entity;
 
+import com.plit.FO.user.dto.UserDTO;
 import jakarta.persistence.*;
 import lombok.*;
 

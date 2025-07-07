@@ -1,4 +1,4 @@
-package com.plit.FO.user;
+package com.plit.FO.user.dto;
 
 import lombok.*;
 

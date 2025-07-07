@@ -1,5 +1,6 @@
-package com.plit.FO.user;
+package com.plit.FO.user.repository;
 
+import com.plit.FO.user.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

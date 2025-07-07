@@ -1,8 +1,8 @@
 package com.plit.FO.mypage;
 
 import com.plit.FO.qna.service.QnaService;
-import com.plit.FO.user.UserDTO;
-import com.plit.FO.user.UserService;
+import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -2,8 +2,8 @@ package com.plit.FO.clan.controller;
 
 import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.service.ClanService;
-import com.plit.FO.user.UserService;
-import com.plit.FO.user.UserDTO;
+import com.plit.FO.user.service.UserService;
+import com.plit.FO.user.dto.UserDTO;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
