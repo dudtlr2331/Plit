@@ -138,5 +138,21 @@ public class BoRestController {
         }).collect(Collectors.toList());
     }
 
+    // 일괄처리
+    @PutMapping("/user/bulk-status")
+    public ResponseEntity<?> updateUserStatusBulk(@RequestBody BoUserDTO request) {
+        List<Integer> userSeqList = request.getUserSeqList();
+        String action = request.getAction();
+
+        if (userSeqList == null || action == null || userSeqList.isEmpty()) {
+            return ResponseEntity.badRequest().body("유효하지 않은 요청입니다.");
+        }
+
+        for (Integer userSeq : userSeqList) {
+            userService.updateUserStatus(userSeq, action);
+        }
+
+        return ResponseEntity.ok().build();
+    }
 
 }

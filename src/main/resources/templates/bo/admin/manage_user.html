@@ -40,11 +40,25 @@
             <input type="text" id="searchInput" class="form-control form-control-sm"
                    placeholder="닉네임 검색" style="height: 32px; flex: 1;" />
         </div>
+
+        <!--일괄 처리-->
+        <div class="d-flex align-items-center" style="gap: 6px;">
+            <select id="bulkActionSelect" class="form-select form-select-sm" style="width: 120px;">
+                <option value="">일괄 처리</option>
+                <option value="BAN">차단</option>
+                <option value="UNBAN">해제</option>
+                <option value="BLOCK">탈퇴</option>
+                <option value="UNBLOCK">활성</option>
+            </select>
+            <button class="btn btn-sm btn-danger" onclick="applyBulkAction()">적용</button>
+        </div>
     </div>
 
     <table class="table table-bordered">
         <thead>
         <tr>
+            <!--전체선택-->
+            <th><input type="checkbox" id="selectAll" /></th>
             <th>ID</th>
             <th>닉네임</th>
             <th>권한</th>
@@ -57,6 +71,7 @@
         <tr th:each="user : ${userList}"
             th:class="${user.useYn == 'N'} ? 'status-inactive' : (${user.isBanned} ? 'status-blocked' : 'status-normal')">
 
+            <td><input type="checkbox" class="user-checkbox" th:value="${user.userSeq}" /></td>
             <td th:text="${user.userId}"></td>
 
             <td>
@@ -173,6 +188,55 @@
                 row.style.display = text.includes(keyword) ? "" : "none";
             });
         });
+
+        //일괄처리를 위한 js 메서드
+        document.getElementById("selectAll").addEventListener("change", function () {
+            const checked = this.checked;
+            document.querySelectorAll(".user-checkbox").forEach(cb => cb.checked = checked);
+        });
+
+        function applyBulkAction() {
+            const action = document.getElementById("bulkActionSelect").value;
+            if (!action) {
+                alert("처리 작업을 선택하세요.");
+                return;
+            }
+
+            const selectedIds = Array.from(document.querySelectorAll(".user-checkbox"))
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                alert("선택된 유저가 없습니다.");
+                return;
+            }
+
+            if (!confirm(`선택한 ${selectedIds.length}명의 유저에게 '${action}' 작업을 적용하시겠습니까?`)) return;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch("/api/bo/admin/user/bulk-status", {
+                method: "PUT",
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({
+                    userSeqList: selectedIds,
+                    action: action
+                })
+            }).then(res => {
+                if (res.ok) {
+                    alert("일괄 처리가 완료되었습니다.");
+                    location.reload();
+                } else {
+                    return res.text().then(msg => { throw new Error(msg); });
+                }
+            }).catch(err => {
+                alert("처리 실패: " + err.message);
+            });
+        }
     </script>
 </div>
 </html>
