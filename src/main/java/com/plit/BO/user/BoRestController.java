@@ -120,7 +120,7 @@ public class BoRestController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/report/history/{reportedUserId}")
+    @PostMapping("/report/history/{reportedUserId}")
     public List<BlacklistDTO> getReportHistory(@PathVariable Integer reportedUserId) {
         List<BlacklistEntity> list = blacklistRepository.findByReportedUserId(reportedUserId);
 
@@ -138,7 +138,7 @@ public class BoRestController {
         }).collect(Collectors.toList());
     }
 
-    // 일괄처리
+    // 일괄처리 - 유저 관리
     @PutMapping("/user/bulk-status")
     public ResponseEntity<?> updateUserStatusBulk(@RequestBody BoUserDTO request) {
         List<Integer> userSeqList = request.getUserSeqList();
@@ -150,6 +150,32 @@ public class BoRestController {
 
         for (Integer userSeq : userSeqList) {
             userService.updateUserStatus(userSeq, action);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    // 일괄처리 - 트롤 신고 관리
+    @PostMapping("/report/bulk")
+    public ResponseEntity<?> handleBulkReportStatus(@RequestBody Map<String, Object> payload,
+                                                    @AuthenticationPrincipal User user) {
+        // 로그인 확인
+        UserDTO loginUser = userService.findByUserId(user.getUsername());
+        if (loginUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        // payload에서 데이터 추출
+        List<Integer> blacklistNoList = ((List<?>) payload.get("blacklistNoList")).stream()
+                .map(obj -> Integer.parseInt(obj.toString()))
+                .toList();
+
+        String action = (String) payload.get("action");
+        if (!action.equals("ACCEPTED") && !action.equals("DECLINED")) {
+            return ResponseEntity.badRequest().body("잘못된 처리 상태입니다.");
+        }
+
+        // 처리
+        for (Integer blacklistNo : blacklistNoList) {
+            blacklistService.updateReportStatus(blacklistNo, action, loginUser.getUserSeq());
         }
 
         return ResponseEntity.ok().build();

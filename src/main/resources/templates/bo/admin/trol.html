@@ -6,6 +6,8 @@
     <h1 class="mt-4">트롤 신고 관리</h1>
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap" style="gap: 10px;">
+
+
         <div class="btn-group" role="group">
             <a th:href="@{/bo/trol(status='ALL', keyword=${keyword})}"
                th:classappend="${status == 'ALL' or status == null} ? 'btn btn-primary' : 'btn btn-outline-primary'"
@@ -17,7 +19,7 @@
 
             <a th:href="@{/bo/trol(status='ACCEPTED', keyword=${keyword})}"
                th:classappend="${status == 'ACCEPTED'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
-               class="btn">수량</a>
+               class="btn">수락</a>
 
             <a th:href="@{/bo/trol(status='DECLINED', keyword=${keyword})}"
                th:classappend="${status == 'DECLINED'} ? 'btn btn-primary' : 'btn btn-outline-primary'"
@@ -28,12 +30,34 @@
             <input type="text" id="searchInput" class="form-control form-control-sm"
                    placeholder="키워드 검색" style="height: 32px; flex: 1;" />
         </div>
+
+        <!-- 정렬 드롭다운 -->
+        <div class="d-flex align-items-center" style="gap: 6px;">
+            <select id="sortOption" class="form-select form-select-sm" style="width: 160px;">
+                <option value="">정렬 기준</option>
+                <option value="recent">신고 최신 순</option>
+                <option value="oldest">신고 오래된 순</option>
+                <option value="countDesc">신고 횟수 많은 순</option>
+                <option value="countAsc">신고 횟수 적은 순</option>
+            </select>
+        </div>
+
+        <!--다중 선택-->
+        <div class="d-flex align-items-center mb-3" style="gap: 6px;">
+            <select id="bulkTrollActionSelect" class="form-select form-select-sm" style="width: 120px;">
+                <option value="">처리 작업</option>
+                <option value="ACCEPTED">수락</option>
+                <option value="DECLINED">거절</option>
+            </select>
+            <button class="btn btn-sm btn-danger" onclick="applyBulkTrollAction()">적용</button>
+        </div>
     </div>
 
     <div class="card-body">
         <table id="datatablesSimple" class="table table-bordered">
             <thead>
             <tr>
+                <th><input type="checkbox" id="selectAllTroll" /></th>
                 <th>제보자</th>
                 <th>신고 대상</th>
                 <th>신고 횟수</th>
@@ -47,6 +71,7 @@
             </thead>
             <tbody>
             <tr th:each="item : ${blacklistList}" th:if="${item.status == 'ACCEPTED'}" style="background-color: #d4edda;">
+                <td></td>
                 <td th:text="${item.reporterNickname}"></td>
                 <td>
                     <a href="javascript:void(0)" th:text="${item.reportedNickname}"
@@ -63,6 +88,7 @@
             </tr>
 
             <tr th:each="item : ${blacklistList}" th:if="${item.status == 'DECLINED'}" style="background-color: #f8d7da;">
+                <td></td>
                 <td th:text="${item.reporterNickname}"></td>
                 <td>
                     <a href="javascript:void(0)" th:text="${item.reportedNickname}"
@@ -79,6 +105,7 @@
             </tr>
 
             <tr th:each="item : ${blacklistList}" th:if="${item.status == 'PENDING'}">
+                <td><input type="checkbox" class="troll-checkbox" th:value="${item.blackListNo}" /></td>
                 <td th:text="${item.reporterNickname}"></td>
                 <td>
                     <a href="javascript:void(0)" th:text="${item.reportedNickname}"
@@ -198,6 +225,91 @@
                 row.style.display = text.includes(keyword) ? "" : "none";
             });
         });
+
+        // 전체 선택
+        document.getElementById("selectAllTroll").addEventListener("change", function () {
+            const checked = this.checked;
+            document.querySelectorAll(".troll-checkbox").forEach(cb => cb.checked = checked);
+        });
+
+        // 일괄 처리 함수
+        function applyBulkTrollAction() {
+            const action = document.getElementById("bulkTrollActionSelect").value;
+            if (!action) {
+                alert("처리 작업을 선택하세요.");
+                return;
+            }
+
+            const selectedIds = Array.from(document.querySelectorAll(".troll-checkbox"))
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                alert("선택된 신고가 없습니다.");
+                return;
+            }
+
+            if (!confirm(`선택된 ${selectedIds.length}건의 신고를 '${action === 'ACCEPTED' ? '수락' : '거절'}' 처리하시겠습니까?`)) return;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch("/api/bo/admin/report/bulk", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({
+                    blacklistNoList: selectedIds,
+                    action: action
+                })
+            }).then(res => {
+                if (res.ok) {
+                    alert("일괄 처리가 완료되었습니다.");
+                    location.reload();
+                } else {
+                    return res.text().then(msg => { throw new Error(msg); });
+                }
+            }).catch(err => {
+                alert("처리 실패: " + err.message);
+            });
+        }
+
+        // 정렬
+        document.getElementById("sortOption").addEventListener("change", function () {
+            const sortValue = this.value;
+            const tbody = document.querySelector("#datatablesSimple tbody");
+
+            const rows = Array.from(tbody.querySelectorAll("tr")).filter(
+                row => window.getComputedStyle(row).display !== 'none'
+            );
+
+            console.log("정렬 대상:", rows.length);
+            if (rows.length === 0) return;
+
+            rows.sort((a, b) => {
+                try {
+                    if (sortValue === "recent" || sortValue === "oldest") {
+                        const dateA = new Date(a.children[6].innerText.trim());
+                        const dateB = new Date(b.children[6].innerText.trim());
+                        return sortValue === "recent" ? dateB - dateA : dateA - dateB;
+                    } else if (sortValue === "countDesc" || sortValue === "countAsc") {
+                        const countA = parseInt(a.children[3].innerText.replace(/\D/g, ""));
+                        const countB = parseInt(b.children[3].innerText.replace(/\D/g, ""));
+                        return sortValue === "countDesc" ? countB - countA : countA - countB;
+                    }
+                } catch (e) {
+                    console.error("정렬 에러:", e);
+                }
+                return 0;
+            });
+
+            // 정렬 후 다시 tbody에 삽입
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
+        });
+
     </script>
 </div>
 </html>

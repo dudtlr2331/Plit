@@ -63,9 +63,10 @@ public class BoController {
     public String unprocessedQna(HttpSession session, Model model) {
         return "bo/admin/unprocessed_qna";
     }
+
     @GetMapping("bo/trol")
     public String trol(@AuthenticationPrincipal User user,
-                       @RequestParam(required = false, defaultValue = "ALL") String status,
+                       @RequestParam(required = false, defaultValue = "PENDING") String status,
                        @RequestParam(required = false) String keyword,
                        Model model) {
 
