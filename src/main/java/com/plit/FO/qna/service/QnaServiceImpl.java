@@ -3,8 +3,13 @@ package com.plit.FO.qna.service;
 import com.plit.FO.qna.dto.QnaDTO;
 import com.plit.FO.qna.entity.QnaEntity;
 import com.plit.FO.qna.repository.QnaRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +18,9 @@ import java.util.UUID;
 public class QnaServiceImpl implements QnaService {
 
     private final QnaRepository qnaRepository;
+
+    @Value("${custom.upload-path.qna}")
+    private String uploadDir;
 
     public QnaServiceImpl(QnaRepository qnaRepository) {
         this.qnaRepository = qnaRepository;
@@ -27,10 +35,18 @@ public class QnaServiceImpl implements QnaService {
         qna.setStatus("대기중");
         qna.setAskedAt(LocalDateTime.now());
 
-        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
-            String originalFilename = dto.getFile().getOriginalFilename();
+        MultipartFile file = dto.getFile();
+        if (file != null && !file.isEmpty()) {
+            String originalFilename = file.getOriginalFilename();
             String savedName = UUID.randomUUID() + "_" + originalFilename;
-            qna.setFileName(savedName);
+
+            try {
+                Path savePath = Paths.get(uploadDir).resolve(savedName);
+                file.transferTo(savePath.toFile());
+                qna.setFileName(savedName);
+            } catch (IOException e) {
+                throw new RuntimeException("파일 저장 실패", e);
+            }
         }
 
         qnaRepository.save(qna);
@@ -72,5 +88,21 @@ public class QnaServiceImpl implements QnaService {
         qna.setStatus("답변완료");
         qna.setAnsweredAt(LocalDateTime.now());
         qnaRepository.save(qna);
+    }
+
+    @Override
+    public List<QnaEntity> getUnansweredQuestions() {
+        return qnaRepository.findByAnswerIsNullAndDeleteYnOrderByAskedAtDesc("N");
+    }
+
+    @Override
+    public List<QnaEntity> getQuestionsByType(String type) {
+        if ("UNANSWERED".equalsIgnoreCase(type)) {
+            return qnaRepository.findByStatusAndDeleteYnOrderByAskedAtDesc("대기중", "N");
+        } else if ("ANSWERED".equalsIgnoreCase(type)) {
+            return qnaRepository.findByDeleteYnAndStatusOrderByAskedAtDesc("N", "답변완료");
+        } else {
+            return qnaRepository.findByDeleteYnOrderByAskedAtDesc("N"); // 전체
+        }
     }
 }

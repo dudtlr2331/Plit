@@ -1,11 +1,13 @@
 package com.plit.FO.party.service;
 
-import com.plit.FO.party.PositionEnum;
+import com.plit.FO.party.enums.PartyStatus;
+import com.plit.FO.party.enums.PositionEnum;
 import com.plit.FO.party.dto.PartyDTO;
-import com.plit.FO.party.dto.PartyFindPositionDTO;
 import com.plit.FO.party.entity.PartyEntity;
 import com.plit.FO.party.entity.PartyFindPositionEntity;
+import com.plit.FO.party.entity.PartyMemberEntity;
 import com.plit.FO.party.repository.PartyFindPositionRepository;
+import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.repository.PartyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +22,13 @@ public class PartyServiceImpl implements PartyService {
     private final PartyRepository partyRepository;
     private final PartyFindPositionRepository positionRepository;
     private final PartyFindPositionRepository partyFindPositionRepository;
+    private final PartyMemberRepository partyMemberRepository;
 
-    public PartyServiceImpl(PartyRepository partyRepository, PartyFindPositionRepository positionRepository, PartyFindPositionRepository partyFindPositionRepository) {
+    public PartyServiceImpl(PartyRepository partyRepository, PartyFindPositionRepository positionRepository, PartyFindPositionRepository partyFindPositionRepository, PartyMemberRepository partyMemberRepository) {
         this.partyRepository = partyRepository;
         this.positionRepository = positionRepository;
         this.partyFindPositionRepository = partyFindPositionRepository;
+        this.partyMemberRepository = partyMemberRepository;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class PartyServiceImpl implements PartyService {
         PartyEntity party = PartyEntity.builder()
                 .partyName(dto.getPartyName())
                 .partyType(dto.getPartyType())
-                .partyStatus(dto.getPartyStatus())
+                .partyStatus(PartyStatus.valueOf(dto.getPartyStatus()))
                 .partyCreateDate(LocalDateTime.now())
                 .partyEndTime(dto.getPartyEndTime())
                 .partyHeadcount(dto.getPartyHeadcount())
@@ -78,7 +82,7 @@ public class PartyServiceImpl implements PartyService {
         party.setPartyName(dto.getPartyName());
         party.setPartyType(dto.getPartyType());
         party.setPartyEndTime(dto.getPartyEndTime());
-        party.setPartyStatus(dto.getPartyStatus());
+        party.setPartyStatus(PartyStatus.valueOf(dto.getPartyStatus()));
         party.setPartyHeadcount(dto.getPartyHeadcount());
         party.setPartyMax(dto.getPartyMax());
         party.setMemo(dto.getMemo());
@@ -103,7 +107,7 @@ public class PartyServiceImpl implements PartyService {
         dto.setPartyType(entity.getPartyType());
         dto.setPartyCreateDate(entity.getPartyCreateDate());
         dto.setPartyEndTime(entity.getPartyEndTime());
-        dto.setPartyStatus(entity.getPartyStatus());
+        dto.setPartyStatus(entity.getPartyStatus().name());
         dto.setPartyHeadcount(entity.getPartyHeadcount());
         dto.setPartyMax(entity.getPartyMax());
         dto.setMemo(entity.getMemo());
@@ -122,7 +126,7 @@ public class PartyServiceImpl implements PartyService {
         entity.setPartyName(dto.getPartyName());
         entity.setPartyType(dto.getPartyType());
         entity.setPartyEndTime(dto.getPartyEndTime());
-        entity.setPartyStatus(dto.getPartyStatus());
+        entity.setPartyStatus(PartyStatus.valueOf(dto.getPartyStatus()));
         entity.setPartyHeadcount(dto.getPartyHeadcount());
         entity.setPartyMax(dto.getPartyMax());
         entity.setMemo(dto.getMemo());
@@ -135,10 +139,50 @@ public class PartyServiceImpl implements PartyService {
         List<PartyFindPositionEntity> entities = positions.stream()
                 .map(posStr -> PartyFindPositionEntity.builder()
                         .party(party)
-                        .position(PositionEnum.valueOf(posStr)) // 여기서 변환
+                        .position(PositionEnum.valueOf(posStr))
                         .build())
                 .collect(Collectors.toList());
 
         positionRepository.saveAll(entities);
+    }
+
+    @Transactional
+    @Override
+    public void joinParty(Long partySeq, String userId) {
+        PartyEntity party = partyRepository.findById(partySeq)
+                .orElseThrow(() -> new IllegalArgumentException("해당 파티가 존재하지 않습니다."));
+
+        if (!"자유랭크".equals(party.getPartyType())) {
+            throw new IllegalStateException("자유랭크 파티만 참가할 수 있습니다.");
+        }
+
+        if (party.getPartyStatus() == PartyStatus.FULL || party.getPartyStatus() == PartyStatus.CLOSED) {
+            throw new IllegalStateException("마감된 파티에는 참가할 수 없습니다.");
+        }
+
+        if (partyMemberRepository.existsByParty_PartySeqAndUserId(partySeq, userId)) {
+            throw new IllegalStateException("이미 참가한 파티입니다.");
+        }
+
+        if (party.getPartyHeadcount() >= party.getPartyMax()) {
+            throw new IllegalStateException("파티 인원이 가득 찼습니다.");
+        }
+
+        // 파티 멤버 등록
+        PartyMemberEntity member = PartyMemberEntity.builder()
+                .party(party)
+                .userId(userId)
+                .role("MEMBER")
+                .build();
+        partyMemberRepository.save(member);
+
+        // 현재 인원수 증가
+        party.setPartyHeadcount(party.getPartyHeadcount() + 1);
+
+        if (party.getPartyHeadcount() >= party.getPartyMax()) {
+            party.setPartyStatus(PartyStatus.FULL);
+        }
+
+        partyRepository.save(party);
     }
 }

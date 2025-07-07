@@ -57,7 +57,7 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                     .logoutUrl("/logout") // 로그아웃 요청 경로
-                    .logoutSuccessUrl("/") // 로그아웃이 완료되면 홈(/)으로 리다이렉트
+                    .logoutSuccessUrl("/main") // 로그아웃이 완료되면 홈(/)으로 리다이렉트
                     .permitAll()
             );
 

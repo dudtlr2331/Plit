@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PartyMemberDTO {
     private Long id;
-    private Long userId;
+    private String userId;
     private LocalDateTime joinTime;
     private String role;
 

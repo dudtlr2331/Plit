@@ -1,6 +1,6 @@
 package com.plit.FO.party.entity;
 
-import com.plit.FO.party.PositionEnum;
+import com.plit.FO.party.enums.PositionEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
