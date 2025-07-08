@@ -8,10 +8,17 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #fff; }
         .login-wrapper { max-width: 400px; margin: 100px auto; text-align: center; }
-        .logo { font-size: 32px; font-weight: bold; margin-bottom: 30px; }
+        .logo { font-size: 32px; font-weight: bold; margin-bottom: 50px; }
+        .logo-img {
+            height: 40px;
+            margin-bottom: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
         .login-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
         .login-subtitle { color: gray; margin-bottom: 20px; }
-        .btn-login { background-color: #ff4d4d; color: white; font-weight: bold; }
+        .btn-login { background-color: #6570b4; color: white; font-weight: bold; }
         .divider { margin: 20px 0; position: relative; }
         .divider::before, .divider::after {
             content: "";
@@ -31,8 +38,9 @@
 </head>
 <body>
 <div class="login-wrapper">
-    <div class="logo">Logo</div>
-
+    <a th:href="@{/main}" class="logo">
+        <img th:src="@{/images/logo/plit_logo.png}" alt="Logo" class="logo-img">
+    </a>
     <div class="login-title">로그인</div>
     <div class="login-subtitle">어서오십시오</div>
 

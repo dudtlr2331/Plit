@@ -3,7 +3,9 @@
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
     <header>
-        <a th:href="@{/main}" class="logo">Logo</a>
+        <a th:href="@{/main}" class="logo">
+            <img th:src="@{/images/logo/plit_logo_w.png}" alt="Logo" style="height: 40px;">
+        </a>
 
         <nav>
             <a th:href="@{/party}">파티찾기</a>
@@ -20,10 +22,10 @@
                 <span th:text="${#authentication.principal.userNickname}">닉네임</span>
 
                 <button onclick="location.href='/mypage'"
-                        style="background: white; color: #ff5a5a; border: 2px solid #ff5a5a;
+                        style="background: white; color: #6570b4; border: 2px solid #7c4798;
                    padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
                    transition: all 0.2s ease;"
-                        onmouseover="this.style.backgroundColor='#ffebeb';"
+                        onmouseover="this.style.backgroundColor='#7c4798';"
                         onmouseout="this.style.backgroundColor='white';">
                     마이페이지
                 </button>
@@ -32,14 +34,14 @@
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <button type="submit"
                             style="background: white;
-                   color: #ff5a5a;
-                   border: 2px solid #ff5a5a;
+                   color: #6570b4;
+                   border: 2px solid #7c4798;
                    padding: 6px 12px;
                    border-radius: 6px;
                    font-weight: bold;
                    cursor: pointer;
                    transition: all 0.2s ease;"
-                            onmouseover="this.style.backgroundColor='#ffebeb';"
+                            onmouseover="this.style.backgroundColor='#7c4798';"
                             onmouseout="this.style.backgroundColor='white';">
                         로그아웃
                     </button>
@@ -49,10 +51,10 @@
             <!-- 비로그인 상태 -->
             <div sec:authorize="isAnonymous()">
                 <button onclick="location.href='/login'"
-                        style="background: white; color: #ff5a5a; border: 1px solid #ff5a5a;
+                        style="background: white; color: #6570b4; border: 1px solid #7c4798;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
                            transition: all 0.2s ease;"
-                        onmouseover="this.style.backgroundColor='#ffebeb';"
+                        onmouseover="this.style.backgroundColor='#7c4798';"
                         onmouseout="this.style.backgroundColor='white';">
                     로그인
                 </button>
