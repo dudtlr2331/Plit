@@ -1,27 +1,5 @@
-<!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="_csrf" th:content="${_csrf.token}">
-  <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
-  <meta name="_csrf_header" th:content="${_csrf.headerName}">
-  <title>마이페이지 - 친구 목록</title>
-  <link rel="stylesheet" href="/css/mypageFriends.css" />
-</head>
-<body>
-<div class="container">
-  <div class="sidebar">
-    <ul>
-      <li><a href="/mypage">계정 관리</a></li>
-      <li><a href="/mypage/qna">문의하기</a></li>
-      <li><a href="/mypage/friends" class="active">친구 목록</a></li>
-      <li><a href="/mypage/blocked">차단 목록</a></li>
-    </ul>
-  </div>
-
-  <div class="content">
-    <div class="section active">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
+<div th:fragment="friendsFragment">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
         <h2>친구 목록</h2>
         <div style="position: relative; display: inline-block;">
           <button onclick="toggleRequestPopup()" class="submit-button">친구 신청</button>
@@ -34,8 +12,7 @@
             <div id="requestList" style="padding: 10px;"></div>
           </div>
         </div>
-
-      </div>
+  </div>
 
       <div th:if="${#lists.isEmpty(friendList)}" class="friend-item">
         <div class="friend-left">
@@ -60,9 +37,6 @@
                   th:attr="onclick=|deleteFriend(${friend.friendsNo})|">삭제</button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
 <!-- 채팅 팝업 -->
 <div class="chat-popup" id="chatPopup">
@@ -314,5 +288,4 @@
             });
   }
 </script>
-</body>
-</html>
+</div>

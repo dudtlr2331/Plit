@@ -33,8 +33,9 @@ public class FriendController {
         Integer userSeq = loginUser.getUserSeq();
         List<FriendDTO> friendList = friendService.getAcceptedFriends(userSeq);
 
+        model.addAttribute("viewSection", "friends");
         model.addAttribute("loginUser", loginUser);
         model.addAttribute("friendList", friendList);
-        return "fo/mypage/mypage_friends";
+        return "fo/mypage/mypage";
     }
 }
