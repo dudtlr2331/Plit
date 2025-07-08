@@ -19,15 +19,24 @@
         .btn-red { background-color: #6570b4; color: white; font-weight: bold; }
         .form-step { display: none; }
         .form-step.active { display: block; }
+        .logo-img {
+            height: 40px;
+            margin-bottom: 30px;
+        }
+        .signup-logo { max-width: 900px; margin: 100px auto; display: flex; justify-content: space-between; align-items: flex-start; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="text-start fs-3 fw-bold my-4">Logo</div>
+    <div class="signup-logo">
+        <a th:href="@{/main}" class="logo">
+            <img th:src="@{/images/logo/plit_logo.png}" alt="PLIT 로고" class="logo-img">
+        </a>
+    </div>
     <div class="signup-container">
         <div class="left-text">
-            <h2>000 멤버 ID를 생성하세요.</h2>
-            <p>모든 게이머를 위한 000회원 커뮤니티에 오신 것을 환영합니다.<br>독특한 온라인 모험을 시작하세요.</p>
+            <h2>PLIT 멤버 ID를 생성하세요.</h2>
+            <p>모든 게이머를 위한<br>PLIT 회원 커뮤니티에 오신 것을 환영합니다.<br>독특한 온라인 모험을 시작하세요.</p>
         </div>
         <div class="right-form">
 
@@ -260,6 +269,5 @@
         return true;
     }
 </script>
-
 </body>
 </html>

@@ -31,7 +31,7 @@
         .divider::before { left: 0; }
         .divider::after { right: 0; }
         .divider span { background-color: white; padding: 0 10px; color: #888; }
-        .kakao-login img { width: 40px; height: 40px; }
+        .kakao-login img { }
         .error-message { color: red; margin-bottom: 15px; }
         .success-message { color: green; margin-bottom: 15px; }
     </style>
@@ -68,7 +68,7 @@
 
     <div class="kakao-login">
         <a href="#">
-            <img src="https://developers.kakao.com/assets/img/about/logos/kakaologin/logo_kakao.png" alt="카카오 로그인">
+            <img th:src="@{/images/login/kakao_login.png}" alt="Logo" class="logo-img">
         </a>
     </div>
 </div>
