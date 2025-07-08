@@ -2,6 +2,7 @@ package com.plit.FO.party.controller;
 
 import com.plit.FO.party.dto.JoinRequestDTO;
 import com.plit.FO.party.dto.PartyDTO;
+import com.plit.FO.party.dto.PartyMemberDTO;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.service.PartyService;
 import org.springframework.http.HttpStatus;
@@ -75,31 +76,50 @@ public class PartyRestController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }
 
-        // ✅ 로그 출력
-        System.out.println(">>> [Join] userId = " + user.getUsername());
-        System.out.println(">>> [Join] partyId = " + partyId);
-        System.out.println(">>> [Join] position = " + request.getPosition());
-        System.out.println(">>> [Join] message = " + request.getMessage());
-
-        partyService.joinParty(partyId, user.getUsername(), request.getPosition(), request.getMessage());
-
-        // DB에 저장됐는지 확인용 (transaction이 커밋되면 로그가 나오기 전이어도 INSERT 되어야 함)
-        System.out.println(">>> [Join] joinParty() 완료");
-
-        return ResponseEntity.ok("OK");
+        try {
+            partyService.joinParty(partyId, user.getUsername(), request.getPosition(), request.getMessage());
+            return ResponseEntity.ok("OK");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // 파티 참가 체크
     @GetMapping("/{partyId}/joined")
     public boolean checkIfJoined(@PathVariable Long partyId,
                                  @AuthenticationPrincipal(expression = "username") String userId) {
-        return partyMemberRepository.existsByParty_PartySeqAndUserId(partyId, userId);
+        return partyMemberRepository.existsByParty_PartySeqAndUserIdAndStatus(partyId, userId, "ACCEPTED");
     }
 
     // 파티에 참가 중인 멤버 목록
     @GetMapping("/{partyId}/members")
-    public ResponseEntity<List<String>> getPartyMembers(@PathVariable Long partyId) {
-        List<String> members = partyService.getPartyMembers(partyId);
+    public ResponseEntity<List<PartyMemberDTO>> getPartyMembers(@PathVariable Long partyId) {
+        List<PartyMemberDTO> members = partyService.getPartyMemberDTOs(partyId);
         return ResponseEntity.ok(members);
+    }
+
+    //파티 참가 수락
+    @PostMapping("/{partyId}/members/{memberId}/accept")
+    public ResponseEntity<?> acceptMember(@PathVariable Long partyId, @PathVariable Long memberId) {
+        try {
+            partyService.acceptMember(partyId, memberId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 파티 참가 거절
+    @PostMapping("/{partyId}/members/{memberId}/reject")
+    public ResponseEntity<Void> rejectMember(@PathVariable Long partyId, @PathVariable Long memberId) {
+        partyService.rejectMember(partyId, memberId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{partyId}/join-status")
+    public ResponseEntity<String> getJoinStatus(@PathVariable Long partyId,
+                                                @AuthenticationPrincipal(expression = "username") String userId) {
+        String status = partyService.getJoinStatus(partyId, userId); // NONE, PENDING, ACCEPTED, REJECTED
+        return ResponseEntity.ok(status);
     }
 }

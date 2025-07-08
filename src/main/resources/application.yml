@@ -1,14 +1,16 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/plit
+    url: jdbc:mysql://localhost:3306/plit #로컬 데이터베이스
+#    url: jdbc:mysql://database-2.c3dpfr0cwcg9.sa-east-1.rds.amazonaws.com:3306/plit
     username: plit
-    password: 123456
+    password: 123456   #로컬 데이터베이스 password
+#    password: aws123!!
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   servlet:
     multipart:
-      max-file-size: 2MB
-      max-request-size: 2MB
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   thymeleaf:
     prefix: classpath:/templates/
@@ -50,6 +52,3 @@ custom:
   upload-path:
     qna: /Users/minseok/qna/uploads
     clan: /Users/minseok/dev/plit-image/
-
-
-

@@ -16,6 +16,7 @@ public class PartyMemberDTO {
     private LocalDateTime joinTime;
     private String role;
     private String message;
+    private String status;
 
     public PartyMemberDTO(PartyMemberEntity entity) {
         this.id = entity.getId();
@@ -23,5 +24,6 @@ public class PartyMemberDTO {
         this.joinTime = entity.getJoinTime();
         this.role = entity.getRole();
         this.message = entity.getMessage();
+        this.status = entity.getStatus();
     }
 }

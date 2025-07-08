@@ -1,5 +1,6 @@
 package com.plit.FO.party.service;
 
+import com.plit.FO.party.dto.PartyMemberDTO;
 import com.plit.FO.party.enums.PartyStatus;
 import com.plit.FO.party.enums.PositionEnum;
 import com.plit.FO.party.dto.PartyDTO;
@@ -164,31 +165,23 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalStateException("이미 참가한 파티입니다.");
         }
 
-        if (party.getPartyHeadcount() >= party.getPartyMax()) {
+        // 인원수 조건은 현재 ACCEPTED 된 멤버만 체크
+        int acceptedCount = partyMemberRepository.countByParty_PartySeqAndStatus(partySeq, "ACCEPTED");
+        if (acceptedCount >= party.getPartyMax()) {
             throw new IllegalStateException("파티 인원이 가득 찼습니다.");
         }
 
-        // 파티 멤버 등록
+        // PENDING 상태로 저장
         PartyMemberEntity member = PartyMemberEntity.builder()
                 .party(party)
                 .userId(userId)
                 .role("MEMBER")
                 .message(message)
+                .status("PENDING")
+                .position(position)
                 .build();
 
         partyMemberRepository.save(member);
-        partyMemberRepository.flush();  // ★ 강제 flush
-
-        System.out.println(">>> [Join] member 저장됨: " + member.getId());
-
-        // 현재 인원수 증가
-        party.setPartyHeadcount(party.getPartyHeadcount() + 1);
-
-        if (party.getPartyHeadcount() >= party.getPartyMax()) {
-            party.setPartyStatus(PartyStatus.FULL);
-        }
-
-        partyRepository.save(party);
     }
 
     @Transactional
@@ -225,8 +218,69 @@ public class PartyServiceImpl implements PartyService {
 
     @Override
     public List<String> getPartyMembers(Long partySeq) {
-        return partyMemberRepository.findByParty_PartySeq(partySeq).stream()
+        return partyMemberRepository.findByParty_PartySeqAndStatus(partySeq, "ACCEPTED").stream()
                 .map(PartyMemberEntity::getUserId)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void acceptMember(Long partyId, Long memberId) {
+        PartyMemberEntity member = partyMemberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("멤버가 존재하지 않습니다."));
+
+        PartyEntity party = member.getParty();
+
+        if (!party.getPartySeq().equals(partyId)) {
+            throw new IllegalArgumentException("파티 불일치");
+        }
+
+        // 최대 인원 수 제한
+        if (party.getPartyHeadcount() >= party.getPartyMax()) {
+            throw new IllegalStateException("최대 인원을 초과할 수 없습니다.");
+        }
+
+        // 포지션 중복 수락 제한
+        List<PartyMemberEntity> acceptedMembers = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, "ACCEPTED");
+        boolean positionTaken = acceptedMembers.stream()
+                .anyMatch(m -> m.getPosition().equalsIgnoreCase(member.getPosition()));
+
+        if (positionTaken) {
+            throw new IllegalStateException("해당 포지션은 이미 다른 참가자가 수락되었습니다.");
+        }
+
+        member.setStatus("ACCEPTED");
+        party.setPartyHeadcount(party.getPartyHeadcount() + 1);
+
+        partyMemberRepository.save(member);
+        partyRepository.save(party);
+    }
+
+    @Transactional
+    public void rejectMember(Long partyId, Long memberId) {
+        PartyMemberEntity member = partyMemberRepository.findById(memberId).orElseThrow();
+        if (!member.getParty().getPartySeq().equals(partyId)) throw new IllegalArgumentException("파티 불일치");
+        member.setStatus("REJECTED");
+        partyMemberRepository.save(member);
+    }
+
+    @Override
+    public List<PartyMemberDTO> getPartyMemberDTOs(Long partySeq) {
+        PartyEntity party = partyRepository.findById(partySeq).orElseThrow();
+        return partyMemberRepository.findByParty(party).stream()
+                .map(PartyMemberDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public String getJoinStatus(Long partyId, String userId) {
+        return partyMemberRepository.findByParty_PartySeqAndUserId(partyId, userId)
+                .map(PartyMemberEntity::getStatus)
+                .orElse("NONE");
+    }
+
+    @Override
+    public boolean existsByParty_PartySeqAndStatusAndPosition(Long partySeq, String status, String position) {
+        return partyMemberRepository.existsByParty_PartySeqAndStatusAndPosition(partySeq, status, position);
     }
 }

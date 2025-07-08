@@ -18,4 +18,14 @@ public interface PartyMemberRepository extends JpaRepository<PartyMemberEntity, 
     boolean existsByParty_PartySeqAndUserId(Long party, String userId);
 
     List<PartyMemberEntity> findByParty_PartySeq(Long partySeq);
+
+    int countByParty_PartySeqAndStatus(Long partyPartySeq, String status);
+
+    boolean existsByParty_PartySeqAndUserIdAndStatus(Long partySeq, String userId, String status);
+
+    List<PartyMemberEntity> findByParty_PartySeqAndStatus(Long partySeq, String status);
+
+    Optional<PartyMemberEntity> findByParty_PartySeqAndUserId(Long partyId, String userId);
+
+    boolean existsByParty_PartySeqAndStatusAndPosition(Long partySeq, String status, String position);
 }

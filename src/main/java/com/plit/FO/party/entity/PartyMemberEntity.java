@@ -2,6 +2,7 @@ package com.plit.FO.party.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -27,12 +28,19 @@ public class PartyMemberEntity {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "join_time")
-    private LocalDateTime joinTime = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "join_time", nullable = false, updatable = false)
+    private LocalDateTime joinTime;
 
     @Column(name = "role", nullable = false, length = 10)
     private String role = "MEMBER";
 
     @Column(name = "message")
     private String message;
+
+    @Column(name = "status", nullable = false)
+    private String status = "PENDING";  // PENDING, ACCEPTED, REJECTED
+
+    @Column(name = "position", nullable = false)
+    private String position;
 }
