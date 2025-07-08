@@ -255,7 +255,7 @@
                             <th:block th:each="entry, stat : ${summary.sortedChampionList}">
                                 <th:block th:if="${stat.index < 3}"> <!-- 객체 stat 이 3보다 작을 때만 렌더링 [ 상위 3개 항목 ] -->
                                     <div class="champion">
-                                        <img th:src="@{'/images/champion/' + ${entry.key} + '.png'}" class="champion-icon" />
+                                        <img th:src="${entry.championImageUrl}" class="champion-icon" />
 
                                         <div class="graph-bar" th:style="${championHeightStyles[entry.key]}"></div>
 

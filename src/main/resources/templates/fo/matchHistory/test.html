@@ -5,7 +5,7 @@
     <title>Test Image</title>
 </head>
 <body>
-<h2>🧪 이미지 테스트 페이지</h2>
+<h2>이미지 테스트 페이지</h2>
 
 <p>챔피언 이미지 예시:</p>
 <img src="https://plit-bucket.s3.eu-central-1.amazonaws.com/img/champion/Aatrox.png" alt="Aatrox" width="120">
@@ -15,6 +15,23 @@
 
 <p>룬 이미지 예시:</p>
 <img src="https://plit-bucket.s3.eu-central-1.amazonaws.com/img/rune/8005.png" alt="Rune" width="60">
+
+
+
+<h2 th:text="${summonerName}"></h2>
+
+<p>티어:</p>
+<img th:src="${tierImage}" alt="티어 이미지" width="60">
+<p th:text="${tier}"></p>
+
+<p>선호 챔피언:</p>
+<p th:text="${mostChampion}"></p>
+
+<p>승률:</p>
+<p th:text="${winRate}"></p>
+
+<p>KDA:</p>
+<p th:text="${kda}"></p>
 
 </body>
 </html>

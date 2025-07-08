@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -121,21 +118,32 @@ public class MatchHistoryController {
 
 
 
-    // 예비용
-    @GetMapping("/history")
-    public String getMatchHistoryByPuuid(@RequestParam String puuid, Model model) {
+    // 간단 테스트용
+    // http://localhost:8080/match/test-direct?gameName=hideonbush&tagLine=KR1
+    @GetMapping("/test-direct")
+    public String testDirectRiotApi(@RequestParam String gameName,
+                                    @RequestParam String tagLine,
+                                    Model model) {
 
-        SummonerDTO summoner = matchHistoryService.getSummonerByPuuid(puuid);
+        System.out.println("직접 API 테스트: " + gameName + "#" + tagLine);
+
+        // Riot API로 Account 정보 직접 요청
+        SummonerDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
         if (summoner == null) {
-            throw new IllegalArgumentException("존재하지 않는 puuid입니다.");
+            throw new IllegalArgumentException("소환사 정보를 찾을 수 없습니다.");
         }
 
+        String puuid = summoner.getPuuid();
+        System.out.println("얻은 puuid: " + puuid);
+
+        // 전적, 티어 등 가져오기
         List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(puuid);
         String tier = matchHistoryService.getTierByPuuid(puuid);
         MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
         Map<String, RankDTO> rankMap = matchHistoryService.getRankInfoByPuuid(puuid);
         List<FavoriteChampionDTO> favoriteChampions = matchHistoryService.getFavoriteChampions(matchList);
 
+        // 스타일 계산
         Map<String, String> championHeightStyles = summary.getChampionTotalGames().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -165,6 +173,7 @@ public class MatchHistoryController {
                 "TUTORIAL", "튜토리얼"
         );
 
+        // 모델에 데이터 넣기
         model.addAttribute("summoner", summoner);
         model.addAttribute("tier", tier);
         model.addAttribute("matchList", matchList);
@@ -177,10 +186,59 @@ public class MatchHistoryController {
         model.addAttribute("rankMap", rankMap);
         model.addAttribute("favoriteChampions", favoriteChampions);
 
-        System.out.println("puuid 요청으로 조회된 소환사: " + summoner.getGameName() + "#" + summoner.getTagLine());
-
         return "fo/matchHistory/matchHistory";
     }
+
+
+    // http://localhost:8080/match/test-clan - (*) service 메서드 - test.html 참고
+    @GetMapping("/test-clan")
+    public String testClanMemberStats(Model model) {
+
+        // 테스트용 Riot ID
+        String gameName = "hide on bush";
+        String tagLine = "kr1";
+
+        System.out.println("테스트: 멤버 = " + gameName + "#" + tagLine);
+
+        // Riot ID -> puuid
+        SummonerDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
+        if (summoner == null) {
+            throw new IllegalArgumentException("소환사 정보를 찾을 수 없습니다.");
+        }
+        String puuid = summoner.getPuuid();
+
+        // 티어
+        String tier = matchHistoryService.getTierByPuuid(puuid);
+        String tierImage = "/images/tier/" + tier.split(" ")[0].toUpperCase().replace(" ", "") + ".png";
+
+        // 전적 + 통계 요약
+        List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(puuid);
+        MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
+
+        // 선호 챔피언
+        String mostChamp = summary.getSortedChampionList().isEmpty()
+                ? "데이터 없음"
+                : summary.getSortedChampionList().get(0).getKey();
+
+        // 승률, KDA 계산
+        int totalGames = summary.getTotalCount();
+        int wins = summary.getWinCount();
+        String winRate = (totalGames > 0) ? (Math.round(wins * 100.0 / totalGames) + "%") : "0%";
+        String kda = String.format("%.2f", summary.getKdaRatio());
+
+        // 모델 전달
+        model.addAttribute("summonerName", gameName + "#" + tagLine);
+        model.addAttribute("tier", tier);
+        model.addAttribute("tierImage", tierImage);
+        model.addAttribute("mostChampion", mostChamp);
+        model.addAttribute("winRate", winRate);
+        model.addAttribute("kda", kda);
+
+        return "fo/matchHistory/test";
+    }
+
+
+
 
 
 }

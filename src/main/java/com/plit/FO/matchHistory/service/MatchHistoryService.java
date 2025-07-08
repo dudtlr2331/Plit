@@ -11,6 +11,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -33,19 +34,29 @@ public class MatchHistoryService {
     private String riotApiKey;
 
 
-    // riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
+    // (*) riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
     public SummonerDTO getAccountByRiotId(String gameName, String tagLine) {
         try {
-            // 1. Riot ID → puuid, gameName, tagLine
-            URI riotIdUri = UriComponentsBuilder
+            // Riot ID -> puuid, gameName, tagLine // uri( 자원 식별 방식 ) 만들기
+            URI riotIdUri = UriComponentsBuilder // URI 생성도구
+                    // riot api의 riot id 앤드포인트에 접속하기 위한 url( uri 의 한 종류 ) 구성
                     .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}")
-                    .queryParam("api_key", riotApiKey)
-                    .buildAndExpand(gameName.trim(), tagLine.trim())
+                    .queryParam("api_key", riotApiKey) // 인증
+                    .buildAndExpand(gameName.trim(), tagLine.trim())// 대입
                     .encode(StandardCharsets.UTF_8)
                     .toUri();
 
-            ResponseEntity<Map> riotIdResponse = restTemplate.getForEntity(riotIdUri, Map.class);
-            Map<String, Object> riotIdBody = riotIdResponse.getBody();
+            // http get 요청
+            ResponseEntity<Map> riotIdResponse = restTemplate.getForEntity(riotIdUri, Map.class); // Map.class -> JSON 을 Map 형식으로 변환
+            Map<String, Object> riotIdBody = riotIdResponse.getBody(); // body 부분만 꺼내기
+
+            /* 예시 riot api 응답 구조 ( json )
+            {
+                "puuid": "o1MvjJkA.. ",
+                "gameName": "Hide on Bush",
+                "tagLine": "KR1"
+            }
+             */
 
             if (riotIdBody == null || riotIdBody.get("puuid") == null) {
                 throw new IllegalArgumentException("Riot API 응답이 비어 있거나 잘못됨");
@@ -55,7 +66,7 @@ public class MatchHistoryService {
             String actualGameName = (String) riotIdBody.get("gameName");
             String actualTagLine = (String) riotIdBody.get("tagLine");
 
-            // 2. puuid → 소환사 정보
+            // puuid -> 소환사 정보
             URI summonerUri = UriComponentsBuilder
                     .fromHttpUrl("https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}")
                     .queryParam("api_key", riotApiKey)
@@ -69,7 +80,7 @@ public class MatchHistoryService {
                     ? (Integer) summonerBody.get("profileIconId")
                     : null;
 
-            // 3. DTO 리턴
+            // DTO로 리턴
             return SummonerDTO.builder()
                     .puuid(puuid)
                     .gameName(actualGameName)
@@ -83,8 +94,7 @@ public class MatchHistoryService {
         }
     }
 
-
-    // puuid -> 티어 [ league/v4 ]
+    // (*) puuid -> 티어 [ league/v4 ]
     public String getTierByPuuid(String puuid) {
         String url = "https://kr.api.riotgames.com/lol/league/v4/entries/by-puuid/" + puuid + "?api_key=" + riotApiKey;
         try {
@@ -92,7 +102,7 @@ public class MatchHistoryService {
             List<Map<String, Object>> entries = response.getBody();
 
             for (Map<String, Object> entry : entries) {
-                if ("RANKED_SOLO_5x5".equals(entry.get("queueType"))) {
+                if ("RANKED_SOLO_5x5".equals(entry.get("queueType"))) { // queueType 이 "RANKED_SOLO_5x5 ( 솔로랭크 데이터 ) 인
                     return entry.get("tier") + " " + entry.get("rank");
                 }
             }
@@ -284,7 +294,7 @@ public class MatchHistoryService {
         return result.size() > 5 ? result.subList(0, 5) : result;
     }
 
-    // 전체 20 게임 통계 요약
+    // (*) 전체 20 게임 통계 요약
     public MatchSummaryDTO getMatchSummary(List<MatchHistoryDTO> matchList) {
         int total = matchList.size();
         if (total == 0) return new MatchSummaryDTO();
@@ -382,7 +392,7 @@ public class MatchHistoryService {
 
     }
 
-    // puuid -> matchid <최근 매치 정보 - 전적 요약 리스트> [ match/v5 ]
+    // (*) puuid -> matchid <최근 매치 정보 - 전적 요약 리스트> [ match/v5 ]
     public List<MatchHistoryDTO> getMatchHistory(String puuid) {
         List<String> matchIds = getMatchIdsByPuuid(puuid);
         List<MatchHistoryDTO> result = new ArrayList<>();
@@ -660,6 +670,62 @@ public class MatchHistoryService {
     }
 
 
+    // Riot id -> puuid -> DB 저장
+    public String getPuuidOrRequest(String gameName, String tagLine) {
+
+        // 캐시는 대소문자 무시해서 조회
+        Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
+                .findByGameNameIgnoreCaseAndTagLineIgnoreCase(gameName.trim(), tagLine.trim());
+
+
+        if (cache.isPresent()) {
+            System.out.println("[캐시 HIT] " + gameName + "#" + tagLine + " → " + cache.get().getPuuid());
+            return cache.get().getPuuid();
+        }
+
+        // Riot API에는 원본 그대로 사용
+        try {
+            String encodedGameName = UriUtils.encodePathSegment(gameName.trim(), StandardCharsets.UTF_8);
+            String encodedTagLine = UriUtils.encodePathSegment(tagLine.trim(), StandardCharsets.UTF_8);
+
+            String url = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
+                    encodedGameName + "/" + encodedTagLine;
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Riot-Token", riotApiKey);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+            // 디버깅 로그
+            System.out.println("[Riot API 요청 URL] " + url);
+            System.out.println("[요청] " + gameName + "#" + tagLine);
+            System.out.println("[응답 코드] " + response.getStatusCode());
+            System.out.println("[응답 바디] " + response.getBody());
+
+            Map<String, Object> body = response.getBody();
+
+            if (body != null && body.get("puuid") != null) {
+                String puuid = (String) body.get("puuid");
+
+                // DB 저장 시엔 원본 그대로 저장 (캐시는 IgnoreCase로 조회하면 됨)
+                RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
+                        .gameName(gameName.trim())
+                        .tagLine(tagLine.trim())
+                        .puuid(puuid)
+                        .build();
+                riotIdCacheRepository.save(saved);
+
+                return puuid;
+            }
+
+        } catch (Exception e) {
+            System.err.println("[Riot API 오류] " + e.getMessage());
+        }
+
+        return null;
+    }
+
     // 캐시 확인하고 없으면 Riot API로 요청 + DB 저장
     public String getPuuidByRiotId(String gameName, String tagLine) {
         try {
@@ -684,54 +750,7 @@ public class MatchHistoryService {
         }
     }
 
-    //
-    public String getPuuidOrRequest(String gameName, String tagLine) {
-
-        // 캐시는 대소문자 무시해서 조회
-        Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
-                .findByGameNameIgnoreCaseAndTagLineIgnoreCase(gameName.trim(), tagLine.trim());
-
-
-        if (cache.isPresent()) {
-            return cache.get().getPuuid();
-        }
-
-        // Riot API에는 원본 그대로 사용
-        try {
-            String encodedGameName = URLEncoder.encode(gameName, StandardCharsets.UTF_8);
-            String encodedTagLine = URLEncoder.encode(tagLine, StandardCharsets.UTF_8);
-
-            String url = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s", encodedGameName, encodedTagLine);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-Riot-Token", riotApiKey);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            Map<String, Object> body = response.getBody();
-
-            if (body != null && body.get("puuid") != null) {
-                String puuid = (String) body.get("puuid");
-
-                // DB 저장 시엔 원본 그대로 저장 (캐시는 IgnoreCase로 조회하면 됨)
-                RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
-                        .gameName(gameName.trim())
-                        .tagLine(tagLine.trim())
-                        .puuid(puuid)
-                        .build();
-                riotIdCacheRepository.save(saved);
-
-                return puuid;
-            }
-
-        } catch (Exception e) {
-            System.err.println("[Riot API 오류] " + e.getMessage());
-        }
-
-        return null;
-    }
-
-
+    // puuid -> 소환사 정보 조회
     public SummonerDTO getSummonerByPuuid(String puuid) {
         try {
             String url = "https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/" +
