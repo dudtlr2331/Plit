@@ -124,7 +124,7 @@
             <h3>개인/2인 랭크 게임</h3>
             <!-- 개인/2인 랭크 게임 null 이 아니면 RankDTO 사용, 연결 -->
             <div class="tier-summary" th:if="${rankMap['RANKED_SOLO_5x5'] != null}">
-                <img th:src="@{'/img/tier/' + ${rankMap['RANKED_SOLO_5x5'].tier.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
+                <img th:src="@{'/images/tier/' + ${rankMap['RANKED_SOLO_5x5'].tier.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
                 <div class="tier-info">
                     <div class="tier-name" th:text="${rankMap['RANKED_SOLO_5x5'].tier + ' ' + rankMap['RANKED_SOLO_5x5'].rank}">티어</div>
                     <div class="lp" th:text="${rankMap['RANKED_SOLO_5x5'].leaguePoints + ' LP'}">0 LP</div>
@@ -146,7 +146,7 @@
             <h3>자유 랭크 게임</h3>
             <div class="tier-summary" th:if="${rankMap['RANKED_FLEX_SR'] != null}">
                 <!-- tier 이미지 이름 대문자로 구성 -->
-                <img th:src="@{'/img/tier/' + ${rankMap['RANKED_FLEX_SR'].tier?.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
+                <img th:src="@{'/images/tier/' + ${rankMap['RANKED_FLEX_SR'].tier?.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
                 <div class="tier-info">
                     <div class="tier-name" th:text="${rankMap['RANKED_FLEX_SR'].tier + ' ' + rankMap['RANKED_FLEX_SR'].rank}">티어</div>
                     <div class="lp" th:text="${rankMap['RANKED_FLEX_SR'].leaguePoints + ' LP'}">0 LP</div>
@@ -255,7 +255,7 @@
                             <th:block th:each="entry, stat : ${summary.sortedChampionList}">
                                 <th:block th:if="${stat.index < 3}"> <!-- 객체 stat 이 3보다 작을 때만 렌더링 [ 상위 3개 항목 ] -->
                                     <div class="champion">
-                                        <img th:src="@{'/img/champion/' + ${entry.key} + '.png'}" class="champion-icon" />
+                                        <img th:src="@{'/images/champion/' + ${entry.key} + '.png'}" class="champion-icon" />
 
                                         <div class="graph-bar" th:style="${championHeightStyles[entry.key]}"></div>
 
@@ -283,7 +283,7 @@
                                              th:style="${positionHeightStyles[pos]}">
                                         </div>
                                     </div>
-                                    <img th:src="@{'/img/position/' + ${pos.toLowerCase()} + '.png'}"
+                                    <img th:src="@{'/images/position/' + ${pos.toLowerCase()} + '.png'}"
                                          th:alt="${pos}" class="position-icon" />
                                 </div>
                             </div>
@@ -313,7 +313,7 @@
                         <div>
                             포지션:
                             <img th:if="${match.teamPosition != null}"
-                                 th:src="@{'/img/position/' + ${match.teamPosition.toLowerCase()} + '.png'}"
+                                 th:src="@{'/images/position/' + ${match.teamPosition.toLowerCase()} + '.png'}"
                                  class="position-icon" />
                         </div>
 
@@ -325,7 +325,7 @@
                         <div>
                             티어:
                             <img th:if="${match.tier != null}"
-                                 th:src="@{'/img/tier/' + ${match.tier.toUpperCase()} + '.png'}"
+                                 th:src="@{'/images/tier/' + ${match.tier.toUpperCase()} + '.png'}"
                                  class="tier-icon" />
                         </div>
                     </div>
