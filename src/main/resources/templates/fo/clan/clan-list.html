@@ -9,26 +9,9 @@
   <link rel="stylesheet" href="/css/clan.css" />
 </head>
 <body>
-<header>
-  <div class="logo" onclick="location.href='/main'">plit</div>
-  <nav>
-    <a href="/party">파티찾기</a>
-    <a href="/record">내전찾기</a>
-    <a href="/clan" style="color: yellow;">클랜찾기</a>
-    <a href="/report">트롤신고</a>
-  </nav>
-  <div style="display: flex; align-items: center; gap: 15px;">
-    <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
-    <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
-      <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
-      <button onclick="location.href='/mypage'">마이페이지</button>
-      <button onclick="location.href='/logout'">로그아웃</button>
-    </div>
-    <div sec:authorize="isAnonymous()">
-      <button onclick="location.href='/login'">로그인</button>
-    </div>
-  </div>
-</header>
+
+<div th:replace="~{fo/common/header :: header}"></div>
+
 
 <div class="container">
   <div class="search-bar">
@@ -53,7 +36,6 @@
       </div>
     </form>
 
-    <!-- 클랜 등록 버튼 -->
     <div sec:authorize="isAuthenticated()">
       <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
     </div>
@@ -65,17 +47,50 @@
       <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h2>클랜 등록하기</h2>
-        <form method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
+        <form id="clanForm" method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
           <div th:if="${error}" style="color: red; text-align: center; margin: 10px 0;">
             <p th:text="${error}"></p>
           </div>
-          <input type="text" name="name" placeholder="클랜 이름" required />
-          <input type="text" name="summonerName" placeholder="소환사 이름" required />
-          <label for="imageUpload" class="image-label">이미지 등록하기</label>
-          <input type="file" id="imageUpload" name="imageFile" accept="image/*" onchange="previewImage(event)" />
-          <img id="imagePreview" style="max-width: 100%; margin-top: 10px;" />
+
+          <!-- 클랜 이름 입력 -->
+          <input
+                  type="text"
+                  name="name"
+                  placeholder="클랜 이름"
+                  required
+                  style="margin-bottom: 6px;"
+                  oninput="checkClanName(this.value)"
+          />
+
+          <div id="clanNameMessage" style="margin-bottom: 16px; font-size: 13px;"></div>
+
+          <!-- 소환사 이름 표시 -->
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">소환사 이름</label>
+            <div style="padding: 10px; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; color: #333;">
+              <span th:text="${nickname}">닉네임</span>
+            </div>
+            <input type="hidden" name="summonerName" th:value="${nickname}" />
+          </div>
+
+          <label for="imageUpload" class="image-label" style="display: block; margin-bottom: 6px;">이미지 등록하기</label>
+
+          <input type="file" id="imageUpload" name="imageFile" accept="image/*"
+                 onchange="validateImageRatio(event)" style="margin-bottom: 10px;" />
+
+          <img id="imagePreview" style="max-width: 100%; margin-bottom: 10px;" />
+
+          <div style="font-size: 13px; color: gray; margin-bottom: 20px; line-height: 1.5;">
+            <p style="margin: 0;">
+              이미지는 <strong>4:3 비율</strong> (예: <strong>800×600</strong>)로 등록하는 것이 가장 예쁘게 보여요.
+            </p>
+            <p style="margin: 4px 0 0 0;">
+              너무 길거나 정사각형에 가까운 이미지는 화면에서 깨져 보일 수 있어요!
+            </p>
+          </div>
+
           <textarea name="intro" placeholder="클랜 소개" required></textarea>
           <select name="minTier" required>
             <option value="">티어 선택</option>
@@ -93,6 +108,7 @@
           </select>
           <input type="url" name="discordLink" placeholder="디스코드 초대 주소" />
           <input type="url" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
+
           <div style="text-align: right;">
             <button type="submit" class="btn">등록하기</button>
             <button type="button" class="btn" onclick="closeModal()">취소</button>
@@ -105,10 +121,13 @@
   <div class="clan-grid">
     <div class="clan-card" th:each="clan : ${clans}" th:onclick="|location.href='/clan/${clan.id}'|" style="cursor: pointer;">
       <div class="clan-image-placeholder">
-        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/images/default.png'}" alt="클랜 이미지" style="width: 100%; height: 100%; object-fit: cover;" />
+        <img th:src="${clan.imageUrl != null and clan.imageUrl != ''} ? @{${clan.imageUrl}} : @{/images/clan/clan_default.png}"
+             alt="클랜 이미지"
+             class="clan-image"
+             style="width: 100%; height: 100%; object-fit: cover;"
+             onerror="this.onerror=null; this.src='/images/clan/clan_default.png';" />
       </div>
 
-      <!-- 클랜 등록 폼 내부 -->
       <div th:if="${linkError}" class="error-msg" style="color: red; text-align: center; font-weight: bold;">
         <p th:text="${linkError}"></p>
       </div>
@@ -161,20 +180,110 @@
   function closeModal() {
     document.getElementById("clanModal").style.display = "none";
   }
-  function previewImage(event) {
-    const reader = new FileReader();
-    reader.onload = function () {
-      const output = document.getElementById('imagePreview');
-      output.src = reader.result;
-    };
-    reader.readAsDataURL(event.target.files[0]);
-  }
+
   function toggleChatList() {
     alert('채팅 리스트 열기 구현 필요');
   }
 
-  document.querySelector("form[action='/clan/register']").addEventListener("submit", function (e) {
-    console.log("폼 제출됨!");
+  function validateImageRatio(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      img.src = e.target.result;
+    };
+
+    img.onload = function () {
+      const width = img.width;
+      const height = img.height;
+      const ratio = width / height;
+
+      const minRatio = 1.2;   // 4:3보다 약간 좁은 비율
+      const maxRatio = 1.5;   // 4:3보다 약간 넓은 비율
+
+      if (ratio < minRatio || ratio > maxRatio) {
+        alert("업로드 전 이미지 비율을 확인해주세요.\n4:3 비율 이미지 (예: 800×600, 400×300)가 가장 깔끔하게 표시됩니다.");
+        event.target.value = ""; // 업로드 취소
+        document.getElementById("imagePreview").src = ""; // 미리보기도 제거
+      } else {
+        document.getElementById("imagePreview").src = img.src;
+      }
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function checkClanName(name) {
+    const msgDiv = document.getElementById("clanNameMessage");
+
+    if (!name || name.length < 2) {
+      msgDiv.textContent = "클랜 이름은 2자 이상 입력해주세요!";
+      msgDiv.style.color = "gray";
+      return;
+    }
+
+    fetch(`/clan/check-name?name=${encodeURIComponent(name)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data) {
+                msgDiv.textContent = "사용 가능한 클랜 이름이에요!";
+                msgDiv.style.color = "green";
+              } else {
+                msgDiv.textContent = "이미 존재하는 클랜 이름입니다.";
+                msgDiv.style.color = "red";
+              }
+            })
+            .catch(() => {
+              msgDiv.textContent = "서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.";
+              msgDiv.style.color = "orange";
+            });
+  }
+
+  async function validateForm() {
+    const nameInput = document.querySelector("input[name='name']");
+    const name = nameInput.value.trim();
+    const msgDiv = document.getElementById("clanNameMessage");
+
+    // 비어있거나 너무 짧으면 막기
+    if (name.length < 2) {
+      alert("클랜 이름은 2자 이상 입력해주세요!");
+      nameInput.focus();
+      return false;
+    }
+
+    // 중복 여부 확인
+    try {
+      const res = await fetch(`/clan/check-name?name=${encodeURIComponent(name)}`);
+      const isAvailable = await res.json();
+
+      if (!isAvailable) {
+        alert("이미 존재하는 클랜 이름입니다. 다른 이름을 입력해주세요!");
+        nameInput.focus();
+        return false; // 제출 막기
+      }
+
+      return true; // 제출 허용
+    } catch (e) {
+      alert("서버 오류가 발생했습니다. 다시 시도해주세요!");
+      return false;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("clanForm");
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const isValid = await validateForm();
+
+      if (isValid) {
+        form.submit();
+      }
+    });
   });
 </script>
 </body>

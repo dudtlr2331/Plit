@@ -18,4 +18,8 @@ public interface ClanService {
     List<ClanEntity> searchClansByKeywordAndTier(String keyword, String tier);
 
     boolean isMember(Long clanId, Long userId);
+
+    void deleteClan(Long id);
+
+    boolean existsByNameAndUseYn(String name, String useYn);
 }
