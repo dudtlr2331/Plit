@@ -75,10 +75,10 @@ public class ClanController {
                 clan.setImageUrl("/uploads/" + fileName);
             } catch (IOException e) {
                 e.printStackTrace();
-                clan.setImageUrl("/images/default.png");
+                clan.setImageUrl("/images/clan/clan_default.png");
             }
         } else {
-            clan.setImageUrl("/images/default.png");
+            clan.setImageUrl("/images/clan/clan_default.png");
         }
 
         clanService.createClan(clan);

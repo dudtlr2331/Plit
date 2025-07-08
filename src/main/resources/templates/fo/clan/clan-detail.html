@@ -37,10 +37,10 @@
             <h1 th:text="${clan.name}" style="margin: 0;">클랜 이름</h1>
             <div class="social-links" style="display: flex; gap: 12px;">
                 <a th:if="${clan.discordLink != null}" th:href="${clan.discordLink}" target="_blank">
-                    <img src="/images/discord-icon.png" alt="Discord" class="clan-social-icon"/>
+                    <img src="/images/clan/discord-icon.png" alt="Discord" class="clan-social-icon"/>
                 </a>
                 <a th:if="${clan.kakaoLink != null}" th:href="${clan.kakaoLink}" target="_blank">
-                    <img src="/images/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon"/>
+                    <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon"/>
                 </a>
             </div>
         </div>
