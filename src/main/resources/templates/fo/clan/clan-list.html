@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title>클랜 찾기</title>
+  <link rel="stylesheet" href="/css/clan.css" />
+</head>
+<body>
+<header>
+  <div class="logo" onclick="location.href='/main'">plit</div>
+  <nav>
+    <a href="/party">파티찾기</a>
+    <a href="/record">내전찾기</a>
+    <a href="/clan" style="color: yellow;">클랜찾기</a>
+    <a href="/report">트롤신고</a>
+  </nav>
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
+    <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
+      <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
+      <button onclick="location.href='/mypage'">마이페이지</button>
+      <button onclick="location.href='/logout'">로그아웃</button>
+    </div>
+    <div sec:authorize="isAnonymous()">
+      <button onclick="location.href='/login'">로그인</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="search-bar">
+    <form method="get" action="/clan" id="searchForm">
+      <div class="search-left">
+        <select name="tier" onchange="document.getElementById('searchForm').submit()">
+          <option value="" th:selected="${tier == null or tier == ''}">티어 전체</option>
+          <option value="상관없음" th:selected="${tier == '상관없음'}">티어 상관 없음</option>
+          <option value="아이언" th:selected="${tier == '아이언'}">아이언</option>
+          <option value="브론즈" th:selected="${tier == '브론즈'}">브론즈</option>
+          <option value="실버" th:selected="${tier == '실버'}">실버</option>
+          <option value="골드" th:selected="${tier == '골드'}">골드</option>
+          <option value="플레티넘" th:selected="${tier == '플레티넘'}">플레티넘</option>
+          <option value="에메랄드" th:selected="${tier == '에메랄드'}">에메랄드</option>
+          <option value="다이아" th:selected="${tier == '다이아'}">다이아</option>
+          <option value="마스터" th:selected="${tier == '마스터'}">마스터</option>
+          <option value="그랜드마스터" th:selected="${tier == '그랜드마스터'}">그랜드마스터</option>
+          <option value="챌린저" th:selected="${tier == '챌린저'}">챌린저</option>
+        </select>
+        <input type="text" name="keyword" placeholder="클랜명 또는 소개 검색" />
+        <button type="submit" class="btn">검색</button>
+      </div>
+    </form>
+
+    <!-- 클랜 등록 버튼 -->
+    <div sec:authorize="isAuthenticated()">
+      <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
+    </div>
+    <div sec:authorize="isAnonymous()">
+      <a href="/login" class="btn">클랜등록</a>
+    </div>
+
+    <div id="clanModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>클랜 등록하기</h2>
+        <form method="post" action="/clan/register" enctype="multipart/form-data" style="padding: 0 16px;">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+          <div th:if="${error}" style="color: red; text-align: center; margin: 10px 0;">
+            <p th:text="${error}"></p>
+          </div>
+          <input type="text" name="name" placeholder="클랜 이름" required />
+          <input type="text" name="summonerName" placeholder="소환사 이름" required />
+          <label for="imageUpload" class="image-label">이미지 등록하기</label>
+          <input type="file" id="imageUpload" name="imageFile" accept="image/*" onchange="previewImage(event)" />
+          <img id="imagePreview" style="max-width: 100%; margin-top: 10px;" />
+          <textarea name="intro" placeholder="클랜 소개" required></textarea>
+          <select name="minTier" required>
+            <option value="">티어 선택</option>
+            <option value="상관없음">티어 상관 없음</option>
+            <option value="아이언">아이언</option>
+            <option value="브론즈">브론즈</option>
+            <option value="실버">실버</option>
+            <option value="골드">골드</option>
+            <option value="플레티넘">플레티넘</option>
+            <option value="에메랄드">에메랄드</option>
+            <option value="다이아">다이아</option>
+            <option value="마스터">마스터</option>
+            <option value="그랜드마스터">그랜드마스터</option>
+            <option value="챌린저">챌린저</option>
+          </select>
+          <input type="url" name="discordLink" placeholder="디스코드 초대 주소" />
+          <input type="url" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
+          <div style="text-align: right;">
+            <button type="submit" class="btn">등록하기</button>
+            <button type="button" class="btn" onclick="closeModal()">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="clan-grid">
+    <div class="clan-card" th:each="clan : ${clans}" th:onclick="|location.href='/clan/${clan.id}'|" style="cursor: pointer;">
+      <div class="clan-image-placeholder">
+        <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/images/default.png'}" alt="클랜 이미지" style="width: 100%; height: 100%; object-fit: cover;" />
+      </div>
+
+      <!-- 클랜 등록 폼 내부 -->
+      <div th:if="${linkError}" class="error-msg" style="color: red; text-align: center; font-weight: bold;">
+        <p th:text="${linkError}"></p>
+      </div>
+
+      <div class="clan-title-box">
+        <h3 th:text="${clan.name}">클랜이름</h3>
+        <span class="clan-member-count">0명</span>
+      </div>
+      <p th:text="${clan.intro}">소개글</p>
+      <small style="display: flex; align-items: center; width: 100%;">
+        <span style="padding-left: 0.75rem; flex-shrink: 0;"
+              th:text="${clan.minTier == '챌린저' ? '챌린저' :
+                       (clan.minTier == '상관없음' ? '티어 상관 없음' :
+                       clan.minTier + ' 이상')}"></span>
+        <div style="flex-grow: 1;"></div>
+        <span class="clan-links" style="padding-right: 0.75rem; display: flex; gap: 4px;">
+          <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}" th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+            <img src="/images/discord-icon.png" alt="Discord" class="social-icon" />
+          </a>
+          <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}" th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+            <img src="/images/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+          </a>
+        </span>
+      </small>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-nav">
+      <a href="#">공지사항</a>
+      <a href="#">사용방법</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="#">광고/제휴문의</a>
+      <a href="#">개발문의</a>
+      <a href="#">404 Squad</a>
+    </div>
+    <div>
+      lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
+      League of Legends is a trademark of Riot Games.
+    </div>
+  </div>
+</footer>
+
+<script>
+  function openModal() {
+    document.getElementById("clanModal").style.display = "block";
+  }
+  function closeModal() {
+    document.getElementById("clanModal").style.display = "none";
+  }
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      const output = document.getElementById('imagePreview');
+      output.src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+  function toggleChatList() {
+    alert('채팅 리스트 열기 구현 필요');
+  }
+
+  document.querySelector("form[action='/clan/register']").addEventListener("submit", function (e) {
+    console.log("폼 제출됨!");
+  });
+</script>
+</body>
+</html>

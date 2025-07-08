@@ -1,7 +1,7 @@
 package com.plit.FO.config;
 
-import com.plit.FO.user.UserEntity;
-import com.plit.FO.user.UserRepository;
+import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +38,7 @@ public class UserDataLoader {
                         .userNickname(nickname)
                         .useYn("Y")
                         .isBanned(false)
-                        .userAuth("user")
+                        .userAuth("USER") // 대문자로 들어가야함
                         .userModiId(null)
                         .userModiDate(null)
                         .userCreateDate(LocalDate.now())

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>플레이어 매칭 UI</title>
@@ -13,7 +13,7 @@
             align-items: center;
             color: white;
         }
-        header .logo { font-weight: bold; cursor: pointer; }
+        header .logo { font-weight: bold; cursor: pointer; text-decoration: none; color: inherit; }
         header nav a {
             margin: 0 10px;
             color: white;
@@ -108,56 +108,17 @@
             padding: 10px;
         }
     </style>
+
+    <!-- 로그인 필요 팝업 스크립트 -->
+    <script th:if="${popup}" defer>
+        window.addEventListener('DOMContentLoaded', () => {
+            alert([[${popup}]]);
+        });
+    </script>
 </head>
 <body>
 
-<header>
-    <div class="logo" onclick="location.href='/main'">Logo</div>
-    <nav>
-        <a onclick="location.href='/party'">파티찾기</a>
-        <a onclick="location.href='/clan'">클랜찾기</a>
-        <a onclick="location.href='/report'">트롤신고</a>
-    </nav>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
-
-        <!-- 로그인 상태인 경우 -->
-        <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
-            <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
-
-            <button onclick="location.href='/mypage'"
-                    style="background: white; color: #ff5a5a; border: 2px solid #ff5a5a;
-                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
-                           transition: all 0.2s ease;"
-                    onmouseover="this.style.backgroundColor='#ffebeb';"
-                    onmouseout="this.style.backgroundColor='white';">
-                마이페이지
-            </button>
-
-            <button onclick="location.href='/logout'"
-                    style="background: #fb5858; color: white; border: none;
-                           padding: 6px 12px; border-radius: 6px; font-weight: bold;
-                           cursor: pointer; transition: all 0.2s ease;"
-                    onmouseover="this.style.backgroundColor='#d40000';"
-                    onmouseout="this.style.backgroundColor='#fb5858';">
-                로그아웃
-            </button>
-        </div>
-
-        <!-- 비로그인 상태인 경우 -->
-        <div th:if="${session.loginUser == null}">
-            <button onclick="location.href='/login'"
-                    style="background: white; color: #ff5a5a; border: 1px solid #ff5a5a;
-                           padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
-                           transition: all 0.2s ease;"
-                    onmouseover="this.style.backgroundColor='#ffebeb';"
-                    onmouseout="this.style.backgroundColor='white';">
-                로그인
-            </button>
-        </div>
-    </div>
-</header>
-
+<div th:replace="~{fo/common/header :: header}"></div>
 
 <div class="search-box">
     <input type="text" placeholder="플레이어 이름 (플레이어#KR1)">
@@ -207,6 +168,13 @@
         <p>파티 하실래요?</p>
     </div>
     <input type="text" placeholder="메시지 입력..." style="width: 100%; padding: 10px;">
+</div>
+
+<!-- 팝업 메시지 -->
+<div th:if="${popup}">
+    <script>
+        alert([[${popup}]]);
+    </script>
 </div>
 
 <script>

@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="loginUserNickname" th:content="${loginUser != null} ? ${loginUser.userNickname} : ''">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
     <title>트롤 신고</title>
     <style>
         html, body {
@@ -177,10 +181,10 @@
 
 <header>
     <nav>
-        <a href="#">파티찾기</a>
-        <a href="#">내전찾기</a>
-        <a href="#">클랜찾기</a>
-        <a href="#" class="active">트롤신고</a>
+        <a href="/main">Logo</a>
+        <a href="/party">파티찾기</a>
+        <a href="/clan">클랜찾기</a>
+        <a href="/report">트롤신고</a>
     </nav>
     <div style="display: flex; align-items: center; gap: 15px;">
         <!-- 로그인 상태 -->
@@ -188,8 +192,8 @@
             <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
 
             <!-- 로그인 상태 -->
-            <div th:if="${session.loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
-                <span th:text="${session.loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
+            <div th:if="${loginUser != null}" style="display: flex; align-items: center; gap: 10px;">
+                <span th:text="${loginUser.userNickname} + ' 님'" style="font-weight: bold;"></span>
 
                 <button onclick="location.href='/mypage'"
                         style="background: white; color: #ff5c5c; border: 2px solid #ff5c5c;
@@ -197,7 +201,7 @@
                     마이페이지
                 </button>
 
-                <button onclick="location.href='/fo/logout'"
+                <button onclick="location.href='/logout'"
                         style="background: #fb5858; color: white; border: none;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold;">
                     로그아웃
@@ -205,14 +209,15 @@
             </div>
 
             <!-- 비로그인 상태 -->
-            <div th:if="${session.loginUser == null}">
-                <button onclick="location.href='/fo/login'"
+            <div th:if="${loginUser == null}">
+                <button onclick="location.href='/login'"
                         style="background: white; color: #ff5c5c; border: 1px solid #ff5c5c;
                            padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
                     로그인
                 </button>
             </div>
         </div>
+    </div>
 </header>
 
 <div class="container">
@@ -234,37 +239,30 @@
         </tr>
         </thead>
         <tbody>
-        <tr>
+        <tr th:each="report : ${blacklist}">
             <td>
                 <div class="summoner-info">
                     <div class="profile-circle"></div>
                     <div>
-                        <div class="summoner-name">플레이어1</div>
-                        <div class="summoner-tag">#KR1</div>
+                        <div class="summoner-name" th:text="${report.reportedNickname}">소환사이름</div>
+                        <div class="summoner-tag">#KR1</div> <!-- 추후 태그 시스템 도입 시 수정 -->
                     </div>
                 </div>
             </td>
-            <td><img src="https://cdn-icons-png.flaticon.com/512/1998/1998611.png" class="tier-icon">M1</td>
-            <td>0회</td>
-            <td><input type="text" class="memo-input" placeholder="메모 입력"></td>
-            <td><span class="time-ago">2초 전</span></td>
-            <td><button class="report-btn">+</button></td>
-        </tr>
-        <tr>
+            <td> <!-- 티어 비워둠 --> </td>
+            <td th:text="${report.reportedCount + '회'}">0회</td>
+            <td><input type="text" class="memo-input" th:value="${report.reason}" readonly></td>
+            <td><span class="time-ago" th:text="${report.timeAgo}">2초 전</span></td>
             <td>
-                <div class="summoner-info">
-                    <div class="profile-circle"></div>
-                    <div>
-                        <div class="summoner-name">플레이어1</div>
-                        <div class="summoner-tag">#KR1</div>
-                    </div>
-                </div>
+                <button class="report-btn"
+                        th:if="${!report.alreadyReportedByCurrentUser}"
+                        th:attr="data-nickname=${report.reportedNickname}"
+                        onclick="handleReportButtonClick(this)">
+                    +
+                </button>
+                <span th:if="${report.alreadyReportedByCurrentUser}" style="color: gray;">✓</span>
             </td>
-            <td><img src="https://cdn-icons-png.flaticon.com/512/1998/1998611.png" class="tier-icon">P3</td>
-            <td>2회</td>
-            <td><input type="text" class="memo-input" placeholder="메모 입력"></td>
-            <td><span class="time-ago">5분 전</span></td>
-            <td><button class="report-btn">+</button></td>
+
         </tr>
         </tbody>
     </table>
@@ -290,7 +288,7 @@
 
         <div style="margin-top:20px; width:90%; display:flex; justify-content:flex-end; gap:10px;">
             <button onclick="closePopup()" style="background:#eee; border:none; padding:10px 20px; border-radius:6px;">취소</button>
-            <button onclick="submitReport()" style="background:#ff5c5c; color:white; border:none; padding:10px 20px; border-radius:6px;">신고</button>
+            <button type="button" onclick="submitReport()" style="background:#ff5c5c; color:white; border:none; padding:10px 20px; border-radius:6px;">신고</button>
         </div>
     </div>
 </div>
@@ -367,6 +365,8 @@
 </body>
 
 <script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
     const nicknameMeta = document.querySelector('meta[name="loginUserNickname"]');
     const nickname = nicknameMeta ? nicknameMeta.content : null;
@@ -409,7 +409,8 @@
 
         fetch("/api/blacklist/report", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", [csrfHeader]: csrfToken },
+            credentials: "same-origin",
             body: JSON.stringify({
                 reporterNickname: reporter,
                 reportedNickname: reportedPlayer,
@@ -435,6 +436,28 @@
     function toggleChatPopup() {
         const el = document.getElementById('chatPopup');
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // + 버튼을 눌렀을 때 반응
+    function openReportPopupWith(nickname) {
+        const reporter = sessionStorage.getItem("loginUserNickname");
+        const reporterInput = document.getElementById("reporter");
+        const reportedInput = document.getElementById("reportedPlayer");
+
+        if (!reporter) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        reporterInput.value = reporter;
+        reportedInput.value = nickname;
+
+        document.getElementById("reportPopup").style.display = "block";
+    }
+
+    function handleReportButtonClick(button) {
+        const nickname = button.getAttribute("data-nickname");
+        openReportPopupWith(nickname);
     }
 </script>
 </html>

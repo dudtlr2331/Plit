@@ -3,27 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>파티 찾기 페이지</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <meta name="user-id" th:content="${#authentication.name}">
   <link rel="stylesheet" href="/css/party-popup.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-<header>
-  <nav>
-    <a href="/main">Logo</a>
-    <a href="/party">파티찾기</a>
-    <a href="/clan">클랜찾기</a>
-    <a href="/report">트롤신고</a>
-  </nav>
-  <nav>
-    <button class="chat-button" onclick="toggleChatList()">💬</button>
-    <a href="/login">로그인</a>
-  </nav>
-  <div id="chatList" class="chat-popup">
-    <div onclick="toggleChatBox('user1')">플레이어1</div>
-    <div onclick="toggleChatBox('user2')">플레이어2</div>
-    <div onclick="toggleChatBox('user3')">플레이어3</div>
-  </div>
-</header>
+
+<div th:replace="fo/common/header :: header"></div>
 
 <div class="tab-container">
   <div class="tab" id="soloTab">솔로 랭크</div>
@@ -98,6 +87,27 @@
 <div id="recruitPopup" class="recruit-popup"></div>
 <div id="partyDetailPopup" class="recruit-popup"></div>
 <div id="chatBox" class="chatbox">채팅창</div>
+
+<div id="joinPopup" class="recruit-popup" style="display:none;">
+  <h3>파티 참가 신청</h3>
+
+  <label>주 포지션 선택</label>
+  <div class="position-group">
+    <label><input type="radio" name="joinPosition" value="TOP"> 탑</label>
+    <label><input type="radio" name="joinPosition" value="JUNGLE"> 정글</label>
+    <label><input type="radio" name="joinPosition" value="MID"> 미드</label>
+    <label><input type="radio" name="joinPosition" value="ADC"> 원딜</label>
+    <label><input type="radio" name="joinPosition" value="SUPPORT"> 서포터</label>
+  </div>
+
+  <label>자기소개</label>
+  <textarea id="joinMessage" rows="3" placeholder="나를 소개해주세요"></textarea>
+
+  <div class="popup-buttons">
+    <button onclick="submitJoinRequest()">가입 신청</button>
+    <button onclick="closeJoinPopup()">취소</button>
+  </div>
+</div>
 
 <!-- JS 분리 -->
 <script src="/js/party.js"></script>

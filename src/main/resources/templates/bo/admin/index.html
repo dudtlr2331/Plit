@@ -1,224 +1,106 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>관리자 대시보드</title>
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-    <link href="/css/styles.css" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <title>관리자 계정 관리</title>
 </head>
-<body class="sb-nav-fixed">
-<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-    <a class="navbar-brand ps-3" href="/index">관리자 페이지</a>
-    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle"><i class="fas fa-bars"></i></button>
-</nav>
+<body>
+<!-- 레이아웃 적용 -->
+<div th:replace="bo/admin/admin_layout :: layout(~{::content})">
+    <!-- 컨텐츠 프래그먼트 정의 -->
+    <div th:fragment="content">
+        <h1 class="mt-4">관리자 계정 관리</h1>
 
-<div id="layoutSidenav">
-    <div id="layoutSidenav_nav">
-        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-            <div class="sb-sidenav-menu">
-                <div class="nav">
-                    <div class="sb-sidenav-menu-heading">Core</div>
-                    <a th:if="${session.loginUser.userAuth == 'master'}" class="nav-link" href="/index">
-                        <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                        Dashboard
-                    </a>
-                    <div class="sb-sidenav-menu-heading">고객문의</div>
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseQna">
-                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                        고객문의
-                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                    </a>
-                    <div class="collapse" id="collapseQna" data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link" href="/bo/personal_qna">1:1 문의</a>
-                            <a class="nav-link" href="/bo/unprocessed_qna">미처리 문의</a>
-                        </nav>
-                    </div>
-                    <div class="sb-sidenav-menu-heading">유저 관리</div>
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUser">
-                        <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
-                        유저 관리
-                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                    </a>
-                    <div class="collapse" id="collapseUser" data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link" href="/bo/trol">트롤 신고 관리</a>
-                            <a class="nav-link" href="/bo/manage_user">유저 관리</a>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            <div class="sb-sidenav-footer">
-                <div class="small">로그인 계정:</div>
-                <span th:text="${session.loginUser.userNickname}">닉네임</span>
-            </div>
-        </nav>
-    </div>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>닉네임</th>
+                <th>권한</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="admin : ${adminList}">
+                <td th:text="${admin.userId}">admin01</td>
+                <td>
+                    <input type="text" th:id="'nickname-' + ${admin.userSeq}" th:value="${admin.userNickname}" class="form-control" />
+                </td>
+                <td>
+                    <select th:id="'auth-select-' + ${admin.userSeq}" class="form-select">
+                        <option value="user" th:selected="${admin.userAuth == 'user'}">user</option>
+                        <option value="admin" th:selected="${admin.userAuth == 'admin'}">admin</option>
+                        <option value="master" th:selected="${admin.userAuth == 'master'}">master</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" th:onclick="'submitEdit(' + ${admin.userSeq} + ')'" class="btn btn-sm btn-success">수정</button>
+                    <button type="button" class="btn btn-sm btn-danger"
+                            th:onclick="'deleteAdmin(' + ${admin.userSeq} + ')'">삭제</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
 
-    <div id="layoutSidenav_content">
-        <main>
-            <div class="container-fluid px-4">
-                <h1 class="mt-4">관리자 계정 관리</h1>
-                <button class="btn btn-primary mb-3" onclick="openAdminPopup()">관리자 계정 추가</button>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
+            if (userAuth !== "admin" && userAuth !== "master") {
+                alert("접근 권한이 없습니다.");
+                location.href = "/main";
+            }
 
-                <table class="table table-bordered">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>닉네임</th>
-                        <th>권한</th>
-                        <th>관리</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="admin : ${adminList}">
-                        <td th:text="${admin.userId}">admin01</td>
+            function submitEdit(userSeq) {
+                const nickname = document.getElementById(`nickname-${userSeq}`).value;
+                const auth = document.getElementById(`auth-select-${userSeq}`).value;
 
-                        <td>
-                            <input type="text" th:id="'nickname-' + ${admin.userSeq}" th:value="${admin.userNickname}" class="form-control" />
-                        </td>
+                const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-                        <td>
-                            <select th:id="'auth-select-' + ${admin.userSeq}" class="form-select">
-                                <option value="admin" th:selected="${admin.userAuth == 'admin'}">admin</option>
-                                <option value="master" th:selected="${admin.userAuth == 'master'}">master</option>
-                            </select>
-                        </td>
+                if (!nickname.trim()) {
+                    alert("닉네임을 입력해주세요.");
+                    return;
+                }
 
-                        <td>
-                            <button type="button" th:onclick="'submitEdit(' + ${admin.userSeq} + ')'" class="btn btn-sm btn-success">수정</button>
-                            <a th:href="@{'/api/bo/admin/delete/' + ${admin.userSeq}}" class="btn btn-sm btn-danger"
-                               onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                fetch(`/api/bo/admin/update/${userSeq}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", [csrfHeader]: csrfToken },
+                    body: JSON.stringify({ userNickname: nickname, userAuth: auth })
+                })
+                    .then(res => {
+                        if (res.ok) {
+                            alert("수정 완료되었습니다.");
+                            location.reload();
+                        } else {
+                            return res.text().then(msg => { throw new Error(msg); });
+                        }
+                    })
+                    .catch(err => alert("수정 실패: " + err.message));
+            }
 
-                <!-- 관리자 추가 팝업 -->
-                <div id="adminPopup" class="modal" style="display:none; position:fixed; top:50%; left:50%;transform: translate(-50%, -50%);width: 60%; height: 50%;background:#fff; border:1px solid #ccc; padding:20px; z-index:1000;box-shadow: 0 4px 10px rgba(0,0,0,0.3); overflow-y: auto;">
-                    <h4>관리자 계정 추가</h4>
-                    <form id="adminAddForm">
-                        <div class="mb-3">
-                            <label>아이디</label>
-                            <input type="text" class="form-control" name="userId" />
-                        </div>
-                        <div class="mb-3">
-                            <label>비밀번호</label>
-                            <input type="password" class="form-control" name="userPwd" />
-                        </div>
-                        <div class="mb-3">
-                            <label>비밀번호 확인</label>
-                            <input type="password" class="form-control" name="userPwdConfirm" />
-                        </div>
-                        <div class="mb-3">
-                            <label>닉네임</label>
-                            <input type="text" class="form-control" name="userNickname" />
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" onclick="closeAdminPopup()">취소</button>
-                            <button type="button" class="btn btn-success" onclick="submitAdminAccount()">계정 추가</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </main>
+            function deleteAdmin(userSeq) {
+                if (!confirm("정말 삭제하시겠습니까?")) return;
 
-        <footer class="py-4 bg-light mt-auto">
-            <div class="container-fluid px-4">
-                <div class="d-flex justify-content-between small">
-                    <div class="text-muted">Copyright &copy; 관리자 페이지 2025</div>
-                    <div>
-                        <a href="#">Privacy Policy</a>
-                        &middot;
-                        <a href="#">Terms & Conditions</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
+                const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                fetch(`/api/bo/admin/delete/${userSeq}`, {
+                    method: "DELETE",
+                    headers: { [csrfHeader]: csrfToken }
+                })
+                    .then(res => {
+                        if (res.ok) {
+                            alert("삭제 완료");
+                            location.reload();
+                        } else {
+                            return res.text().then(msg => { throw new Error(msg); });
+                        }
+                    })
+                    .catch(err => alert("삭제 실패: " + err.message));
+            }
+            /*]]>*/
+        </script>
     </div>
 </div>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="/js/scripts.js"></script>
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    const userAuth = /*[[${session.loginUser.userAuth}]]*/ "guest";
-    if (userAuth !== "admin" && userAuth !== "master") {
-        alert("접근 권한이 없습니다.");
-        location.href = "/main";
-    }
-    /*]]>*/
-
-    function openAdminPopup() {
-        document.getElementById("adminPopup").style.display = "block";
-    }
-
-    function closeAdminPopup() {
-        document.getElementById("adminPopup").style.display = "none";
-    }
-
-    function submitAdminAccount() {
-        const form = document.getElementById("adminAddForm");
-        const userId = form.userId.value.trim();
-        const userPwd = form.userPwd.value.trim();
-        const userPwdConfirm = form.userPwdConfirm.value.trim();
-        const userNickname = form.userNickname.value.trim();
-
-        if (!userId || !userPwd || !userPwdConfirm || !userNickname) {
-            alert("모든 항목을 입력해주세요.");
-            return;
-        }
-
-        if (userPwd !== userPwdConfirm) {
-            alert("비밀번호가 일치하지 않습니다.");
-            return;
-        }
-
-        fetch('/api/bo/admin/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({userId, userPwd, userNickname})
-        })
-            .then(res => {
-                if (res.ok) {
-                    alert("계정이 성공적으로 추가되었습니다.");
-                    closeAdminPopup();
-                    location.reload();
-                } else {
-                    return res.text().then(msg => { throw new Error(msg); });
-                }
-            })
-            .catch(err => alert("추가 실패: " + err.message));
-    }
-
-    function submitEdit(userSeq) {
-        const nickname = document.getElementById(`nickname-${userSeq}`).value;
-        const auth = document.getElementById(`auth-select-${userSeq}`).value;
-
-        if (!nickname.trim()) {
-            alert("닉네임을 입력해주세요.");
-            return;
-        }
-
-        fetch(`/api/bo/admin/update/${userSeq}`, {
-            method: "PUT",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({userNickname: nickname, userAuth: auth})
-        })
-            .then(res => {
-                if (res.ok) {
-                    alert("수정 완료되었습니다.");
-                    location.reload();
-                } else {
-                    return res.text().then(msg => { throw new Error(msg); });
-                }
-            })
-            .catch(err => alert("수정 실패: " + err.message));
-    }
-</script>
 </body>
 </html>
