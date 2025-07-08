@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration // 빈 등록
@@ -19,9 +20,11 @@ public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
 //            .csrf(csrf -> csrf.disable()) // 운영 시에는 반드시 CSRF 보호 활성화하기 현재 비성활 중
 
@@ -44,6 +47,7 @@ public class SecurityConfig {
 
                         /* 마이페이지 */
                         .requestMatchers(HttpMethod.POST, "/mypage").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/mypage").authenticated()
                         .requestMatchers(HttpMethod.POST, "/mypage/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/friends/**").authenticated()
 
@@ -62,6 +66,12 @@ public class SecurityConfig {
 
                         .anyRequest().permitAll() //위에 명시하지 않은 모든 요청은 기본적으로 인증 없이 접근 허용
                 )
+
+                // 비로그인 사용자가 마이페이지 접속시, 로그인 페이지 이동
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
+
                 .formLogin(form -> form
                         .loginPage("/login") // 커스텀 로그인 페이지를 /login으로 지정합니다. (GET /login을 처리하는 컨트롤러/HTML 있어야 함)
                         .usernameParameter("userId")   // HTML form의 input name과 맞춰야 함
