@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface ClanRepository extends JpaRepository<ClanEntity, Long> {
 
-    List<ClanEntity> findAllByOrderByCreatedAtDesc();
+    List<ClanEntity> findByUseYnOrderByCreatedAtDesc(String useYn);
 
     @Query("SELECT c FROM ClanEntity c " +
             "WHERE (:tier IS NULL OR c.minTier = :tier) " +
@@ -24,5 +24,7 @@ public interface ClanRepository extends JpaRepository<ClanEntity, Long> {
             "ORDER BY c.createdAt DESC")
     List<ClanEntity> searchByTierAndKeyword(@Param("tier") String tier,
                                             @Param("keyword") String keyword);
+
+    boolean existsByNameAndUseYn(String name, String useYn);
 }
 

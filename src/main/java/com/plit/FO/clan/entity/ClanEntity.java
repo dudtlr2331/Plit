@@ -50,4 +50,7 @@ public class ClanEntity {
 
     @Column(name = "leader_id", nullable = false)
     private Long leaderId;
+
+    @Column(name = "use_yn")
+    private String useYn = "Y";
 }

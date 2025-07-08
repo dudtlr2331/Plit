@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
@@ -35,10 +36,18 @@ public class ClanController {
     @GetMapping
     public String listClans(@RequestParam(required = false) String keyword,
                             @RequestParam(required = false) String tier,
-                            Model model) {
+                            Model model, Principal principal)  {
         List<ClanEntity> clans = clanService.searchClansByKeywordAndTier(keyword, tier);
         model.addAttribute("clans", clans);
         model.addAttribute("tier", tier);
+
+        if (principal != null) {
+            String userId = principal.getName();
+            Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
+
+            optionalUser.ifPresent(user -> model.addAttribute("nickname", user.getUserNickname()));
+        }
+
         return "fo/clan/clan-list";
     }
 
@@ -72,7 +81,7 @@ public class ClanController {
                 File dir = new File(uploadDir);
                 if (!dir.exists()) dir.mkdirs();
                 imageFile.transferTo(new File(dir, fileName));
-                clan.setImageUrl("/uploads/" + fileName);
+                clan.setImageUrl("/uploads/clan/" + fileName);
             } catch (IOException e) {
                 e.printStackTrace();
                 clan.setImageUrl("/images/clan/clan_default.png");
@@ -111,5 +120,26 @@ public class ClanController {
 
         model.addAttribute("role", role);
         return "fo/clan/clan-detail";
+    }
+
+    // 클랜 삭제
+    @PostMapping("/delete/{id}")
+    public String deleteClan(@PathVariable Long id) {
+        clanService.deleteClan(id);
+        return "redirect:/clan";
+    }
+
+    // 클랜이름 중복검사
+    @GetMapping("/check-name")
+    @ResponseBody
+    public boolean checkClanName(@RequestParam String name) {
+        return !clanService.existsByNameAndUseYn(name, "Y");
+    }
+
+    // 파일 업로드 용량 초과 예외 처리
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public String handleMaxUploadSize(MaxUploadSizeExceededException e, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", "이미지 용량이 너무 큽니다! 10MB 이하로 업로드해주세요.");
+        return "redirect:/clan/register";
     }
 }
