@@ -1,16 +1,16 @@
-package com.plit.FO.matchHistory.config;
+package com.plit.FO.clan.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class ClanWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/img/**")
-                .addResourceLocations("classpath:/static/img/");
+        // 개발 중: 실제 파일 저장 폴더 매핑
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:/Users/minseok/dev/plit-image/");
     }
 }
-
