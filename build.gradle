@@ -37,6 +37,14 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.springframework.security:spring-security-crypto:6.3.0' // 암호화 해싱
 	implementation 'org.springframework.boot:spring-boot-starter-mail' // 메일
+
+	// AWS SDK BOM (버전 통합 관리용)
+	implementation platform("software.amazon.awssdk:bom:2.25.6")
+
+	// 실제 사용할 라이브러리
+	implementation "software.amazon.awssdk:s3"
+	implementation "software.amazon.awssdk:auth" // AWS 자격 증명용
+
 }
 
 tasks.named('test') {

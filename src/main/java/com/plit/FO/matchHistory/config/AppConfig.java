@@ -1,4 +1,4 @@
-package com.plit.FO.matchHistory;
+package com.plit.FO.matchHistory.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

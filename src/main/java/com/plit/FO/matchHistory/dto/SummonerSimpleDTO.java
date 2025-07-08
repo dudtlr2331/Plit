@@ -1,4 +1,4 @@
-package com.plit.FO.matchHistory;
+package com.plit.FO.matchHistory.dto;
 
 import lombok.*;
 
@@ -7,8 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountDTO {
-    private String puuid;
+public class SummonerSimpleDTO {
     private String gameName;
     private String tagLine;
 }

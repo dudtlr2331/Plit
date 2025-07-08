@@ -297,6 +297,13 @@ header nav a {
     margin-top: 2px;
 }
 
+.graph-bar {
+    width: 30px;
+    background-color: #4CAF50;
+    transition: height 0.3s ease-in-out;
+    margin-bottom: 5px;
+}
+
 .match-detail {
     display: none;
     background: #fff;

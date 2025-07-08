@@ -1,12 +1,18 @@
-package com.plit.FO.matchHistory;
+package com.plit.FO.matchHistory.service;
 
+import com.plit.FO.matchHistory.dto.*;
+import com.plit.FO.matchHistory.entity.ImageEntity;
+import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
+import com.plit.FO.matchHistory.repository.RiotIdCacheRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -19,62 +25,64 @@ import java.util.stream.Collectors;
 public class MatchHistoryService {
 
     private final RestTemplate restTemplate;
+    private final ImageService imageService;
+
+    private final RiotIdCacheRepository riotIdCacheRepository;
 
     @Value("${riot.api.key}")
     private String riotApiKey;
 
+
     // riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
     public SummonerDTO getAccountByRiotId(String gameName, String tagLine) {
-
-        String encodedGameName = URLEncoder.encode(gameName.trim(), StandardCharsets.UTF_8);
-        String encodedTagLine = URLEncoder.encode(tagLine.trim(), StandardCharsets.UTF_8);
-
-        // riotId -> puuid 조회
-        String url = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
-                encodedGameName + "/" + encodedTagLine + "?api_key=" + riotApiKey;
-
-        System.out.println("gameName 원본: [" + gameName + "]");
-        System.out.println("tagLine 원본: [" + tagLine + "]");
-
-        System.out.println("최종 Riot API 요청 URL: " + url);
-
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            Map<String, String> body = response.getBody();
+            // 1. Riot ID → puuid, gameName, tagLine
+            URI riotIdUri = UriComponentsBuilder
+                    .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}")
+                    .queryParam("api_key", riotApiKey)
+                    .buildAndExpand(gameName.trim(), tagLine.trim())
+                    .encode(StandardCharsets.UTF_8)
+                    .toUri();
 
-            if (body == null || body.get("puuid") == null) {
-                System.err.println("Riot API 응답은 왔지만 소환사를 찾지 못함 (null)");
-                return null;
+            ResponseEntity<Map> riotIdResponse = restTemplate.getForEntity(riotIdUri, Map.class);
+            Map<String, Object> riotIdBody = riotIdResponse.getBody();
+
+            if (riotIdBody == null || riotIdBody.get("puuid") == null) {
+                throw new IllegalArgumentException("Riot API 응답이 비어 있거나 잘못됨");
             }
 
-            String puuid = body.get("puuid");
-            System.out.println("puuid = " + puuid);
+            String puuid = (String) riotIdBody.get("puuid");
+            String actualGameName = (String) riotIdBody.get("gameName");
+            String actualTagLine = (String) riotIdBody.get("tagLine");
 
-            // puuid -> Summoner API
-            String summonerUrl = "https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/"
-                    + puuid + "?api_key=" + riotApiKey;
+            // 2. puuid → 소환사 정보
+            URI summonerUri = UriComponentsBuilder
+                    .fromHttpUrl("https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}")
+                    .queryParam("api_key", riotApiKey)
+                    .buildAndExpand(puuid)
+                    .toUri();
 
-            ResponseEntity<Map> summonerResponse = restTemplate.getForEntity(summonerUrl, Map.class);
+            ResponseEntity<Map> summonerResponse = restTemplate.getForEntity(summonerUri, Map.class);
             Map<String, Object> summonerBody = summonerResponse.getBody();
 
-            SummonerDTO dto = new SummonerDTO();
-            dto.setGameName(body.get("gameName"));
-            dto.setTagLine(body.get("tagLine"));
-            dto.setPuuid(puuid);
-            dto.setProfileIconId((Integer) summonerBody.get("profileIconId"));
+            Integer profileIconId = summonerBody.get("profileIconId") != null
+                    ? (Integer) summonerBody.get("profileIconId")
+                    : null;
 
-            return dto;
+            // 3. DTO 리턴
+            return SummonerDTO.builder()
+                    .puuid(puuid)
+                    .gameName(actualGameName)
+                    .tagLine(actualTagLine)
+                    .profileIconId(profileIconId)
+                    .build();
 
         } catch (Exception e) {
-//            System.err.println("소환사 정보 조회 실패: " + e.getMessage());
-            System.err.println("소환사 정보 조회 실패");
-            System.err.println("입력 gameName: " + gameName);
-            System.err.println("입력 tagLine: " + tagLine);
-            System.err.println("에러 메시지: " + e.getMessage());
-            e.printStackTrace(); // → 실제 원인까지 콘솔에 출력
+            System.err.println("소환사 조회 오류: " + e.getMessage());
             return null;
         }
     }
+
 
     // puuid -> 티어 [ league/v4 ]
     public String getTierByPuuid(String puuid) {
@@ -95,7 +103,7 @@ public class MatchHistoryService {
         }
     }
 
-    // 개인 랭크 정보
+    // 개인 랭크 정보 [ league/v4 ]
     public Map<String, RankDTO> getRankInfoByPuuid(String puuid) {
         String url = "https://kr.api.riotgames.com/lol/league/v4/entries/by-puuid/" + puuid + "?api_key=" + riotApiKey;
 
@@ -133,6 +141,31 @@ public class MatchHistoryService {
 
         return rankMap;
     }
+
+
+    // 소문자화 + 띄어쓰기 제거
+    private String normalizeGameName(String gameName) {
+        return gameName == null ? null : gameName.toLowerCase().replaceAll("\\s+", "");
+    }
+
+    // 대문자화 + 양쪽 공백
+    private String normalizeTagLine(String tagLine) {
+        return tagLine == null ? null : tagLine.toUpperCase().trim();
+    }
+
+    private String normalizePosition(String pos) {
+        if (pos == null) return "unknown";
+        return switch (pos.toUpperCase()) {
+            case "TOP" -> "top";
+            case "JUNGLE" -> "jungle";
+            case "MID", "MIDDLE" -> "mid";
+            case "ADC", "BOTTOM", "BOT" -> "bottom";
+            case "SUPPORT", "UTILITY" -> "support";
+            default -> "unknown";
+        };
+    }
+
+
 
     // Object 라면 -> int
     private int toInt(Object obj) {
@@ -189,13 +222,15 @@ public class MatchHistoryService {
         }
     }
 
-    // 선호 5챔피언
+
+    // 선호 5챔피언 ( 20게임 각각의 전적을 기반으로 => MatchHistoryDTO )
     public List<FavoriteChampionDTO> getFavoriteChampions(List<MatchHistoryDTO> matchList) {
         Map<String, List<MatchHistoryDTO>> byChampion = matchList.stream()
                 .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
 
         List<FavoriteChampionDTO> result = new ArrayList<>();
 
+        // 자유랭크 게임인 큐 타입 필터링 개수
         int totalFlexGames = (int) matchList.stream()
                 .filter(m -> "RANKED_FLEX_SR".equals(m.getQueueType()))
                 .count();
@@ -224,16 +259,16 @@ public class MatchHistoryService {
             String korName = getKorName(engName);
 
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
-                    .name(engName)
+                    .championName(engName)
                     .korName(korName)
                     .kills(sumKills / total)
                     .deaths(sumDeaths / total)
                     .assists(sumAssists / total)
                     .kdaRatio(kdaRatio)
-                    .totalCs((int) (sumCs / total))
+                    .averageCs((int) (sumCs / total))
                     .csPerMin(sumCsPerMin / total)
-                    .flexGameCount(flexGames)
-                    .flexUsagePercent(totalFlexGames == 0 ? 0 : (flexGames * 100.0 / totalFlexGames))
+                    .flexGames(flexGames)
+                    .flexPickRate(totalFlexGames == 0 ? 0 : (flexGames * 100.0 / totalFlexGames))
                     .build();
 
             result.add(dto);
@@ -241,16 +276,15 @@ public class MatchHistoryService {
 
         // 많이 플레이한 챔피언 순으로 정렬
         result.sort((a, b) -> Integer.compare(
-                (int) matchList.stream().filter(m -> m.getChampionName().equals(b.getName())).count(),
-                (int) matchList.stream().filter(m -> m.getChampionName().equals(a.getName())).count()
+                (int) matchList.stream().filter(m -> m.getChampionName().equals(b.getChampionName())).count(),
+                (int) matchList.stream().filter(m -> m.getChampionName().equals(a.getChampionName())).count()
         ));
 
         // 최대 5개까지만 반환
         return result.size() > 5 ? result.subList(0, 5) : result;
     }
 
-
-    // 20 게임 통계 요약
+    // 전체 20 게임 통계 요약
     public MatchSummaryDTO getMatchSummary(List<MatchHistoryDTO> matchList) {
         int total = matchList.size();
         if (total == 0) return new MatchSummaryDTO();
@@ -278,10 +312,10 @@ public class MatchHistoryService {
             sumAssists += match.getAssists();
             if (match.isWin()) wins++;
 
-            // 킬 관여율
+            // 킬 관여율 누적
             try {
-                sumKp += Double.parseDouble(match.getKillParticipation());
-            } catch (Exception ignored) {}
+                sumKp += Optional.ofNullable(match.getKillParticipation()).orElse(0.0);
+            } catch (NumberFormatException ignored) {}
 
             // 챔피언
             String champ = match.getChampionName();
@@ -343,11 +377,12 @@ public class MatchHistoryService {
                 .positionWins(positionWins)
                 .positionWinRates(positionWinRates)
                 .favoritePositions(new LinkedHashMap<>(positionTotalGames))
+                .sortedPositionList(allPositions)
                 .build();
 
     }
 
-    // puuid -> matchid <최근 매치 상세 정보> [ match/v5 ]
+    // puuid -> matchid <최근 매치 정보 - 전적 요약 리스트> [ match/v5 ]
     public List<MatchHistoryDTO> getMatchHistory(String puuid) {
         List<String> matchIds = getMatchIdsByPuuid(puuid);
         List<MatchHistoryDTO> result = new ArrayList<>();
@@ -366,11 +401,8 @@ public class MatchHistoryService {
                 for (Map<String, Object> p : participants) {
                     if (puuid.equals(p.get("puuid"))) {
                         int teamId = (int) p.get("teamId");
-
-                        // 전체 게임 시간 (초)
                         int durationSeconds = ((Number) info.get("gameDuration")).intValue();
 
-                        // 전체 킬 수 계산
                         int teamTotalKills = participants.stream()
                                 .filter(pp -> ((Number) pp.get("teamId")).intValue() == teamId)
                                 .mapToInt(pp -> ((Number) pp.get("kills")).intValue())
@@ -379,30 +411,35 @@ public class MatchHistoryService {
                         int kills = ((Number) p.get("kills")).intValue();
                         int assists = ((Number) p.get("assists")).intValue();
                         int deaths = ((Number) p.get("deaths")).intValue();
-
-                        // KDA 계산
                         double kdaRatio = deaths != 0 ? (double) (kills + assists) / deaths : kills + assists;
 
-                        // CS 및 분당 CS
                         int totalMinions = ((Number) p.get("totalMinionsKilled")).intValue()
                                 + ((Number) p.get("neutralMinionsKilled")).intValue();
                         double csPerMin = totalMinions / (durationSeconds / 60.0);
 
-                        // 킬관여율
                         double kp = teamTotalKills > 0 ? ((double)(kills + assists) / teamTotalKills) * 100 : 0;
 
-                        // 아이템 아이콘 URL 생성
                         List<String> itemImageUrls = new ArrayList<>();
                         List<String> itemIds = new ArrayList<>();
                         for (int i = 0; i <= 6; i++) {
                             int itemId = (int) p.get("item" + i);
                             itemIds.add(String.valueOf(itemId));
-                            if (itemId != 0) {
-                                itemImageUrls.add("https://ddragon.leagueoflegends.com/cdn/14.12.1/img/item/" + itemId + ".png");
-                            } else {
-                                itemImageUrls.add(null);
-                            }
+                            String itemUrl = itemId != 0
+                                    ? imageService.getImage(String.valueOf(itemId), "item")
+                                    .map(ImageEntity::getImageUrl)
+                                    .orElse("/img/default.png")
+                                    : null;
+                            itemImageUrls.add(itemUrl);
                         }
+
+                        // imageService 에서 DB 에서 가져온 이미지 경로 매핑
+                        String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon")), "profile-icon")
+                                .map(ImageEntity::getImageUrl)
+                                .orElse("/img/default.png");
+
+                        String championImageUrl = imageService.getImage((String) p.get("championName"), "champion")
+                                .map(ImageEntity::getImageUrl)
+                                .orElse("/img/default.png");
 
                         MatchHistoryDTO dto = MatchHistoryDTO.builder()
                                 .matchId(matchId)
@@ -412,25 +449,17 @@ public class MatchHistoryService {
                                 .kills(kills)
                                 .deaths(deaths)
                                 .assists(assists)
-                                .summonerName((String) p.get("summonerName"))
-                                .tier(tier)
-                                .totalDamageDealtToChampions(((Number) p.get("totalDamageDealtToChampions")).intValue())
-                                .totalDamageTaken(((Number) p.get("totalDamageTaken")).intValue())
+                                .kdaRatio(kdaRatio)
+                                .csPerMin(csPerMin)
+                                .killParticipation(kp)
                                 .gameMode((String) info.get("gameMode"))
                                 .queueType(String.valueOf(info.get("queueId")))
                                 .gameEndTimestamp(LocalDateTime.ofEpochSecond(
                                         ((Number) info.get("gameEndTimestamp")).longValue() / 1000, 0, ZoneOffset.UTC))
-                                .cs(totalMinions)
-                                .csPerMin(csPerMin)
-                                .killParticipation(String.format("%.1f", kp))
-                                .gameDurationMinutes(durationSeconds / 60)
-                                .gameDurationSeconds(durationSeconds % 60)
-                                .itemIds(itemIds)
-                                .itemImageUrls(itemImageUrls)
-                                .wardsPlaced(((Number) p.getOrDefault("wardsPlaced", 0)).intValue())
-                                .wardsKilled(((Number) p.getOrDefault("wardsKilled", 0)).intValue())
-                                .profileIconUrl("https://ddragon.leagueoflegends.com/cdn/14.12.1/img/profileicon/" + p.get("profileIcon") + ".png")
+                                .championImageUrl(championImageUrl)
+                                .profileIconUrl(profileIconUrl)
                                 .build();
+
 
                         result.add(dto);
                         break;
@@ -445,7 +474,7 @@ public class MatchHistoryService {
         return result;
     }
 
-    // matchId, puuid <상세 정보 필요할 때 한개만 가져오게! - 데이터 아끼기위해> [ match/v5 ]
+    // matchId, puuid <상세 정보 필요할 때 한게임씩 가져오게! - 데이터 아끼기위해> [ match/v5 ]
     public MatchDetailDTO getMatchDetail(String matchId, String myPuuid) {
         try {
             String url = "https://asia.api.riotgames.com/lol/match/v5/matches/" + matchId + "?api_key=" + riotApiKey;
@@ -458,8 +487,8 @@ public class MatchHistoryService {
                     .mapToInt(p -> (int) p.get("totalDamageDealtToChampions"))
                     .max().orElse(1);
 
-            List<MatchHistoryDTO> blueTeam = new ArrayList<>();
-            List<MatchHistoryDTO> redTeam = new ArrayList<>();
+            List<MatchPlayerDTO> blueTeam = new ArrayList<>();
+            List<MatchPlayerDTO> redTeam = new ArrayList<>();
 
             Map<String,String> tierCache = new HashMap<>();
 
@@ -467,21 +496,17 @@ public class MatchHistoryService {
                 List<String> itemImageUrls = new ArrayList<>();
                 for (int i = 0; i <= 6; i++) {
                     int itemId = (int) p.get("item" + i);
-                    if (itemId != 0) {
-                        itemImageUrls.add("https://ddragon.leagueoflegends.com/cdn/14.12.1/img/item/" + itemId + ".png");
-                    } else {
-                        itemImageUrls.add("");
-                    }
+                    String itemUrl = itemId != 0
+                            ? imageService.getImage(String.valueOf(itemId), "item")
+                            .map(ImageEntity::getImageUrl)
+                            .orElse("/img/default.png")
+                            : null;
+                    itemImageUrls.add(itemUrl);
                 }
 
                 String puuid = (String) p.get("puuid");
-                String tier = tierCache.get(puuid);
-                if (tier == null) {
-                    tier = getTierByPuuid(puuid);
-                    tierCache.put(puuid, tier);
-                }
+                String tier = tierCache.computeIfAbsent(puuid, k -> getTierByPuuid(k));
 
-                // 룬 ID 추출
                 Map<String, Object> perks = (Map<String, Object>) p.get("perks");
                 List<Map<String, Object>> styles = (List<Map<String, Object>>) perks.get("styles");
 
@@ -492,10 +517,41 @@ public class MatchHistoryService {
                 int statRune1 = (int) statPerks.get("offense");
                 int statRune2 = (int) statPerks.get("flex");
 
-                MatchHistoryDTO dto = MatchHistoryDTO.builder()
+                int cs = ((Number) p.get("totalMinionsKilled")).intValue()
+                        + ((Number) p.get("neutralMinionsKilled")).intValue();
+                double csPerMin = cs / (((Number) info.getOrDefault("gameDuration", 1)).doubleValue() / 60.0);
+
+
+                String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon")), "profile-icon")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("/img/default.png");
+
+                String championImageUrl = imageService.getImage((String) p.get("championName"), "champion")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("/img/default.png");
+
+                String mainRune1Url = imageService.getImage(String.valueOf(mainRune1), "rune")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("/img/default.png");
+
+                String mainRune2Url = imageService.getImage(String.valueOf(mainRune2), "rune")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("/img/default.png");
+
+                String statRune1Url = imageService.getImage(String.valueOf(statRune1), "rune")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("/img/default.png");
+
+                String statRune2Url = imageService.getImage(String.valueOf(statRune2), "rune")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("/img/default.png");
+
+                String teamPosition = normalizePosition((String) p.get("teamPosition"));
+
+                MatchPlayerDTO dto = MatchPlayerDTO.builder()
                         .matchId(matchId)
                         .win((Boolean) p.get("win"))
-                        .teamPosition((String) p.get("teamPosition"))
+                        .teamPosition(teamPosition)
                         .championName((String) p.get("championName"))
                         .kills(((Number) p.get("kills")).intValue())
                         .deaths(((Number) p.get("deaths")).intValue())
@@ -507,26 +563,21 @@ public class MatchHistoryService {
                         .gameMode((String) info.get("gameMode"))
                         .gameEndTimestamp(LocalDateTime.ofEpochSecond(
                                 ((Number) info.get("gameEndTimestamp")).longValue() / 1000, 0, ZoneOffset.UTC))
-                        .profileIconUrl("https://ddragon.leagueoflegends.com/cdn/14.12.1/img/profileicon/" + p.get("profileIcon") + ".png")
-                        .itemImageUrls(itemImageUrls)
-                        .cs(((Number) p.get("totalMinionsKilled")).intValue()
-                                + ((Number) p.get("neutralMinionsKilled")).intValue())
-                        .csPerMin(
-                                (((Number) p.get("totalMinionsKilled")).intValue()
-                                        + ((Number) p.get("neutralMinionsKilled")).intValue())
-                                        / (((Number) info.getOrDefault("gameDuration", 1)).doubleValue() / 60.0)
-                        )
-                        .wardsPlaced(((Number) p.getOrDefault("wardsPlaced", 0)).intValue())
-                        .wardsKilled(((Number) p.getOrDefault("wardsKilled", 0)).intValue())
+                        .profileIconUrl(profileIconUrl)
+                        .championImageUrl(championImageUrl)
                         .mainRune1(mainRune1)
                         .mainRune2(mainRune2)
                         .statRune1(statRune1)
                         .statRune2(statRune2)
-                        .championImageUrl("/img/champions/" + p.get("championName") + ".png")
-                        .mainRune1Url("/img/runes/" + mainRune1 + ".png")
-                        .mainRune2Url("/img/runes/" + mainRune2 + ".png")
-                        .statRune1Url("/img/runes/" + statRune1 + ".png")
-                        .statRune2Url("/img/runes/" + statRune2 + ".png")
+                        .mainRune1Url(mainRune1Url)
+                        .mainRune2Url(mainRune2Url)
+                        .statRune1Url(statRune1Url)
+                        .statRune2Url(statRune2Url)
+                        .itemImageUrls(itemImageUrls)
+                        .cs(cs)
+                        .csPerMin(csPerMin)
+                        .wardsPlaced(((Number) p.getOrDefault("wardsPlaced", 0)).intValue())
+                        .wardsKilled(((Number) p.getOrDefault("wardsKilled", 0)).intValue())
                         .build();
 
                 String teamId = p.get("teamId").toString();
@@ -558,6 +609,150 @@ public class MatchHistoryService {
         } catch (Exception e) {
             System.err.println("매치 ID 조회 실패: " + e.getMessage());
             return List.of();
+        }
+    }
+
+    // 자동완성 기능
+    public List<SummonerSimpleDTO> searchAndCacheAllMatchingSummoners(String gameName) {
+        String normGameName = normalizeGameName(gameName);
+        List<RiotIdCacheEntity> cachedList = riotIdCacheRepository.findAllByGameNameIgnoreCase(normGameName);
+        List<SummonerSimpleDTO> result = new ArrayList<>();
+
+        // 1. 캐시된 tagLine 들이 있으면 바로 반환
+        if (!cachedList.isEmpty()) {
+            for (RiotIdCacheEntity entity : cachedList) {
+                result.add(new SummonerSimpleDTO(entity.getGameName(), entity.getTagLine()));
+            }
+            return result;
+        }
+
+        // 2. 없으면 Riot API로 tagLine 후보들 조회 시도
+        String[] tagLineCandidates = {"KR1", "JP1", "NA1", "EUW1"};
+        for (String tagLine : tagLineCandidates) {
+            try {
+                String normTagLine = normalizeTagLine(tagLine);
+                String puuid = getPuuidByRiotId(normGameName, normTagLine);
+
+                if (puuid == null) continue;
+
+                SummonerDTO summoner = getSummonerByPuuid(puuid);
+                if (summoner == null) continue;
+
+                // 캐시에 저장
+                RiotIdCacheEntity entity = RiotIdCacheEntity.builder()
+                        .gameName(normGameName)
+                        .tagLine(normTagLine)
+                        .puuid(puuid)
+                        .build();
+                riotIdCacheRepository.save(entity);
+
+                result.add(new SummonerSimpleDTO(normGameName, normTagLine));
+
+                // 첫 성공한 조합만 리턴
+                return result;
+
+            } catch (Exception e) {
+                System.err.println("[자동완성 Riot API 실패] " + gameName + "#" + tagLine + " → " + e.getMessage());
+            }
+        }
+
+        return result;
+    }
+
+
+    // 캐시 확인하고 없으면 Riot API로 요청 + DB 저장
+    public String getPuuidByRiotId(String gameName, String tagLine) {
+        try {
+            URI uri = UriComponentsBuilder
+                    .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}")
+                    .queryParam("api_key", riotApiKey)
+                    .buildAndExpand(gameName.trim(), tagLine.trim()) // gameName, tagLine 을 실제 값으로 치환
+                    .encode(StandardCharsets.UTF_8) // 한글 닉네임 인코딩
+                    .toUri();
+
+            // GET 요청 -> Map<String, Object> 형식으로 응답 받음
+            Map<String, Object> response = restTemplate.getForObject(uri, Map.class);
+            if (response == null || response.get("puuid") == null) {
+                return null;
+            }
+
+            return (String) response.get("puuid");
+
+        } catch (Exception e) {
+            System.err.println("[getPuuidByRiotId 오류] " + e.getMessage());
+            return null;
+        }
+    }
+
+    //
+    public String getPuuidOrRequest(String gameName, String tagLine) {
+
+        // 캐시는 대소문자 무시해서 조회
+        Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
+                .findByGameNameIgnoreCaseAndTagLineIgnoreCase(gameName.trim(), tagLine.trim());
+
+
+        if (cache.isPresent()) {
+            return cache.get().getPuuid();
+        }
+
+        // Riot API에는 원본 그대로 사용
+        try {
+            String encodedGameName = URLEncoder.encode(gameName, StandardCharsets.UTF_8);
+            String encodedTagLine = URLEncoder.encode(tagLine, StandardCharsets.UTF_8);
+
+            String url = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s", encodedGameName, encodedTagLine);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Riot-Token", riotApiKey);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            Map<String, Object> body = response.getBody();
+
+            if (body != null && body.get("puuid") != null) {
+                String puuid = (String) body.get("puuid");
+
+                // DB 저장 시엔 원본 그대로 저장 (캐시는 IgnoreCase로 조회하면 됨)
+                RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
+                        .gameName(gameName.trim())
+                        .tagLine(tagLine.trim())
+                        .puuid(puuid)
+                        .build();
+                riotIdCacheRepository.save(saved);
+
+                return puuid;
+            }
+
+        } catch (Exception e) {
+            System.err.println("[Riot API 오류] " + e.getMessage());
+        }
+
+        return null;
+    }
+
+
+    public SummonerDTO getSummonerByPuuid(String puuid) {
+        try {
+            String url = "https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/" +
+                    puuid + "?api_key=" + riotApiKey;
+
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            Map<String, Object> body = response.getBody();
+
+            if (body == null || body.get("name") == null || body.get("profileIconId") == null) {
+                throw new IllegalArgumentException("puuid로 소환사 정보 못 가져옴");
+            }
+
+            return SummonerDTO.builder()
+                    .puuid(puuid)
+                    .gameName((String) body.get("name"))
+                    .profileIconId((Integer) body.get("profileIconId"))
+                    .build();
+
+        } catch (Exception e) {
+            System.err.println("getSummonerByPuuid 오류: " + e.getMessage());
+            return null;
         }
     }
 

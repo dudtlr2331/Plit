@@ -3,86 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <title>플레이어 전적 페이지</title>
-
-    <link rel="stylesheet" th:href="@{/css/matchHistory.css}">
-
+    <link rel="stylesheet" href="/css/matchHistory.css">
     <script>
+        <!--    매치 요약 박스 클릭시 실행( 상세 페이지 )  (element) 는 match-summary-box    -->
         function loadMatchDetail(element) {
+
+            // 클릭된 매치의 matchId, puuid 를 data- 속성에서 가져옴
             const matchId = element.getAttribute("data-match-id");
             const puuid = element.getAttribute("data-puuid");
 
+            // match-summary-box 바로 아래 div.match-detail 가져옴
             const detailBox = element.nextElementSibling;
 
-            if (detailBox.getAttribute("data-loaded") === "true") {
-                detailBox.style.display = detailBox.style.display === "none" ? "block" : "none";
+            if (detailBox.getAttribute("data-loaded") === "true") { // 이미 로딩된 박스면
+                detailBox.style.display = detailBox.style.display === "none" ? "block" : "none"; // 토글
                 return;
             }
 
-            fetch(`/fo/match/detail?matchId=${matchId}&puuid=${puuid}`)
-                .then(res => res.json())
-                .then(data => {
-                    const table = detailBox.querySelector(".match-detail-table");
+            // Ajax 요청 보냄 ( 서버 -> JSON 상세 전적 응답 ) - 어디로? /match/detail
+            fetch(`/match/detail?matchId=${matchId}&puuid=${puuid}`)
+                .then(res => res.json()) // 응답 -> JSON 파싱
+                .then(data => { // 파싱한 데이터 기반
+                    const table = detailBox.querySelector(".match-detail-table"); // 상세 테이블 DOM
 
-                    const makeRow = (player, isWin) => {
-                        const damageDealt = (player.totalDamageDealtToChampions * 100 / data.totalMaxDamage).toFixed(1);
-                        const damageTaken = (player.totalDamageTaken * 100 / data.totalMaxDamage).toFixed(1);
-                        const csPerMin = player.csPerMin.toFixed(2);
-                        const itemsHtml = player.itemImageUrls.map(img => img ? `<img src="${img}" class="item-icon">` : '').join('');
+                    // makeRow 함수 시작
+                    const makeRow = (player) => { // player 정보를 행으로 만들어주는 함수 정의
+                        const damageDealt = (player.totalDamageDealtToChampions * 100 / data.totalMaxDamage).toFixed(1); // 입힌 피해량 = 팀전체 딜량 * 100 / 총 최대 데미지
+                        const damageTaken = (player.totalDamageTaken * 100 / data.totalMaxDamage).toFixed(1); // 받은 피해량 = 팀 전체 받은 데미지 * 100 / 최대데미지
+                        const csPerMin = player.csPerMin.toFixed(2); // cs 분당 수치 소수점 둘째 자리까지 고정
+                        const itemsHtml = player.itemImageUrls.map(img => img ? `<img src="${img}" class="item-icon">` : '').join(''); // 아이템 이미지 배열 <img> 태그 문자열로 변환
 
-                        return `
-                <tr class="${isWin ? 'win-row' : 'lose-row'}">
-                    <td>
-                        <div class="player-summary-cell">
-                            <img src="${player.championImageUrl}" class="champion-icon" />
-                            <div class="runes">
-                                <img src="${player.mainRune1Url}" class="rune-icon" />
-                                <img src="${player.mainRune2Url}" class="rune-icon" />
-                                <img src="${player.statRune1Url}" class="rune-icon" />
-                                <img src="${player.statRune2Url}" class="rune-icon" />
-                            </div>
-                            <div class="summoner-info">
-                              <div class="summoner-name">${player.summonerName}</div>
-                              <div class="summoner-tier">${player.tier}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>${player.kills}/${player.deaths}/${player.assists}</td>
-                    <td>
-                        <div class="damage-bar">
-                            <div class="damage-dealt" style="width:${damageDealt}%"></div>
-                            <div class="damage-taken" style="width:${damageTaken}%"></div>
-                        </div>
-                    </td>
-                    <td>설치 : ${player.wardsPlaced}<br />제거 : ${player.wardsKilled}</td>
-                    <td>총 CS : ${player.cs}<br />분당 : ${csPerMin}</td>
-                    <td>${itemsHtml}</td>
-                </tr>
-                `;
-                    };
+                        return `<!-- <tr> 구조 전체 반환 -->
+                            <tr>
+                                <td>
+                                    <div class="player-summary-cell">
+                                    <!-- MatchHistoryService.getMatchDetail => I -->
+                                        <img src="${player.profileIconUrl}" class="profile-icon" />
+                                        <img src="${player.championImageUrl}" class="champion-icon" />
+                                        <div class="runes">
+                                            <img src="${player.mainRune1Url}" class="rune-icon" />
+                                            <img src="${player.mainRune2Url}" class="rune-icon" />
+                                            <img src="${player.statRune1Url}" class="rune-icon" />
+                                            <img src="${player.statRune2Url}" class="rune-icon" />
+                                        </div>
+                                        <div class="summoner-info">
+                                            <div class="summoner-name">${player.summonerName}</div>
+                                            <div class="summoner-tier">${player.tier}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${player.kills}/${player.deaths}/${player.assists}<br/><small>${player.kdaRatio}:1</small></td>
+                                <td>
+                                    <div class="damage-bar">
+                                        <div class="damage-dealt" style="width:${damageDealt}%"></div>
+                                        <div class="damage-taken" style="width:${damageTaken}%"></div>
+                                    </div>
+                                </td>
+                                <td>설치: ${player.wardsPlaced}<br/>제거: ${player.wardsKilled}</td>
+                                <td>총 CS: ${player.cs}<br/>분당: ${csPerMin}</td>
+                                <td>${itemsHtml}</td>
+                            </tr>
+                        `;
+                    }; // makeRow 함수 끝
 
-                    const blueRows = data.blueTeam.map(p => makeRow(p, true)).join('');
-                    const redRows = data.redTeam.map(p => makeRow(p, false)).join('');
+                    // 표 제목 부분 <tr> 행 ( 한 층 ) / <td> 열 ( 하나의 호수 ) / <th> 헤더 셀( 굵게 가운데 정렬 - 표 제목 )
+                    const blueHeader = '<tr class="team-summary"><td colspan="6">블루팀</td></tr>';
+                    const redHeader = '<tr class="team-summary"><td colspan="6">레드팀</td></tr>';
+                    const headerRow = '<tr><th>소환사</th><th>KDA</th><th>피해량</th><th>와드</th><th>CS</th><th>아이템</th></tr>';
 
-                    table.innerHTML += `
-                <tr class="team-summary"><td colspan="7">블루팀</td></tr>
-                <tr><th>소환사</th><th>KDA</th><th>피해량</th><th>와드</th><th>CS</th><th>아이템</th></tr>
-                ${blueRows}
-                <tr class="vs-row"><td colspan="7" class="vs-cell">VS</td></tr>
-                <tr class="team-summary"><td colspan="7">레드팀</td></tr>
-                <tr><th>소환사</th><th>티어</th><th>KDA</th><th>피해량</th><th>와드</th><th>CS</th><th>아이템</th></tr>
-                ${redRows}
-            `;
+                    // 응답 데이터에서 각각 makeRow 함수로 줄 생성
+                    const blueRows = data.blueTeam.map(makeRow).join('');
+                    const redRows = data.redTeam.map(makeRow).join('');
 
-                    detailBox.style.display = "block";
-                    detailBox.setAttribute("data-loaded", "true");
+                    // 테이블에 최종 html 대입
+                    table.innerHTML = `
+                        ${blueHeader}
+                        ${headerRow}
+                        ${blueRows}
+                        <tr class="vs-row"><td colspan="6" class="vs-cell">VS</td></tr>
+                        ${redHeader}
+                        ${headerRow}
+                        ${redRows}
+                    `;
+
+                    detailBox.style.display = "block"; // 상세정보박스 보이게
+                    detailBox.setAttribute("data-loaded", "true"); // data-loaded=true : 다시 요청하지 않도록
                 })
-                .catch(err => {
+                .catch(err => { // err 발생시 함수
                     console.error("상세 정보 로딩 실패", err);
                     detailBox.innerHTML = "<p>데이터 로딩 실패</p>";
                 });
         }
     </script>
 </head>
+
+
 <body>
 <header>
     <nav>
@@ -91,144 +106,130 @@
         <a href="/clan">클랜찾기</a>
         <a href="/report">트롤신고</a>
     </nav>
-    <nav>
-        <button class="chat-button" onclick="toggleChatList()">💬</button>
-        <a href="/login">로그인</a>
-    </nav>
-    <div id="chatList" class="chat-popup">
-        <div>채팅방1</div>
-        <div>채팅방2</div>
-    </div>
 </header>
 
-<div class="profile-header">
-    <img th:src="@{'/img/profileicon/' + ${summoner.profileIconId} + '.png'}" alt="프로필 아이콘" />
-    <h2 th:text="${summoner.gameName} + ' #' + ${summoner.tagLine}">플레이어1 #KR1</h2>
-    <button style="margin-left: auto;" class="btn-red">전적갱신</button>
-</div>
-
-<div class="tabs">
-    <button class="tab active">전체</button>
-    <button class="tab">개인/2인 랭크 게임</button>
-    <button class="tab">자유 랭크 게임</button>
+<div class="profile-header"> <!-- SummonerDTO 에서 닉네임, 태그, 아이콘 불러옴 -->
+    <img th:src="${summoner.profileIconUrl}" alt="프로필 아이콘" />
+    <h2 th:text="${summoner.gameName} + ' #' + ${summoner.tagLine}">플레이어명</h2>
+    <button class="btn-red">전적 갱신</button>
 </div>
 
 <div class="main">
+
+    <!-- 왼쪽 파넬 -->
     <div class="left-panel">
 
+        <!-- 개인/2인 랭크 게임 -->
         <div class="rank-box">
-            <div class="rank-box">
-                <h3>개인/2인 랭크 게임</h3>
-                <div class="tier-summary" th:if="${rankMap['RANKED_SOLO_5x5'] != null}">
-                    <img th:src="@{'/img/emblem-' + ${rankMap['RANKED_SOLO_5x5'].tier.toLowerCase()} + '.png'}"
-                         class="tier-icon" alt="현재 티어" />
-
-                    <div class="tier-info">
-                        <div class="tier-name" th:text="${rankMap['RANKED_SOLO_5x5'].tier + ' ' + rankMap['RANKED_SOLO_5x5'].rank}">
-                            tier
-                        </div>
-                        <div class="lp" th:text="${rankMap['RANKED_SOLO_5x5'].leaguePoints + ' LP'}">
-                            leaguepoints
-                        </div>
-                        <div class="win-rate"
-                             th:text="${rankMap['RANKED_SOLO_5x5'].wins + '승 ' + rankMap['RANKED_SOLO_5x5'].losses + '패 · 승률 ' + #numbers.formatDecimal(rankMap['RANKED_SOLO_5x5'].winRate, 0, 0) + '%'}">
-                            win-rate
-                        </div>
+            <h3>개인/2인 랭크 게임</h3>
+            <!-- 개인/2인 랭크 게임 null 이 아니면 RankDTO 사용, 연결 -->
+            <div class="tier-summary" th:if="${rankMap['RANKED_SOLO_5x5'] != null}">
+                <img th:src="@{'/img/tier/' + ${rankMap['RANKED_SOLO_5x5'].tier.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
+                <div class="tier-info">
+                    <div class="tier-name" th:text="${rankMap['RANKED_SOLO_5x5'].tier + ' ' + rankMap['RANKED_SOLO_5x5'].rank}">티어</div>
+                    <div class="lp" th:text="${rankMap['RANKED_SOLO_5x5'].leaguePoints + ' LP'}">0 LP</div>
+                    <!-- #numbers.formatDecimal(a, x, y) : a 를 소수점 이하 최소 x, 최대 y 자릿수로 포맷 -->
+                    <div class="win-rate"
+                         th:text="${rankMap['RANKED_SOLO_5x5'].wins + '승 ' + rankMap['RANKED_SOLO_5x5'].losses + '패 · 승률 ' + #numbers.formatDecimal(rankMap['RANKED_SOLO_5x5'].winRate, 0, 0) + '%'}">
+                        승률
                     </div>
                 </div>
             </div>
+            <!-- null 이면 -->
+            <div class="no-rank-info" th:if="${rankMap['RANKED_SOLO_5x5'] == null}">
+                <p style="color: gray;">개인 랭크 정보가 없습니다.</p>
+            </div>
         </div>
 
+        <!-- 자유 랭크 게임 -->
         <div class="rank-box">
             <h3>자유 랭크 게임</h3>
             <div class="tier-summary" th:if="${rankMap['RANKED_FLEX_SR'] != null}">
-                <img th:src="@{'/img/emblem-' + ${rankMap['RANKED_FLEX_SR'].tier.toLowerCase()} + '.png'}"
-                     class="tier-icon" alt="현재 티어" />
-
+                <!-- tier 이미지 이름 대문자로 구성 -->
+                <img th:src="@{'/img/tier/' + ${rankMap['RANKED_FLEX_SR'].tier?.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
                 <div class="tier-info">
-                    <div class="tier-name"
-                         th:text="${rankMap['RANKED_FLEX_SR'].tier + ' ' + rankMap['RANKED_FLEX_SR'].rank}">
-                        tier
-                    </div>
-                    <div class="lp"
-                         th:text="${rankMap['RANKED_FLEX_SR'].leaguePoints + ' LP'}">
-                        lp
-                    </div>
+                    <div class="tier-name" th:text="${rankMap['RANKED_FLEX_SR'].tier + ' ' + rankMap['RANKED_FLEX_SR'].rank}">티어</div>
+                    <div class="lp" th:text="${rankMap['RANKED_FLEX_SR'].leaguePoints + ' LP'}">0 LP</div>
                     <div class="win-rate"
                          th:text="${rankMap['RANKED_FLEX_SR'].wins + '승 ' + rankMap['RANKED_FLEX_SR'].losses + '패 · 승률 ' + #numbers.formatDecimal(rankMap['RANKED_FLEX_SR'].winRate, 0, 0) + '%'}">
-                        win-rate
+                        승률
                     </div>
                 </div>
             </div>
-
             <div class="no-rank-info" th:if="${rankMap['RANKED_FLEX_SR'] == null}">
-                <p style="color: gray; font-size: 14px;">자유 랭크 정보가 없습니다.</p>
+                <p style="color: gray;">자유 랭크 정보가 없습니다.</p>
             </div>
         </div>
 
+        <!-- 선호 챔피언 -->
         <div class="champion-preference-box">
-            <h2>선호챔피언</h2>
-            <h3 th:text="'S' + ${T(java.time.Year).now().value}">year</h3>
-            <div class="champion-row" th:each="champ : ${favoriteChampions}">
+            <h3>선호 챔피언</h3>
+            <!-- Thymeleaf 반복문 사용 : FavoriteChampionDTO 리스트 출력 -->
+            <div class="champion-row" th:each="champ : ${favoriteChampions}"> <!-- controller 에서 model 객체로  -->
+
                 <div class="champion-icon">
-                    <img th:src="@{'https://ddragon.leagueoflegends.com/cdn/14.12.1/img/champion/' + ${champ.name} + '.png'}"
-                         alt="champion" />
+                    <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
                 </div>
+
                 <div class="champion-info">
                     <div class="champ-name" th:text="${champ.korName}">루시안</div>
-                    <div class="cs-info" th:text="'CS ' + ${champ.totalCs} + ' (' + ${#numbers.formatDecimal(champ.csPerMin, 1, 1)} + ')'">
-                        CS
+                    <div class="cs-info"
+                         th:text="|분당 CS ${#numbers.formatDecimal(champ.csPerMin, 1, 1)}|">CS
                     </div>
                 </div>
 
                 <div class="kda-info">
-                    <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2) + ':1 평점'}">3.09:1 평점</div>
-                    <div class="kda" th:text="${champ.kills} + ' / ' + ${champ.deaths} + ' / ' + ${champ.assists}">8.4 / 4.3 / 5.1</div>
+                    <div class="kda-ratio"
+                         th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2) + ':1 평점'}">0.00:0 평점</div>
+                    <div class="kda"
+                         th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}">0.0 / 0.0 / 0.0</div>
                 </div>
 
                 <div class="usage-info">
-                    <div class="usage-percent" th:text="${champ.flexUsagePercent + '%'}" style="color:#f45b5b;">63%</div>
-                    <div class="game-count" th:text="${champ.flexGameCount + '게임'}">76게임</div>
+                    <div class="usage-percent" th:text="|${champ.flexUsagePercent ?: 0}%|" style="color:#f45b5b;">0%</div>
+                    <div class="game-count" th:text="|${champ.flexGameCount}게임|">0게임</div>
                 </div>
-            </div>
 
-            <div class="show-more">모든 시즌 티어 보기 ⌄</div>
+            </div>
         </div>
 
     </div>
-    <div class="right-panel">
 
+    <!-- 오른쪽 파넬 -->
+    <div class="right-panel">
         <div class="recent-games">
             <h3>최근 게임 (전체)</h3>
 
-            <div th:if="${matchList != null}">
-
+            <!-- 최근 게임 상세 페이지 summary 시작 부분 => MatchSummaryDTO ( MatchHistoryController 에서 연결 ) -->
+            <div th:if="${summary != null}">
                 <div class="kda-summary">
 
+                    <!-- 승패 요약 -->
                     <div class="match-summary-block">
+                        <!-- MatchSummaryDTO 에서  controller 에서 model 객체 -> summary 객체 필드들 이용 -->
                         <p class="match-record-text"
                            th:text="${summary.totalCount} + '전 ' + ${summary.winCount} + '승 ' + ${summary.loseCount} + '패'">
-                            20전 16승 4패
+                            0전 0승 0패
                         </p>
 
                         <div class="win-loss-bar">
                             <div class="win-bar"
-                                 th:style="'width:' + (${summary.winCount * 100.0 / summary.totalCount}) + '%'">
-                                <span th:text="${summary.winCount} + '승'">16승</span>
+                                 th:style="'width:' + (${summary.totalCount > 0 ? summary.winCount * 100.0 / summary.totalCount : 0}) + '%'">
+                            <span th:text="${summary.winCount} + '승'">0승</span>
                             </div>
                             <div class="lose-bar"
-                                 th:style="'width:' + (${summary.loseCount * 100.0 / summary.totalCount}) + '%'">
-                                <span th:text="${summary.loseCount} + '패'">4패</span>
+                                 th:style="'width:' + (${summary.totalCount > 0 ? summary.loseCount * 100.0 / summary.totalCount : 0}) + '%'">
+                                <span th:text="${summary.loseCount} + '패'">0패</span>
                             </div>
                         </div>
 
                         <p class="win-rate-text"
-                           th:text="${#numbers.formatDecimal(summary.winCount * 100.0 / summary.totalCount, 0, 0)} + '%'">
-                            53%
+                           th:text="${summary.totalCount > 0 ? #numbers.formatDecimal(summary.winCount * 100.0 / summary.totalCount, 0, 0) + '%' : '0%'}">
+                            0%
                         </p>
                     </div>
 
-                    <!-- 아래는 기존 kda 등 유지 -->
+                    <!-- KDA 요약 -->
                     <div class="kda-stat">
                         <div class="label">K/D/A</div>
                         <div>
@@ -236,94 +237,122 @@
                             <span style="color:red;" th:text="${#numbers.formatDecimal(summary.avgDeaths, 1, 1)}">0.0</span> /
                             <span th:text="${#numbers.formatDecimal(summary.avgAssists, 1, 1)}">0.0</span>
                         </div>
-                        <div th:text="${#numbers.formatDecimal(summary.kdaRatio, 2, 2)} + ' : 1'">0.00 : 1</div>
+                        <div th:text="${#numbers.formatDecimal(summary.kdaRatio, 2, 2)} + ' : 1'">0.00 : 0</div>
                         <div style="color:red; font-size: 12px;"
                              th:text="|킬 관여 ${#numbers.formatDecimal(summary.killParticipation, 1, 1)}%|">
                             킬 관여
                         </div>
                     </div>
 
-
-                    <!-- 챔피언 상위 3개 -->
-                    <div class="favorite-champions-section">
+                    <!-- 선호 챔피언 -->
+                    <div class="favorite-champions-section" th:if="${#lists.isEmpty(summary.sortedChampionList) == false}">
                         <h4 class="section-title">최근 선호 챔피언</h4>
                         <div class="favorite-champions">
-                            <div class="champion" th:each="entry : ${summary.sortedChampionList.subList(0, 3)}">
-                                <img th:src="@{'https://ddragon.leagueoflegends.com/cdn/14.12.1/img/champion/' + ${entry.key} + '.png'}"
-                                     th:alt="${entry.key}" />
-                                <div class="percentage"
-                                     th:text="${summary.championWinRates[entry.key]} + '%'">승률</div>
-                                <div class="record"
-                                     th:text="${summary.championTotalGames[entry.key]} + '전 '
-                                            + ${summary.championWins[entry.key]} + '승 '
-                                            + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
-                                </div>
-                            </div>
+                            <!-- th:block 렌더링 시 브라우저에 표시 되지 않음 -->
+                            <!-- 반복문 entry : 현재 요소 / stat : 현재 반복 상태를 담은 객체 -->
+                            <!-- entry.key = 챔피언 ID / entry.value = 사용횟수 or 점수 -->
+                            <!-- MatchSummaryDTO 필드 ==> private List<Map.Entry<String, Integer>> sortedChampionList; -->
+                            <th:block th:each="entry, stat : ${summary.sortedChampionList}">
+                                <th:block th:if="${stat.index < 3}"> <!-- 객체 stat 이 3보다 작을 때만 렌더링 [ 상위 3개 항목 ] -->
+                                    <div class="champion">
+                                        <img th:src="@{'/img/champion/' + ${entry.key} + '.png'}" class="champion-icon" />
+
+                                        <div class="graph-bar" th:style="${championHeightStyles[entry.key]}"></div>
+
+                                        <div class="percentage"
+                                             th:text="${summary.championWinRates[entry.key]} + '%'">승률</div>
+                                        <div class="record"
+                                             th:text="${summary.championTotalGames[entry.key]} + '전 '
+                            + ${summary.championWins[entry.key]} + '승 '
+                            + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </th:block>
                         </div>
                     </div>
 
                     <!-- 선호 포지션 -->
-                    <div class="favorite-positions">
+                    <div class="favorite-positions" th:if="@{${summary.favoritePositions != null and !summary.favoritePositions.isEmpty()}}">
                         <h4 class="section-title">최근 선호 포지션</h4>
-                        <div class="position-bar-container">
-                            <div class="position"
-                                 th:each="pos : ${summary.sortedPositionList}">
-
-                                <div class="position-bar">
-                                    <div class="fill"
-                                         th:with="value=${summary.favoritePositions[pos]}"
-                                         th:style="'height:' + ((value != null ? value * 100.0 / summary.totalCount : 0)) + '%'">
+                            <div class="position-bar-container">
+                                <div class="position"
+                                     th:each="pos : ${summary.sortedPositionList}">
+                                    <div class="position-bar">
+                                        <div class="fill"
+                                             th:style="${positionHeightStyles[pos]}">
+                                        </div>
                                     </div>
+                                    <img th:src="@{'/img/position/' + ${pos.toLowerCase()} + '.png'}"
+                                         th:alt="${pos}" class="position-icon" />
                                 </div>
-
-                                <img th:src="@{'/img/position-' + ${pos.toLowerCase()} + '.png'}"
-                                     th:alt="${pos}" class="position-icon" />
                             </div>
-                        </div>
                     </div>
 
                 </div>
-            </div>
+            </div>   <!-- summary 부분 끝 -->
 
+            <!-- match => MatchHistoryDTO 기반 / th:each 반복문-->
             <div th:each="match : ${matchList}">
+                <!-- 각 매치 요약 박스 -->
                 <div class="match-summary-box"
                      th:attr="data-match-id=${match.matchId}, data-puuid=${summoner.puuid}"
                      th:classappend="${match.win} ? 'win-bg' : 'lose-bg'"
                      onclick="loadMatchDetail(this)">
 
-                    <div class="champion-icon">
-                        <img th:src="@{'https://ddragon.leagueoflegends.com/cdn/14.12.1/img/champion/' + ${match.championName} + '.png'}" alt="챔피언">
-                    </div>
+                    <!-- 챔피언 아이콘 -->
+                    <img th:src="${match.championImageUrl}" class="champion-icon" />
 
+                    <!-- 매치 주요 정보 -->
                     <div class="match-summary-main">
-                        <div><strong th:text="${match.championName}"></strong> (<span th:text="${modeMap[match.gameMode]} ?: '기타 모드'"></span>)</div>
-                        <div>포지션: <span th:text="${match.teamPosition}"></span></div>
-                        <div>KDA: <span th:text="${match.kills + '/' + match.deaths + '/' + match.assists}"></span> |
-                            CS: <span th:text="${match.cs}"></span> (<span th:text="${match.csPerMin}"></span>)</div>
-                        <div th:if="${match.killParticipation != null}">킬관여율: <span th:text="${match.killParticipation} + '%'">킬관여율</span></div>
-                        <div>결과: <span th:text="${match.win} ? '승리' : '패배'"></span> |
-                            티어: <span th:text="${match.tier}"></span></div>
-                        <div th:if="${match.gameDurationMinutes != null}" th:text="${match.gameDurationMinutes} + '분 ' + ${match.gameDurationSeconds} + '초'"></div>
+                        <div>
+                            <strong th:text="${match.championName}"></strong>
+                            (<span th:text="${modeMap[match.gameMode]}"></span>)
+                        </div>
+
+                        <div>
+                            포지션:
+                            <img th:if="${match.teamPosition != null}"
+                                 th:src="@{'/img/position/' + ${match.teamPosition.toLowerCase()} + '.png'}"
+                                 class="position-icon" />
+                        </div>
+
+                        <div>
+                            KDA:
+                            <span th:text="${match.kills + '/' + match.deaths + '/' + match.assists}"></span>
+                        </div>
+
+                        <div>
+                            티어:
+                            <img th:if="${match.tier != null}"
+                                 th:src="@{'/img/tier/' + ${match.tier.toUpperCase()} + '.png'}"
+                                 class="tier-icon" />
+                        </div>
                     </div>
 
+                    <!-- 아이템 이미지들 -->
                     <div class="match-items">
                         <img th:each="imgUrl : ${match.itemImageUrls}"
                              th:if="${imgUrl != null}"
                              th:src="${imgUrl}"
-                             alt="아이템">
+                             class="item-icon"
+                             alt="아이템" />
                     </div>
                 </div>
 
+                <!-- 상세 전적 표시 영역 -->
                 <div class="match-detail" style="display: none;">
                     <table class="match-detail-table"></table>
                 </div>
             </div>
+
+            <!-- 전적이 없는 경우 -->
             <div th:if="${#lists.isEmpty(matchList)}">
                 <p>불러온 전적이 없습니다.</p>
             </div>
+
         </div>
     </div>
 </div>
 </body>
 </html>
-
