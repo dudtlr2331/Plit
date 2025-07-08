@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>QnA 답변 작성</title>
+</head>
+<body>
+<div th:replace="bo/admin/admin_layout :: layout(~{::content})">
+    <div th:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">QnA 답변 작성</h1>
+
+            <!-- 문의 내용 카드 -->
+            <div class="card mt-4 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <strong th:text="${qna.title}">제목</strong>
+                </div>
+                <div class="card-body">
+                    <p><strong>작성자:</strong>
+                        <span th:text="${qna.user != null ? qna.user.userId : '탈퇴회원'}">아이디</span> /
+                        <span th:text="${qna.user != null ? qna.user.userNickname : '탈퇴회원'}">닉네임</span>
+                    </p>
+
+                    <p><strong>첨부파일:</strong>
+                        <span th:if="${qna.fileName != null}">
+                            📎
+                            <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
+                               th:text="${qna.fileName}">첨부파일</a>
+                        </span>
+                        <span th:if="${qna.fileName == null}">없음</span>
+                    </p>
+
+                    <p><strong>문의 내용:</strong></p>
+                    <p th:text="${qna.content}">문의 내용</p>
+                </div>
+            </div>
+
+            <!-- 답변 작성 카드 -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <strong>답변 작성</strong>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/bo/admin/qna/answer/{id}(id=${qna.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <div class="mb-3">
+                            <label for="answer" class="form-label">답변 내용</label>
+                            <textarea id="answer" name="answer" class="form-control" rows="6"
+                                      placeholder="답변을 입력하세요..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">답변 등록</button>
+                        <a th:href="@{/bo/admin/qna/list}" class="btn btn-secondary">취소</a>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -25,4 +25,14 @@ public interface QnaService {
 
     // 관리자용 상태 필터
     List<QnaEntity> getQuestionsByType(String type);
+
+    // Entity → DTO 변환
+    QnaDTO toDTO(QnaEntity entity);
+
+    void deleteById(Long id); // 관리자용
+
+    List<QnaEntity> getDeletedQuestions();
+
+    void hardDelete(Long id);
+
 }

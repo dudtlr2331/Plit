@@ -19,21 +19,15 @@ public class QnaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // user_id를 외래키로 사용 (읽기 전용)
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    // 실제 UserEntity와 연관관계 (읽기 전용)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_seq", insertable = false, updatable = false)
-    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
+    @JoinColumn(name = "user_seq", nullable = false)
     private UserEntity user;
 
     @Column(nullable = false)
     private String title;
 
     @Column(nullable = false)
-    private String status = "미처리";
+    private String status = "대기중";
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
@@ -50,6 +44,28 @@ public class QnaEntity {
     @Column(name = "file_name")
     private String fileName;
 
+    @Column(name = "category")
+    private String category;
+
     @Column(name = "delete_yn", columnDefinition = "VARCHAR(1) DEFAULT 'N'")
     private String deleteYn = "N";
+
+    // 관리자 삭제 여부
+    @Column(name = "admin_deleted", nullable = false)
+    private boolean adminDeleted = false;
+
+    // 유저 로그인 아이디
+    public String getUserId() {
+        return user != null ? user.getUserId() : null;
+    }
+
+    // 유저 시퀀스
+    public Integer getUserSeq() {
+        return user != null ? user.getUserSeq() : null;
+    }
+
+    // 유저 닉네임 추가
+    public String getUserNickname() {
+        return user != null ? user.getUserNickname() : null;
+    }
 }

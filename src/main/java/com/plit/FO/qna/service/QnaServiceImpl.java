@@ -3,76 +3,69 @@ package com.plit.FO.qna.service;
 import com.plit.FO.qna.dto.QnaDTO;
 import com.plit.FO.qna.entity.QnaEntity;
 import com.plit.FO.qna.repository.QnaRepository;
+import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class QnaServiceImpl implements QnaService {
 
     private final QnaRepository qnaRepository;
+    private final UserRepository userRepository;
 
     @Value("${custom.upload-path.qna}")
     private String uploadDir;
 
-    public QnaServiceImpl(QnaRepository qnaRepository) {
+    public QnaServiceImpl(QnaRepository qnaRepository, UserRepository userRepository) {
         this.qnaRepository = qnaRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public void saveQuestion(QnaDTO dto, Long userId) {
+        UserEntity user = userRepository.findById(userId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+
         QnaEntity qna = new QnaEntity();
-        qna.setUserId(userId);
+        qna.setUser(user);
         qna.setTitle(dto.getTitle());
         qna.setContent(dto.getContent());
+        qna.setCategory(dto.getCategory());
         qna.setStatus("대기중");
         qna.setAskedAt(LocalDateTime.now());
 
-        MultipartFile file = dto.getFile();
-        if (file != null && !file.isEmpty()) {
-            String originalFilename = file.getOriginalFilename();
-            String savedName = UUID.randomUUID() + "_" + originalFilename;
-
-            try {
-                Path savePath = Paths.get(uploadDir).resolve(savedName);
-                file.transferTo(savePath.toFile());
-                qna.setFileName(savedName);
-            } catch (IOException e) {
-                throw new RuntimeException("파일 저장 실패", e);
-            }
+        if (dto.getFileName() != null) {
+            qna.setFileName(dto.getFileName());
         }
 
         qnaRepository.save(qna);
-        System.out.println("문의 등록됨 → " + qna.getTitle());
     }
 
     @Override
     public List<QnaEntity> getMyQuestions(Long userId) {
-        return qnaRepository.findByUserIdAndDeleteYnOrderByAskedAtDesc(userId, "N");
+        UserEntity user = userRepository.findById(userId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다"));
+        return qnaRepository.findByUserAndDeleteYnOrderByAskedAtDesc(user, "N");
     }
 
     @Override
     public void deleteQna(Long id, Long userId) {
         qnaRepository.findById(id).ifPresent(qna -> {
-            if (qna.getUserId().equals(userId)) {
+            if (qna.getUser() != null && qna.getUser().getUserSeq().equals(userId.intValue())) {
                 qnaRepository.softDelete(id, userId);
-                System.out.println("문의 삭제됨: " + id);
             } else {
-                System.out.println("삭제 권한 없음: " + userId);
+                throw new IllegalArgumentException("삭제 권한이 없습니다.");
             }
         });
     }
 
     @Override
     public List<QnaEntity> getAllQuestions() {
-        return qnaRepository.findByDeleteYnOrderByAskedAtDesc("N");
+        return qnaRepository.findByDeleteYnAndAdminDeletedFalseOrderByAskedAtDesc("N");
     }
 
     @Override
@@ -92,17 +85,55 @@ public class QnaServiceImpl implements QnaService {
 
     @Override
     public List<QnaEntity> getUnansweredQuestions() {
-        return qnaRepository.findByAnswerIsNullAndDeleteYnOrderByAskedAtDesc("N");
+        return qnaRepository.findByAnswerIsNullAndDeleteYnAndAdminDeletedFalseOrderByAskedAtDesc("N");
     }
 
     @Override
     public List<QnaEntity> getQuestionsByType(String type) {
         if ("UNANSWERED".equalsIgnoreCase(type)) {
-            return qnaRepository.findByStatusAndDeleteYnOrderByAskedAtDesc("대기중", "N");
+            return qnaRepository.findByDeleteYnAndAdminDeletedFalseAndStatusOrderByAskedAtDesc("N", "대기중");
         } else if ("ANSWERED".equalsIgnoreCase(type)) {
-            return qnaRepository.findByDeleteYnAndStatusOrderByAskedAtDesc("N", "답변완료");
+            return qnaRepository.findByDeleteYnAndStatusAndAdminDeletedFalseOrderByAskedAtDesc("N", "답변완료");
         } else {
-            return qnaRepository.findByDeleteYnOrderByAskedAtDesc("N"); // 전체
+            return qnaRepository.findByDeleteYnAndAdminDeletedFalseOrderByAskedAtDesc("N");
         }
+    }
+
+    @Override
+    public QnaDTO toDTO(QnaEntity entity) {
+        QnaDTO dto = new QnaDTO();
+        dto.setId(entity.getId());
+        dto.setTitle(entity.getTitle());
+        dto.setContent(entity.getContent());
+        dto.setFileName(entity.getFileName());
+        dto.setAskedAt(entity.getAskedAt());
+        dto.setStatus(entity.getStatus());
+        dto.setCategory(entity.getCategory());
+
+        if (entity.getUser() != null) {
+            dto.setUserId((long) entity.getUser().getUserSeq());
+            dto.setUserNickname(entity.getUser().getUserNickname());
+        } else {
+            dto.setUserNickname("(탈퇴회원)");
+        }
+
+        return dto;
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        QnaEntity qna = findById(id);
+        qna.setAdminDeleted(true);
+        qnaRepository.save(qna);
+    }
+
+    @Override
+    public List<QnaEntity> getDeletedQuestions() {
+        return qnaRepository.findByDeleteYnOrAdminDeletedTrueOrderByAskedAtDesc("Y");
+    }
+
+    @Override
+    public void hardDelete(Long id) {
+        qnaRepository.deleteById(id);
     }
 }
