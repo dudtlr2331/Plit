@@ -1,4 +1,4 @@
-package com.plit.FO.mypage;
+package com.plit.FO.mypage.controller;
 
 import com.plit.FO.qna.service.QnaService;
 import com.plit.FO.user.dto.UserDTO;
