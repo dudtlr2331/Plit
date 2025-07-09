@@ -20,6 +20,10 @@ public class FavoriteChampionDTO {
     private double deaths;
     private double assists;
 
+    private int gameCount;
+    private int winCount;
+    private double winRate;
+
     private double kdaRatio;
 
     private double flexPickRate;
