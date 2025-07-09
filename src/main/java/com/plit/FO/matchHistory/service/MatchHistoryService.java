@@ -14,12 +14,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +30,13 @@ public class MatchHistoryService {
 
     private final RiotIdCacheRepository riotIdCacheRepository;
 
+    private static final LocalDateTime S2025_START = LocalDateTime.of(2025, 1, 9, 12, 0);
+
     @Value("${riot.api.key}")
     private String riotApiKey;
 
+
+//    riot api 기본정보 가져오기
 
     // (*) riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
     public SummonerDTO getAccountByRiotId(String gameName, String tagLine) {
@@ -153,6 +157,106 @@ public class MatchHistoryService {
     }
 
 
+//    왼쪽 파넬
+
+    // 최근 시즌 시작일 자동 추정 (랭크 매치 중 가장 오래된 날짜)
+    private LocalDateTime getSeasonStart(List<MatchHistoryDTO> matchList) {
+        return matchList.stream()
+                .filter(m -> "420".equals(m.getQueueType()) || "440".equals(m.getQueueType()))
+                .map(MatchHistoryDTO::getGameEndTimestamp)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now().minusMonths(3)); // fallback: 최근 3개월
+    }
+
+    // 시즌 필터 (동적으로 시즌 시작일 넘겨받음)
+    private boolean isCurrentSeason(MatchHistoryDTO m, LocalDateTime seasonStart) {
+        return m.getGameEndTimestamp().isAfter(seasonStart);
+    }
+
+    // 모드 필터 (솔로/자유/전체)
+    private boolean matchesMode(MatchHistoryDTO m, String mode) {
+        if ("solo".equals(mode)) return "420".equals(m.getQueueType());
+        if ("flex".equals(mode)) return "440".equals(m.getQueueType());
+        return "420".equals(m.getQueueType()) || "440".equals(m.getQueueType());
+    }
+
+    // 내부 계산 로직
+    private List<FavoriteChampionDTO> calculateFavoriteChampions(List<MatchHistoryDTO> matchList, String mode) {
+        Map<String, List<MatchHistoryDTO>> byChampion = matchList.stream()
+                .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
+
+        int totalFlexGames = (int) matchList.stream()
+                .filter(m -> "440".equals(m.getQueueType()))
+                .count();
+
+        List<FavoriteChampionDTO> result = new ArrayList<>();
+
+        for (Map.Entry<String, List<MatchHistoryDTO>> entry : byChampion.entrySet()) {
+            String engName = entry.getKey();
+            List<MatchHistoryDTO> matches = entry.getValue();
+
+            double sumKills = 0, sumDeaths = 0, sumAssists = 0, sumCs = 0, sumCsPerMin = 0;
+            int flexGames = 0, soloGames = 0;
+
+            for (MatchHistoryDTO m : matches) {
+                sumKills += m.getKills();
+                sumDeaths += m.getDeaths();
+                sumAssists += m.getAssists();
+                sumCs += m.getCs();
+                sumCsPerMin += m.getCsPerMin();
+
+                if ("440".equals(m.getQueueType())) flexGames++;
+                if ("420".equals(m.getQueueType())) soloGames++;
+            }
+
+            if ("flex".equals(mode) && flexGames == 0) continue;
+            if ("solo".equals(mode) && soloGames == 0) continue;
+
+            int total = matches.size();
+            int wins = (int) matches.stream().filter(MatchHistoryDTO::isWin).count();
+            int winRate = total == 0 ? 0 : (int) round(wins * 100.0 / total, 0);
+            double kdaRatio = sumDeaths == 0 ? sumKills + sumAssists : (sumKills + sumAssists) / sumDeaths;
+            String korName = getKorName(engName);
+
+            FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
+                    .championName(engName)
+                    .korName(korName)
+                    .kills(sumKills / total)
+                    .deaths(sumDeaths / total)
+                    .assists(sumAssists / total)
+                    .kdaRatio(round(kdaRatio, 2))
+                    .averageCs((int) (sumCs / total))
+                    .csPerMin(round(sumCsPerMin / total, 1))
+                    .flexGames(flexGames)
+                    .flexPickRate(totalFlexGames == 0 ? 0 : round(flexGames * 100.0 / totalFlexGames, 1))
+                    .championImageUrl(imageService.getImageUrl(engName, "champion"))
+                    .gameCount(total)
+                    .winCount(wins)
+                    .winRate(winRate)
+                    .build();
+
+            result.add(dto);
+        }
+
+        result.sort(Comparator.comparingInt(FavoriteChampionDTO::getFlexGames).reversed());
+        return result;
+    }
+
+    // 시즌 기반 선호 챔피언
+    public List<FavoriteChampionDTO> getFavoriteChampionsBySeason(String puuid, String mode) {
+        List<MatchHistoryDTO> allMatches = getMatchHistory(puuid);
+
+        LocalDateTime seasonStart = getSeasonStart(allMatches);
+        List<MatchHistoryDTO> filtered = allMatches.stream()
+                .filter(m -> isCurrentSeason(m, seasonStart))
+                .filter(m -> matchesMode(m, mode))
+                .collect(Collectors.toList());
+
+        return calculateFavoriteChampions(filtered, mode);
+    }
+
+
+//    오른쪽 파넬
 
     // 선호 5챔피언 ( 20게임 각각의 전적을 기반으로 => MatchHistoryDTO )
     public List<FavoriteChampionDTO> getFavoriteChampions(List<MatchHistoryDTO> matchList) {
@@ -189,6 +293,11 @@ public class MatchHistoryService {
             double kdaRatio = sumDeaths == 0 ? sumKills + sumAssists : (sumKills + sumAssists) / sumDeaths;
             String korName = getKorName(engName);
 
+            String championImageUrl = imageService.getImage(engName + ".png", "champion")
+                    .map(ImageEntity::getImageUrl)
+                    .orElse("/img/default.png");
+
+
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
                     .championName(engName)
                     .korName(korName)
@@ -200,6 +309,7 @@ public class MatchHistoryService {
                     .csPerMin(sumCsPerMin / total)
                     .flexGames(flexGames)
                     .flexPickRate(totalFlexGames == 0 ? 0 : (flexGames * 100.0 / totalFlexGames))
+                    .championImageUrl(championImageUrl)
                     .build();
 
             result.add(dto);
@@ -268,7 +378,7 @@ public class MatchHistoryService {
         for (String champ : championTotalGames.keySet()) {
             int count = championTotalGames.get(champ);
             int win = championWins.getOrDefault(champ, 0);
-            int rate = (int) Math.round(win * 100.0 / count);
+            int rate = (int) round(win * 100.0 / count, 0);
             championWinRates.put(champ, rate);
         }
 
@@ -277,7 +387,7 @@ public class MatchHistoryService {
         for (String pos : allPositions) {
             int count = positionTotalGames.getOrDefault(pos, 0);
             int win = positionWins.getOrDefault(pos, 0);
-            int rate = (count == 0) ? 0 : (int) Math.round(win * 100.0 / count);
+            int rate = (count == 0) ? 0 : (int) round(win * 100.0 / count, 0);
             positionWinRates.put(pos, rate);
         }
 
@@ -317,7 +427,6 @@ public class MatchHistoryService {
     public List<MatchHistoryDTO> getMatchHistory(String puuid) {
         List<String> matchIds = getMatchIdsByPuuid(puuid);
         List<MatchHistoryDTO> result = new ArrayList<>();
-        String tier = getTierByPuuid(puuid);
 
         for (String matchId : matchIds) {
             try {
@@ -356,7 +465,7 @@ public class MatchHistoryService {
                             int itemId = (int) p.get("item" + i);
                             itemIds.add(String.valueOf(itemId));
                             String itemUrl = itemId != 0
-                                    ? imageService.getImage(String.valueOf(itemId), "item")
+                                    ? imageService.getImage(String.valueOf(itemId) + ".png", "item")
                                     .map(ImageEntity::getImageUrl)
                                     .orElse("/img/default.png")
                                     : null;
@@ -364,11 +473,11 @@ public class MatchHistoryService {
                         }
 
                         // imageService 에서 DB 에서 가져온 이미지 경로 매핑
-                        String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon")), "profile-icon")
+                        String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon") + ".png"), "profile-icon")
                                 .map(ImageEntity::getImageUrl)
                                 .orElse("/img/default.png");
 
-                        String championImageUrl = imageService.getImage((String) p.get("championName"), "champion")
+                        String championImageUrl = imageService.getImage((String) p.get("championName") + ".png", "champion")
                                 .map(ImageEntity::getImageUrl)
                                 .orElse("/img/default.png");
 
@@ -428,7 +537,7 @@ public class MatchHistoryService {
                 for (int i = 0; i <= 6; i++) {
                     int itemId = (int) p.get("item" + i);
                     String itemUrl = itemId != 0
-                            ? imageService.getImage(String.valueOf(itemId), "item")
+                            ? imageService.getImage(String.valueOf(itemId) + ".png", "item")
                             .map(ImageEntity::getImageUrl)
                             .orElse("/img/default.png")
                             : null;
@@ -453,27 +562,27 @@ public class MatchHistoryService {
                 double csPerMin = cs / (((Number) info.getOrDefault("gameDuration", 1)).doubleValue() / 60.0);
 
 
-                String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon")), "profile-icon")
+                String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon") + ".png"), "profile-icon")
                         .map(ImageEntity::getImageUrl)
                         .orElse("/img/default.png");
 
-                String championImageUrl = imageService.getImage((String) p.get("championName"), "champion")
+                String championImageUrl = imageService.getImage((String) p.get("championName") + ".png", "champion")
                         .map(ImageEntity::getImageUrl)
                         .orElse("/img/default.png");
 
-                String mainRune1Url = imageService.getImage(String.valueOf(mainRune1), "rune")
+                String mainRune1Url = imageService.getImage(String.valueOf(mainRune1) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
                         .orElse("/img/default.png");
 
-                String mainRune2Url = imageService.getImage(String.valueOf(mainRune2), "rune")
+                String mainRune2Url = imageService.getImage(String.valueOf(mainRune2) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
                         .orElse("/img/default.png");
 
-                String statRune1Url = imageService.getImage(String.valueOf(statRune1), "rune")
+                String statRune1Url = imageService.getImage(String.valueOf(statRune1) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
                         .orElse("/img/default.png");
 
-                String statRune2Url = imageService.getImage(String.valueOf(statRune2), "rune")
+                String statRune2Url = imageService.getImage(String.valueOf(statRune2) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
                         .orElse("/img/default.png");
 
@@ -620,6 +729,7 @@ public class MatchHistoryService {
     }
 
 
+
     // Object 라면 -> int
     private int toInt(Object obj) {
         if (obj instanceof Integer) return (Integer) obj;
@@ -632,6 +742,11 @@ public class MatchHistoryService {
             }
         }
         return 0;
+    }
+
+    // 반올림
+    private double round(double value, int precision) {
+        return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
     }
 
     // 게임 모드 -> 한글
@@ -649,12 +764,7 @@ public class MatchHistoryService {
     // 한글 이름으로 불러오기
     private Map<String, String> korNameMap = new HashMap<>();
 
-    // 영어 -> 한글 챔피언 이름
-    private String getKorName(String engName) {
-        return korNameMap.getOrDefault(engName, engName);
-    }
-
-    // 한글 챔피언 이름
+    // 한글 챔피언 이름 - riot 챔피언 json 으로 호출 - 모든 챔피언의 영어 이름(key) 과 한글 이름 필드가 들어있음
     @PostConstruct
     public void loadKorChampionMap() {
         try {
@@ -663,6 +773,7 @@ public class MatchHistoryService {
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             Map<String, Object> data = (Map<String, Object>) response.get("data");
 
+            // korNameMap 에 매핑 저장
             for (String engName : data.keySet()) {
                 Map<String, Object> champData = (Map<String, Object>) data.get(engName);
                 String korName = (String) champData.get("name");
@@ -674,5 +785,11 @@ public class MatchHistoryService {
             System.err.println("챔피언 한글 이름 로딩 실패: " + e.getMessage());
         }
     }
+
+    // 영어 -> 한글 챔피언 이름
+    private String getKorName(String engName) {
+        return korNameMap.getOrDefault(engName, engName);
+    }
+
 
 }
