@@ -1,0 +1,98 @@
+body { font-family: sans-serif; margin: 0; padding: 0; }
+
+header {
+    background: linear-gradient(to right, #7c4798, #6570b4);
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+header .logo { font-weight: bold; cursor: pointer; text-decoration: none; color: inherit; }
+
+header nav a {
+    margin: 0 10px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/*.main-header {*/
+/*    display: flex;*/
+/*    align-items: center;      !* 수직 정렬 *!*/
+/*    padding: 0 20px;*/
+/*    height: 60px;*/
+/*    background: linear-gradient(to right, #7c4798, #6570b4);*/
+/*}*/
+
+/*.logo img {*/
+/*    height: 30px;*/
+/*    display: block;*/
+/*    margin: 0;                !* 불필요한 여백 제거 *!*/
+/*    padding: 0;*/
+/*}*/
+
+/*.main-nav {*/
+/*    display: flex;*/
+/*    gap: 20px;*/
+/*}*/
+
+/*.main-nav a {*/
+/*    color: white;*/
+/*    text-decoration: none;*/
+/*    font-weight: bold;*/
+/*}*/
+
+/*.main-nav a:hover {*/
+/*    text-decoration: underline;*/
+/*}*/
+
+/*.header-right {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    gap: 15px;*/
+/*}*/
+
+/*.chat-icon {*/
+/*    font-size: 28px;*/
+/*    cursor: pointer;*/
+/*}*/
+
+/*.mypage-btn,*/
+/*.logout-btn,*/
+/*.login-btn {*/
+/*    background: white;*/
+/*    color: #ff5a5a;*/
+/*    border: 1px solid #ff5a5a;*/
+/*    padding: 6px 12px;*/
+/*    border-radius: 6px;*/
+/*    font-weight: bold;*/
+/*    cursor: pointer;*/
+/*    transition: all 0.2s ease;*/
+/*}*/
+
+/*.mypage-btn:hover,*/
+/*.logout-btn:hover,*/
+/*.login-btn:hover {*/
+/*    background-color: #ffebeb;*/
+/*}*/
+
+/*!* 반응형: 768px 이하일 때 메뉴 숨김 + 오른쪽 요소 줄세움 *!*/
+/*@media (max-width: 768px) {*/
+/*    .main-nav {*/
+/*        display: none;*/
+/*    }*/
+
+/*    .header-right {*/
+/*        flex-direction: column;*/
+/*        align-items: flex-end;*/
+/*        gap: 10px;*/
+/*    }*/
+
+/*    .main-header {*/
+/*        height: auto;*/
+/*        padding: 10px 15px;*/
+/*    }*/
+/*}*/
