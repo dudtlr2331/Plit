@@ -1,6 +1,7 @@
 package com.plit.FO.config;
 
 import com.plit.FO.user.repository.UserRepository;
+import com.plit.FO.user.service.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +11,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Map;
+
 
 @Configuration // 빈 등록
 @EnableWebSecurity // Spring Security 설정 활성화
@@ -21,6 +26,7 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final UserServiceImpl userServiceImpl;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -87,7 +93,24 @@ public class SecurityConfig {
                         .logoutUrl("/logout") // 로그아웃 요청 경로
                         .logoutSuccessUrl("/main") // 로그아웃이 완료되면 홈(/)으로 리다이렉트
                         .permitAll()
+                )
+                
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(userServiceImpl)
+                        )
+                        .successHandler((request, response, authentication) -> {
+                            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+
+                            Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttributes().get("kakao_account");
+                            String email = (String) kakaoAccount.get("email");
+
+                            request.getSession().setAttribute("userEmail", email);
+                            response.sendRedirect("/main");
+                        })
                 );
+
 
         return http.build();
     }

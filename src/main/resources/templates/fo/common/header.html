@@ -19,7 +19,7 @@
             <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
                 <!-- 닉네임 표시 (Spring Security Dialect 사용) -->
-                <span th:text="${#authentication.principal.userNickname}">닉네임</span>
+                <span th:text="${#authentication.principal.attributes['properties']['nickname']}"></span>
 
                 <button onclick="location.href='/mypage'"
                         style="background: white; color: #6570b4; border: 2px solid #7c4798;

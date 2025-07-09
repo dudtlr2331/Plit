@@ -6,7 +6,13 @@ import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends DefaultOAuth2UserService implements UserService {
 
     private final JavaMailSender   mailSender;
     private final UserRepository   userRepository;
@@ -261,5 +267,56 @@ public class UserServiceImpl implements UserService {
                 .userCreateDate(e.getUserCreateDate())
                 .userAuth(e.getUserAuth())
                 .build();
+    }
+
+    /// 카카오 로그인
+    @Override
+    public OAuth2User loadUser(OAuth2UserRequest userRequest)
+            throws OAuth2AuthenticationException {
+
+        // 1. 카카오 API 호출 → 사용자 정보 가져오기
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+
+        String provider = userRequest.getClientRegistration().getRegistrationId(); // "kakao"
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+
+        /* 2. 카카오 계정 정보 파싱 */
+        if ("kakao".equals(provider)) {
+            Map<String, Object> kakaoAccount =
+                    (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> profile =
+                    (Map<String, Object>) kakaoAccount.get("profile");
+
+            String email    = (String) kakaoAccount.get("email");      // ← userId 로 사용
+            String nickname = (String) profile.get("nickname");
+
+            /* 3. DB 에 사용자 저장(없으면) */
+            processOAuthPostLogin(email, nickname);
+        }
+
+        /* 4. Spring Security 인증 객체 반환 */
+        return new DefaultOAuth2User(
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+                attributes,
+                "id"   // Kakao user-id attribute
+        );
+    }
+
+    /** OAuth2 로그인 후 신규 사용자 처리 */
+    private void processOAuthPostLogin(String email, String nickname) {
+        userRepository.findByUserId(email)
+                .orElseGet(() -> userRepository.save(
+                        UserEntity.builder()
+                                .userId(email)
+                                .userPwd(passwordEncoder.encode(UUID.randomUUID().toString()))
+                                .userNickname(
+                                        nickname != null ? nickname : generateRandomNickname()
+                                )
+                                .useYn("Y")
+                                .isBanned(false)
+                                .userAuth("user")
+                                .userCreateDate(LocalDate.now())
+                                .build()
+                ));
     }
 }
