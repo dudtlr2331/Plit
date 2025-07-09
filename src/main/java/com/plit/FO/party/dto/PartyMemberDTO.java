@@ -17,6 +17,7 @@ public class PartyMemberDTO {
     private String role;
     private String message;
     private String status;
+    private String position;
 
     public PartyMemberDTO(PartyMemberEntity entity) {
         this.id = entity.getId();
@@ -25,5 +26,6 @@ public class PartyMemberDTO {
         this.role = entity.getRole();
         this.message = entity.getMessage();
         this.status = entity.getStatus();
+        this.position = entity.getPosition();
     }
 }
