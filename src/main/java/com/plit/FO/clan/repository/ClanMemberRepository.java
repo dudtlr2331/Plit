@@ -2,14 +2,16 @@ package com.plit.FO.clan.repository;
 
 import com.plit.FO.clan.entity.ClanMemberEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
+import java.util.List;
+import java.util.Optional;
+
 public interface ClanMemberRepository extends JpaRepository<ClanMemberEntity, Long> {
 
-    // 특정 유저가 클랜 멤버인지 여부 확인
+    // status 기반
+    List<ClanMemberEntity> findByClanIdAndStatus(Long clanId, String status);  // "APPROVED", "PENDING"
+
     boolean existsByClanIdAndUserId(Long clanId, Long userId);
 
-    // 필요 시, 수락된 멤버만 조회하거나 필터할 수도 있어
-    // List<ClanMemberEntity> findByClanIdAndStatus(Long clanId, String status);
+    Optional<ClanMemberEntity> findByClanIdAndUserId(Long clanId, Long userId);
 }

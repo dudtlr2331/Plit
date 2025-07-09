@@ -1,0 +1,61 @@
+package com.plit.FO.clan.service;
+
+import com.plit.FO.clan.dto.ClanMemberDTO;
+import com.plit.FO.clan.entity.ClanMemberEntity;
+import com.plit.FO.clan.repository.ClanMemberRepository;
+import com.plit.FO.user.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ClanMemberServiceImpl implements ClanMemberService {
+
+    private final ClanMemberRepository clanMemberRepository;
+    private final UserService userService;
+
+    @Override
+    public List<ClanMemberDTO> findApprovedMembersByClanId(Long clanId) {
+        return clanMemberRepository.findByClanIdAndStatus(clanId, "APPROVED")
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ClanMemberDTO> findPendingMembersByClanId(Long clanId) {
+        return clanMemberRepository.findByClanIdAndStatus(clanId, "PENDING")
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ClanMemberDTO convertToDTO(ClanMemberEntity entity) {
+        ClanMemberDTO dto = new ClanMemberDTO();
+        dto.setMemberId(entity.getUserId());
+        dto.setRole(entity.getRole());
+        dto.setStatus(entity.getStatus());
+        dto.setJoinedAt(entity.getJoinedAt());
+        dto.setMainPosition(entity.getMainPosition());
+
+        // 유저 정보 불러오기
+        userService.getUserBySeq(entity.getUserId().intValue()).ifPresent(user -> {
+            dto.setNickname(user.getUserNickname());
+        });
+
+        // 직접 entity에서 가져오기
+        dto.setTier(entity.getTier() != null ? entity.getTier() : "Unranked");
+        dto.setIntro(entity.getIntro() != null ? entity.getIntro() : "소개글이 없습니다.");
+
+        return dto;
+    }
+    @Override
+    public Optional<ClanMemberDTO> findByClanIdAndUserId(Long clanId, Long userId) {
+        return clanMemberRepository.findByClanIdAndUserId(clanId, userId)
+                .map(this::convertToDTO);
+    }
+}
