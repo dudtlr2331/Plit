@@ -18,30 +18,46 @@ function openJoinPopup(partyId) {
     selectedPartyId = partyId;
     document.getElementById('joinPopup').style.display = 'block';
 
-    // 모집 포지션을 서버에서 가져와서 반영
-    fetch(`/api/parties/${partyId}`)
-        .then(res => res.json())
-        .then(party => {
-            const availablePositions = party.positions; // ['TOP', 'JUNGLE', ...]
-            const container = document.querySelector('.position-group');
-            container.innerHTML = '';
+    Promise.all([
+        fetch(`/api/parties/${partyId}`).then(res => res.json()),
+        fetch(`/api/parties/${partyId}/members`).then(res => res.json())
+    ]).then(([party, members]) => {
+        console.log("모집 포지션:", party.positions);
+        console.log("현재 멤버 목록:", members);
 
-            const positionLabels = {
-                TOP: '탑',
-                JUNGLE: '정글',
-                MID: '미드',
-                ADC: '원딜',
-                SUPPORT: '서포터'
-            };
+        const availablePositions = party.positions;
+        const takenPositions = members
+            .filter(m => m.status === 'ACCEPTED')
+            .map(m => m.position);
 
-            availablePositions.forEach(pos => {
+        console.log("이미 배정된 포지션:", takenPositions);
+
+        const selectablePositions = availablePositions.filter(pos => !takenPositions.includes(pos));
+        console.log("신청 가능한 포지션:", selectablePositions);
+
+        const container = document.querySelector('.position-group');
+        container.innerHTML = '';
+
+        const positionLabels = {
+            TOP: '탑',
+            JUNGLE: '정글',
+            MID: '미드',
+            ADC: '원딜',
+            SUPPORT: '서포터'
+        };
+
+        if (selectablePositions.length === 0) {
+            container.innerHTML = `<p style="color:gray;">선택 가능한 포지션이 없습니다.</p>`;
+        } else {
+            selectablePositions.forEach(pos => {
                 const label = document.createElement('label');
                 label.innerHTML = `
                     <input type="radio" name="joinPosition" value="${pos}"> ${positionLabels[pos] || pos}
                 `;
                 container.appendChild(label);
             });
-        });
+        }
+    });
 }
 
 function closeJoinPopup() {
@@ -127,9 +143,8 @@ function renderParties(data) {
 
     if (data.length === 0) {
         const empty = document.createElement('div');
-        empty.className = 'recruit-item';
-        empty.style.justifyContent = 'center';
-        empty.innerHTML = '<span>현재 모집 중인 파티가 없습니다.</span>';
+        empty.className = 'recruit-item empty-row';
+        empty.innerHTML = `<span class="empty-message">현재 모집 중인 파티가 없습니다.</span>`;
         list.appendChild(empty);
         return;
     }
@@ -138,33 +153,30 @@ function renderParties(data) {
         const item = document.createElement('div');
         item.className = 'recruit-item';
 
-        const mainIcon = getPositionIconHTML(party.mainPosition);
+        const mainIcon = getPositionIconHTML(party.mainPosition, true);
         const recruitIcons = Array.isArray(party.positions)
-            ? party.positions.map(p => getPositionIconHTML(p)).join(' ')
-            : party.positions.split(',').map(p => getPositionIconHTML(p.trim())).join(' ');
+            ? party.positions.map(p => getPositionIconHTML(p, true)).join(' ')
+            : party.positions.split(',').map(p => getPositionIconHTML(p.trim(), true)).join(' ');
 
         item.innerHTML = `
-            <span><a href="javascript:void(0)" class="party-detail-link"
-                data-seq="${party.partySeq}"
-                data-name="${party.partyName}"
-                data-type="${party.partyType}"
-                data-created="${party.partyCreateDate}"
-                data-end="${party.partyEndTime}"
-                data-status="${party.partyStatus}"
-                data-headcount="${party.partyHeadcount}"
-                data-max="${party.partyMax}"
-                data-memo="${party.memo}"
-                data-main="${party.mainPosition}"
-                data-createdby="${party.createdBy}"
-                data-positions="${party.positions.join ? party.positions.join(',') : party.positions}"
-            >${party.partyName}</a></span>
-            <span>${party.partyType}</span>
-            <span>${formatDateTime(party.partyCreateDate)}</span>
-            <span>${formatDateTime(party.partyEndTime)}</span>
-            <span>${party.partyStatus}</span>
-            <span>${party.partyHeadcount}</span>
-            <span>${party.partyMax}</span>
             <span>${party.partySeq}</span>
+            <span>
+                <a href="javascript:void(0)" class="party-detail-link"
+                    data-seq="${party.partySeq}"
+                    data-name="${party.partyName}"
+                    data-type="${party.partyType}"
+                    data-created="${party.partyCreateDate}"
+                    data-end="${party.partyEndTime}"
+                    data-status="${party.partyStatus}"
+                    data-headcount="${party.partyHeadcount}"
+                    data-max="${party.partyMax}"
+                    data-memo="${party.memo}"
+                    data-main="${party.mainPosition}"
+                    data-positions="${party.positions.join ? party.positions.join(',') : party.positions}"
+                    data-createdby="${party.createdBy}"
+                >${party.partyName}</a>
+            </span>
+            <span>${party.partyStatus}</span>
             <span title="주 포지션">${mainIcon}</span>
             <span title="모집 포지션">${recruitIcons}</span>
             <span class="chat-icon" onclick="toggleChatBox('partyId-${party.partySeq}')">💬</span>
@@ -215,6 +227,45 @@ function toggleChatBox(userId) {
 function selectPosition(element) {
     document.querySelectorAll('.position-selector span').forEach(span => span.classList.remove('selected'));
     element.classList.add('selected');
+}
+
+/* 포지션 선택 시 인원 체크 */
+function addPositionCheckboxBehavior(popup) {
+    const checkboxes = popup.querySelectorAll("input[name='positions']");
+    const maxInput = popup.querySelector("input[name='partyMax']");
+    const headcountInput = popup.querySelector("input[name='partyHeadcount']");
+
+    const updateHeadcounts = () => {
+        const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+        if (selected.includes('ALL')) {
+            maxInput.value = 5;
+        } else {
+            maxInput.value = Math.min(selected.length + 1, 5); // +1 for party leader
+        }
+
+        headcountInput.value = 1; // 파티장은 무조건 1명
+    };
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener("change", () => {
+            const selected = Array.from(checkboxes).filter(c => c.checked && c.value !== 'ALL');
+            const all = popup.querySelector("input[name='positions'][value='ALL']");
+
+            // ALL 자동 체크 로직
+            if (selected.length === 5) {
+                checkboxes.forEach(c => c.checked = false);
+                if (all) all.checked = true;
+            } else if (all && all.checked && selected.length > 0) {
+                all.checked = false;
+            }
+
+            updateHeadcounts();
+        });
+    });
+
+    // 폼 열릴 때 초기값 설정
+    updateHeadcounts();
 }
 
 function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions, createdBy) {
@@ -474,10 +525,8 @@ function openPartyFormPopup(party = null) {
         
         ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
         
-        <label>종료일자: <input type="datetime-local" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
+        <label>종료일자: <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
         <label>상태: <input type="text" name="partyStatus" value="${party?.partyStatus ?? 'WAITING'}" required></label><br>
-        <label>현재 인원: <input type="number" name="partyHeadcount" value="${party?.partyHeadcount ?? 1}" min="1" required></label><br>
-        <label>최대 인원: <input type="number" name="partyMax" value="${party?.partyMax ?? 5}" min="1" required></label><br>
         <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
         
         <label>주 포지션:
@@ -506,6 +555,24 @@ function openPartyFormPopup(party = null) {
 
     popup.style.display = 'block';
     addPositionCheckboxBehavior(popup);
+    setMinEndTime();
+}
+
+/* 종료시간 계산 */
+function setMinEndTime() {
+    const input = document.querySelector('input[name="partyEndTime"]');
+    if (!input) return;
+
+    const now = new Date();
+    now.setSeconds(0, 0); // 초, 밀리초 0으로 맞춤
+
+    const yyyy = now.getFullYear();
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+
+    input.min = `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
 }
 
 function submitPartyForm() {
@@ -520,12 +587,14 @@ function submitPartyForm() {
     const partyType = popup.querySelector('select[name="partyType"]').value;
     const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
     const partyStatus = popup.querySelector('input[name="partyStatus"]').value;
-    const partyHeadcount = parseInt(popup.querySelector('input[name="partyHeadcount"]').value);
-    const partyMax = parseInt(popup.querySelector('input[name="partyMax"]').value);
     const memo = popup.querySelector('textarea[name="memo"]').value;
     const mainPosition = popup.querySelector('select[name="mainPosition"]').value;
     const positions = Array.from(popup.querySelectorAll('input[name="positions"]:checked'))
         .map(cb => cb.value);
+
+    const partyHeadcount = 1; // 파티장만 포함
+    const partyMax = positions.includes("ALL") ? 5 : Math.min(positions.length + 1, 5); // +1 = 파티장 포함
+
 
     const data = {
         partyName,

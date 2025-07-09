@@ -48,14 +48,23 @@ public class PartyServiceImpl implements PartyService {
     @Override
     @Transactional
     public void saveParty(PartyDTO dto, String userId) {
+        // 종료일이 현재보다 과거인 경우 예외 처리
+        if (dto.getPartyEndTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("종료일은 현재보다 미래여야 합니다.");
+        }
+
+        int calculatedMax = (dto.getPositions() != null && dto.getPositions().contains("ALL"))
+                ? 5
+                : Math.min((dto.getPositions() != null ? dto.getPositions().size() : 0) + 1, 5);
+
         PartyEntity party = PartyEntity.builder()
                 .partyName(dto.getPartyName())
                 .partyType(dto.getPartyType())
                 .partyStatus(PartyStatus.valueOf(dto.getPartyStatus()))
                 .partyCreateDate(LocalDateTime.now())
                 .partyEndTime(dto.getPartyEndTime())
-                .partyHeadcount(dto.getPartyHeadcount())
-                .partyMax(dto.getPartyMax())
+                .partyHeadcount(1) // 파티장 1명
+                .partyMax(calculatedMax)
                 .memo(dto.getMemo())
                 .mainPosition(dto.getMainPosition())
                 .createdBy(userId)
@@ -63,6 +72,7 @@ public class PartyServiceImpl implements PartyService {
 
         partyRepository.save(party);
 
+        // 모집 포지션 저장
         if (dto.getPositions() != null) {
             List<PartyFindPositionEntity> positionEntities = dto.getPositions().stream()
                     .map(pos -> PartyFindPositionEntity.builder()
@@ -70,9 +80,19 @@ public class PartyServiceImpl implements PartyService {
                             .position(PositionEnum.valueOf(pos))
                             .build())
                     .toList();
-
             partyFindPositionRepository.saveAll(positionEntities);
         }
+
+        // 파티장을 멤버로 등록
+        PartyMemberEntity leader = PartyMemberEntity.builder()
+                .party(party)
+                .userId(userId)
+                .position(dto.getMainPosition())
+                .status("ACCEPTED")
+                .message("파티장")
+                .build();
+
+        partyMemberRepository.save(leader);
     }
 
     @Override
