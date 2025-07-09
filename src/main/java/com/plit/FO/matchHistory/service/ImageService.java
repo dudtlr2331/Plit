@@ -35,7 +35,7 @@ public class ImageService {
     public String getImageUrl(String name, String type) {
         return imageRepository.findByNameAndType(name, type)
                 .map(ImageEntity::getImageUrl)
-                .orElse("/img/default.png");
+                .orElse("/images/default.png");
     }
 
     @Scheduled(cron = "0 0 9 ? * WED") // 매주 수요일 오전 9시 자동 동기화
@@ -59,7 +59,7 @@ public class ImageService {
 
     // 특정 타입 이미지 동기화( 로컬 저장, DB 업데이트 )
     public void updateImagesByType(String type, String version) {
-        Path folderPath = Paths.get("src/main/resources/static/img/" + type);
+        Path folderPath = Paths.get("src/main/resources/static/images/" + type);
         if (!Files.exists(folderPath)) {
             System.out.println("[" + type + "] 폴더가 존재하지 않음 -> 생성함");
             try {
@@ -172,6 +172,29 @@ public class ImageService {
         }
     }
 
+    //
+    private boolean isSameImage(Path localPath, String remoteUrl) {
+        try {
+            byte[] local = Files.readAllBytes(localPath); // 로컬 이미지
+            byte[] remote = restTemplate.getForObject(remoteUrl, byte[].class); // 라이엇 서버 이미지
+            return Arrays.equals(local, remote);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getProfileIconUrl(Integer profileIconId) {
+        if (profileIconId == null) return "/images/default.png";
+
+        String fileName = profileIconId + ".png";
+
+        return imageRepository.findByNameAndType(fileName, "profile-icon")
+                .map(ImageEntity::getImageUrl)
+                .orElse("/images/default.png");
+    }
+
+
+
     // 폴더에 있는 .png 파일 이름 목록 반환
     private Set<String> getFileNamesFromFolder(Path folderPath) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(folderPath, "*.png")) {
@@ -185,20 +208,9 @@ public class ImageService {
         }
     }
 
-    //
-    private boolean isSameImage(Path localPath, String remoteUrl) {
-        try {
-            byte[] local = Files.readAllBytes(localPath); // 로컬 이미지
-            byte[] remote = restTemplate.getForObject(remoteUrl, byte[].class); // 라이엇 서버 이미지
-            return Arrays.equals(local, remote);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    // static/img 폴더 이미지 DB에 등록 ( 중복 제외 ) -> 처음 DB 등록할때만 사용 용도 [ url 지정시 코드 바꿀 예정 ]
+    // static/images 폴더 이미지 DB에 등록 ( 중복 제외 ) -> 처음 DB 등록할때만 사용 용도 [ url 지정시 코드 바꿀 예정 ]
     public void bulkInsertFromFolder(String type) {
-        Path folder = Paths.get("src/main/resources/static/img/" + type);
+        Path folder = Paths.get("src/main/resources/static/images/" + type);
         if (!Files.exists(folder)) {
             System.err.println("폴더 없음: " + folder.toAbsolutePath());
             return;
@@ -210,7 +222,7 @@ public class ImageService {
                     .forEach(path -> {
                         String fileName = path.getFileName().toString();
                         String name = fileName.replaceAll("\\.png$", "");
-                        String imageUrl = "/img/" + type + "/" + fileName;
+                        String imageUrl = "/images/" + type + "/" + fileName;
 
                         if (!imageRepository.existsByNameAndType(name, type)) {
                             imageRepository.save(new ImageEntity(name, type, imageUrl));
@@ -223,4 +235,5 @@ public class ImageService {
             System.err.println("[에러] 폴더 읽기 실패: " + e.getMessage());
         }
     }
+
 }

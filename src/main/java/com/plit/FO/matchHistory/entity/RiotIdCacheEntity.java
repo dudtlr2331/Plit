@@ -25,6 +25,12 @@ public class RiotIdCacheEntity {
     private String tagLine; // tag_line
     private String puuid;
 
+    @Column(nullable = false)
+    private String normalizedGameName;
+
+    @Column(nullable = false)
+    private String normalizedTagLine;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

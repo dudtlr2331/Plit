@@ -3,8 +3,10 @@ package com.plit.FO.matchHistory.controller;
 import com.plit.FO.matchHistory.dto.*;
 import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
 import com.plit.FO.matchHistory.repository.RiotIdCacheRepository;
+import com.plit.FO.matchHistory.service.ImageService;
 import com.plit.FO.matchHistory.service.MatchHistoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,11 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 @RequestMapping("/match")
 @RequiredArgsConstructor
 public class MatchHistoryController {
 
+    private final ImageService imageService;
     private final MatchHistoryService matchHistoryService;
     private final RiotIdCacheRepository riotIdCacheRepository;
 
@@ -31,10 +35,12 @@ public class MatchHistoryController {
         String puuid = matchHistoryService.getPuuidOrRequest(gameName, tagLine);
 
         // puuid로 소환사 정보 가져오기
-        SummonerDTO summoner = matchHistoryService.getSummonerByPuuid(puuid);
+        SummonerDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
         if (summoner == null) {
             throw new IllegalArgumentException("잘못된 Riot ID입니다.");
         }
+
+        summoner.setProfileIconUrl(imageService.getProfileIconUrl(summoner.getProfileIconId()));
 
         // puuid로 매치 정보 조회
         List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(puuid);
@@ -92,6 +98,10 @@ public class MatchHistoryController {
         System.out.println("summoner puuid = " + summoner.getPuuid());
         System.out.println("profileIconUrl = " + summoner.getProfileIconUrl());
 
+        System.out.println("매치 수: " + matchList.size());
+        System.out.println("첫 매치 ID: " + matchList.get(0).getMatchId());
+
+
         return "fo/matchHistory/matchHistory"; // 템플릿 경로
     }
 
@@ -104,10 +114,11 @@ public class MatchHistoryController {
 
     @GetMapping("/autocomplete")
     public ResponseEntity<List<String>> autocomplete(@RequestParam String keyword) {
-        List<RiotIdCacheEntity> matches = riotIdCacheRepository
-                .findTop10ByGameNameIgnoreCaseContaining(keyword.trim());
+        String normalized = keyword.trim().replaceAll("\\s+", "").toLowerCase();
 
-        // 중복 제거 및 "gameName#tagLine" 형태로 반환
+        List<RiotIdCacheEntity> matches = riotIdCacheRepository
+                .findTop10ByNormalizedGameNameContaining(normalized);
+
         List<String> result = matches.stream()
                 .map(e -> e.getGameName() + "#" + e.getTagLine())
                 .distinct()
@@ -115,6 +126,8 @@ public class MatchHistoryController {
 
         return ResponseEntity.ok(result);
     }
+
+
 
 
 

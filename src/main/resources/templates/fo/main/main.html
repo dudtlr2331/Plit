@@ -107,6 +107,24 @@
             margin: 10px 0;
             padding: 10px;
         }
+        .autocomplete-box {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .autocomplete-item {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .autocomplete-item:hover {
+            background-color: #eee;
+        }
+
     </style>
 
     <!-- 로그인 필요 팝업 스크립트 -->
@@ -121,7 +139,8 @@
 <div th:replace="~{fo/common/header :: header}"></div>
 
 <div class="search-box">
-    <input type="text" placeholder="플레이어 이름 (플레이어#KR1)">
+    <input type="text" id="searchInput" placeholder="플레이어 이름 (플레이어#KR1)">
+    <div id="autocompleteList" class="autocomplete-box"></div>
 </div>
 
 <div class="player-list">
@@ -187,6 +206,44 @@
         const el = document.getElementById('chatPopup');
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
+
+    const searchInput = document.getElementById("searchInput");
+    const autocompleteList = document.getElementById("autocompleteList");
+
+    searchInput.addEventListener("input", async function () {
+        const keyword = searchInput.value.trim();
+        if (keyword.length < 2) {
+            autocompleteList.innerHTML = "";
+            return;
+        }
+
+        const res = await fetch(`/match/autocomplete?keyword=${encodeURIComponent(keyword)}`);
+        const suggestions = await res.json();
+
+        autocompleteList.innerHTML = suggestions.map(s => `
+        <div class="autocomplete-item" onclick="selectRiotId('${s}')">${s}</div>
+    `).join("");
+    });
+
+    searchInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            const inputValue = searchInput.value.trim();
+            const [gameName, tagLine] = inputValue.split("#");
+
+            if (!gameName || !tagLine) {
+                alert("Riot ID 형식은 '닉네임#태그'입니다.");
+                return;
+            }
+
+            window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+        }
+    });
+
+    function selectRiotId(riotId) {
+        const [gameName, tagLine] = riotId.split("#");
+        window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+    }
+
 </script>
 
 </body>

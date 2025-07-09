@@ -153,85 +153,6 @@ public class MatchHistoryService {
     }
 
 
-    // 소문자화 + 띄어쓰기 제거
-    private String normalizeGameName(String gameName) {
-        return gameName == null ? null : gameName.toLowerCase().replaceAll("\\s+", "");
-    }
-
-    // 대문자화 + 양쪽 공백
-    private String normalizeTagLine(String tagLine) {
-        return tagLine == null ? null : tagLine.toUpperCase().trim();
-    }
-
-    private String normalizePosition(String pos) {
-        if (pos == null) return "unknown";
-        return switch (pos.toUpperCase()) {
-            case "TOP" -> "top";
-            case "JUNGLE" -> "jungle";
-            case "MID", "MIDDLE" -> "mid";
-            case "ADC", "BOTTOM", "BOT" -> "bottom";
-            case "SUPPORT", "UTILITY" -> "support";
-            default -> "unknown";
-        };
-    }
-
-
-
-    // Object 라면 -> int
-    private int toInt(Object obj) {
-        if (obj instanceof Integer) return (Integer) obj;
-        if (obj instanceof Number) return ((Number) obj).intValue();
-        if (obj instanceof String) {
-            try {
-                return Integer.parseInt((String) obj);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        return 0;
-    }
-
-    // 게임 모드 -> 한글
-    private String getQueueType(String code) {
-        return switch (code) {
-            case "RANKED_SOLO_5x5" -> "솔로랭크";
-            case "RANKED_FLEX_SR" -> "자유랭크";
-            case "NORMAL" -> "일반";
-            case "ARAM" -> "칼바람";
-            case "CHERRY", "CHERRY_PICK" -> "특별 모드";
-            default -> "기타";
-        };
-    }
-
-    // 한글 이름으로 불러오기
-    private Map<String, String> korNameMap = new HashMap<>();
-
-    // 영어 -> 한글 챔피언 이름
-    private String getKorName(String engName) {
-        return korNameMap.getOrDefault(engName, engName);
-    }
-
-    // 한글 챔피언 이름
-    @PostConstruct
-    public void loadKorChampionMap() {
-        try {
-            String url = "https://ddragon.leagueoflegends.com/cdn/14.12.1/data/ko_KR/champion.json";
-            RestTemplate restTemplate = new RestTemplate();
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-            Map<String, Object> data = (Map<String, Object>) response.get("data");
-
-            for (String engName : data.keySet()) {
-                Map<String, Object> champData = (Map<String, Object>) data.get(engName);
-                String korName = (String) champData.get("name");
-                korNameMap.put(engName, korName);
-            }
-
-            System.out.println("챔피언 한글 이름 불러오기 완료 (" + korNameMap.size() + "개)");
-        } catch (Exception e) {
-            System.err.println("챔피언 한글 이름 로딩 실패: " + e.getMessage());
-        }
-    }
-
 
     // 선호 5챔피언 ( 20게임 각각의 전적을 기반으로 => MatchHistoryDTO )
     public List<FavoriteChampionDTO> getFavoriteChampions(List<MatchHistoryDTO> matchList) {
@@ -310,7 +231,7 @@ public class MatchHistoryService {
         Map<String, Integer> positionTotalGames = new HashMap<>();
         Map<String, Integer> positionWins = new HashMap<>();
 
-        List<String> allPositions = List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY");
+        List<String> allPositions = List.of("TOP", "JUNGLE", "MID", "BOTTOM", "UTILITY");
         for (String pos : allPositions) {
             positionTotalGames.put(pos, 0);
             positionWins.put(pos, 0);
@@ -622,69 +543,23 @@ public class MatchHistoryService {
         }
     }
 
-    // 자동완성 기능
-    public List<SummonerSimpleDTO> searchAndCacheAllMatchingSummoners(String gameName) {
-        String normGameName = normalizeGameName(gameName);
-        List<RiotIdCacheEntity> cachedList = riotIdCacheRepository.findAllByGameNameIgnoreCase(normGameName);
-        List<SummonerSimpleDTO> result = new ArrayList<>();
-
-        // 1. 캐시된 tagLine 들이 있으면 바로 반환
-        if (!cachedList.isEmpty()) {
-            for (RiotIdCacheEntity entity : cachedList) {
-                result.add(new SummonerSimpleDTO(entity.getGameName(), entity.getTagLine()));
-            }
-            return result;
-        }
-
-        // 2. 없으면 Riot API로 tagLine 후보들 조회 시도
-        String[] tagLineCandidates = {"KR1", "JP1", "NA1", "EUW1"};
-        for (String tagLine : tagLineCandidates) {
-            try {
-                String normTagLine = normalizeTagLine(tagLine);
-                String puuid = getPuuidByRiotId(normGameName, normTagLine);
-
-                if (puuid == null) continue;
-
-                SummonerDTO summoner = getSummonerByPuuid(puuid);
-                if (summoner == null) continue;
-
-                // 캐시에 저장
-                RiotIdCacheEntity entity = RiotIdCacheEntity.builder()
-                        .gameName(normGameName)
-                        .tagLine(normTagLine)
-                        .puuid(puuid)
-                        .build();
-                riotIdCacheRepository.save(entity);
-
-                result.add(new SummonerSimpleDTO(normGameName, normTagLine));
-
-                // 첫 성공한 조합만 리턴
-                return result;
-
-            } catch (Exception e) {
-                System.err.println("[자동완성 Riot API 실패] " + gameName + "#" + tagLine + " → " + e.getMessage());
-            }
-        }
-
-        return result;
-    }
-
-
-    // Riot id -> puuid -> DB 저장
+    // Riot id -> puuid ( DB 캐시 활용, riot api 호출 )
     public String getPuuidOrRequest(String gameName, String tagLine) {
+        // 소문자화 + 띄어쓰기 제거
+        String normalizedGameName = normalizeGameName(gameName);
+        String normalizedTagLine = normalizeTagLine(tagLine);
 
-        // 캐시는 대소문자 무시해서 조회
+        // 정규화된 값으로 캐시 DB 먼저 조회
         Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
-                .findByGameNameIgnoreCaseAndTagLineIgnoreCase(gameName.trim(), tagLine.trim());
-
+                .findByNormalizedGameNameAndNormalizedTagLine(normalizedGameName, normalizedTagLine);
 
         if (cache.isPresent()) {
-            System.out.println("[캐시 HIT] " + gameName + "#" + tagLine + " → " + cache.get().getPuuid());
+            System.out.println("[캐시 HIT] " + gameName + "#" + tagLine + " -> " + cache.get().getPuuid());
             return cache.get().getPuuid();
         }
 
-        // Riot API에는 원본 그대로 사용
-        try {
+        // 캐시에 없으면 Riot API에 정확한 원본 값으로 요청
+        try { // UriUtils.encodePathsegment() : URL에 넣을 수 있도록 문자열을 안전하게 변환(인코딩)해주는 메서드
             String encodedGameName = UriUtils.encodePathSegment(gameName.trim(), StandardCharsets.UTF_8);
             String encodedTagLine = UriUtils.encodePathSegment(tagLine.trim(), StandardCharsets.UTF_8);
 
@@ -697,23 +572,20 @@ public class MatchHistoryService {
 
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
 
-            // 디버깅 로그
-            System.out.println("[Riot API 요청 URL] " + url);
-            System.out.println("[요청] " + gameName + "#" + tagLine);
-            System.out.println("[응답 코드] " + response.getStatusCode());
-            System.out.println("[응답 바디] " + response.getBody());
-
             Map<String, Object> body = response.getBody();
 
             if (body != null && body.get("puuid") != null) {
                 String puuid = (String) body.get("puuid");
 
-                // DB 저장 시엔 원본 그대로 저장 (캐시는 IgnoreCase로 조회하면 됨)
+                // DB 저장 (원본 + 정규화된 값 모두 저장)
                 RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
                         .gameName(gameName.trim())
                         .tagLine(tagLine.trim())
+                        .normalizedGameName(normalizedGameName)
+                        .normalizedTagLine(normalizedTagLine)
                         .puuid(puuid)
                         .build();
+
                 riotIdCacheRepository.save(saved);
 
                 return puuid;
@@ -726,52 +598,80 @@ public class MatchHistoryService {
         return null;
     }
 
-    // 캐시 확인하고 없으면 Riot API로 요청 + DB 저장
-    public String getPuuidByRiotId(String gameName, String tagLine) {
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}")
-                    .queryParam("api_key", riotApiKey)
-                    .buildAndExpand(gameName.trim(), tagLine.trim()) // gameName, tagLine 을 실제 값으로 치환
-                    .encode(StandardCharsets.UTF_8) // 한글 닉네임 인코딩
-                    .toUri();
 
-            // GET 요청 -> Map<String, Object> 형식으로 응답 받음
-            Map<String, Object> response = restTemplate.getForObject(uri, Map.class);
-            if (response == null || response.get("puuid") == null) {
-                return null;
-            }
 
-            return (String) response.get("puuid");
-
-        } catch (Exception e) {
-            System.err.println("[getPuuidByRiotId 오류] " + e.getMessage());
-            return null;
-        }
+    // 소문자화 + 띄어쓰기 제거
+    private String normalizeGameName(String gameName) {
+        return gameName.trim().replaceAll("\\s+", "").toLowerCase();
+    }
+    private String normalizeTagLine(String tagLine) {
+        return tagLine.trim().toLowerCase();
+    }
+    private String normalizePosition(String pos) {
+        if (pos == null) return "unknown";
+        return switch (pos.toUpperCase()) {
+            case "TOP" -> "top";
+            case "JUNGLE" -> "jungle";
+            case "MID", "MIDDLE" -> "mid";
+            case "ADC", "BOTTOM", "BOT" -> "bottom";
+            case "SUPPORT", "UTILITY" -> "support";
+            default -> "unknown";
+        };
     }
 
-    // puuid -> 소환사 정보 조회
-    public SummonerDTO getSummonerByPuuid(String puuid) {
+
+    // Object 라면 -> int
+    private int toInt(Object obj) {
+        if (obj instanceof Integer) return (Integer) obj;
+        if (obj instanceof Number) return ((Number) obj).intValue();
+        if (obj instanceof String) {
+            try {
+                return Integer.parseInt((String) obj);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    // 게임 모드 -> 한글
+    private String getQueueType(String code) {
+        return switch (code) {
+            case "RANKED_SOLO_5x5" -> "솔로랭크";
+            case "RANKED_FLEX_SR" -> "자유랭크";
+            case "NORMAL" -> "일반";
+            case "ARAM" -> "칼바람";
+            case "CHERRY", "CHERRY_PICK" -> "특별 모드";
+            default -> "기타";
+        };
+    }
+
+    // 한글 이름으로 불러오기
+    private Map<String, String> korNameMap = new HashMap<>();
+
+    // 영어 -> 한글 챔피언 이름
+    private String getKorName(String engName) {
+        return korNameMap.getOrDefault(engName, engName);
+    }
+
+    // 한글 챔피언 이름
+    @PostConstruct
+    public void loadKorChampionMap() {
         try {
-            String url = "https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/" +
-                    puuid + "?api_key=" + riotApiKey;
+            String url = "https://ddragon.leagueoflegends.com/cdn/14.12.1/data/ko_KR/champion.json";
+            RestTemplate restTemplate = new RestTemplate();
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> data = (Map<String, Object>) response.get("data");
 
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            Map<String, Object> body = response.getBody();
-
-            if (body == null || body.get("name") == null || body.get("profileIconId") == null) {
-                throw new IllegalArgumentException("puuid로 소환사 정보 못 가져옴");
+            for (String engName : data.keySet()) {
+                Map<String, Object> champData = (Map<String, Object>) data.get(engName);
+                String korName = (String) champData.get("name");
+                korNameMap.put(engName, korName);
             }
 
-            return SummonerDTO.builder()
-                    .puuid(puuid)
-                    .gameName((String) body.get("name"))
-                    .profileIconId((Integer) body.get("profileIconId"))
-                    .build();
-
+            System.out.println("챔피언 한글 이름 불러오기 완료 (" + korNameMap.size() + "개)");
         } catch (Exception e) {
-            System.err.println("getSummonerByPuuid 오류: " + e.getMessage());
-            return null;
+            System.err.println("챔피언 한글 이름 로딩 실패: " + e.getMessage());
         }
     }
 

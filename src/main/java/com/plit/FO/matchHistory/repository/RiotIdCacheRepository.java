@@ -15,11 +15,10 @@ public interface RiotIdCacheRepository extends JpaRepository<RiotIdCacheEntity, 
     // 메서드 이름 기반 -> JPA 자동 쿼리 만들어줌 ( 대소문자 구분 )
     Optional<RiotIdCacheEntity> findByGameNameAndTagLine(String gameName, String tagLine);
 
-    Optional<RiotIdCacheEntity> findByGameNameIgnoreCaseAndTagLineIgnoreCase(String gameName, String tagLine);
-
     // gameName 기준 여러 캐시 찾음
     // IgnoreCase -> 대소문자 구분 없이 조회
-    List<RiotIdCacheEntity> findAllByGameNameIgnoreCase(String gameName);
+    List<RiotIdCacheEntity> findTop10ByNormalizedGameNameContaining(String normalizedGameName);
+
 
     // 자동완성용 - gameName 기준 유사 검색 (LIKE 또는 IgnoreCase)
     List<RiotIdCacheEntity> findTop10ByGameNameIgnoreCaseContaining(String partialGameName);
@@ -28,6 +27,7 @@ public interface RiotIdCacheRepository extends JpaRepository<RiotIdCacheEntity, 
     // 대소문자 구분 없이 존재 여부 확인
     boolean existsByGameNameIgnoreCaseAndTagLineIgnoreCase(String gameName, String tagLine);
 
+    Optional<RiotIdCacheEntity> findByNormalizedGameNameAndNormalizedTagLine(String normalizedGameName, String normalizedTagLine);
 }
 
 

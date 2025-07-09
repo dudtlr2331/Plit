@@ -255,16 +255,14 @@
                             <th:block th:each="entry, stat : ${summary.sortedChampionList}">
                                 <th:block th:if="${stat.index < 3}"> <!-- 객체 stat 이 3보다 작을 때만 렌더링 [ 상위 3개 항목 ] -->
                                     <div class="champion">
-                                        <img th:src="${entry.championImageUrl}" class="champion-icon" />
+<!--                                        -->
 
                                         <div class="graph-bar" th:style="${championHeightStyles[entry.key]}"></div>
 
                                         <div class="percentage"
                                              th:text="${summary.championWinRates[entry.key]} + '%'">승률</div>
                                         <div class="record"
-                                             th:text="${summary.championTotalGames[entry.key]} + '전 '
-                            + ${summary.championWins[entry.key]} + '승 '
-                            + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
+                                             th:text="${summary.championTotalGames[entry.key]} + '전 ' + ${summary.championWins[entry.key]} + '승 ' + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
                                         </div>
                                     </div>
                                 </th:block>
@@ -273,20 +271,29 @@
                     </div>
 
                     <!-- 선호 포지션 -->
-                    <div class="favorite-positions" th:if="@{${summary.favoritePositions != null and !summary.favoritePositions.isEmpty()}}">
+                    <div class="favorite-positions" th:if="${summary.favoritePositions != null and !summary.favoritePositions.isEmpty()}">
                         <h4 class="section-title">최근 선호 포지션</h4>
-                            <div class="position-bar-container">
-                                <div class="position"
-                                     th:each="pos : ${summary.sortedPositionList}">
-                                    <div class="position-bar">
-                                        <div class="fill"
-                                             th:style="${positionHeightStyles[pos]}">
-                                        </div>
-                                    </div>
-                                    <img th:src="@{'/images/position/' + ${pos.toLowerCase()} + '.png'}"
-                                         th:alt="${pos}" class="position-icon" />
+
+                        <div class="position-bar-container-vertical">
+                            <div class="position-column"
+                                 th:each="pos : ${summary.sortedPositionList}">
+
+                                <!-- 비율 텍스트 -->
+                                <div class="position-percent"
+                                     th:text="${#numbers.formatDecimal(summary.favoritePositions[pos], 0, 1)} + '%'">
                                 </div>
+
+                                <!-- 막대 그래프 -->
+                                <div class="position-bar-vertical">
+                                    <div class="fill"
+                                         th:style="'height:' + ${summary.favoritePositions[pos]} + '%;'">
+                                    </div>
+                                </div>
+
+                                <!-- 포지션명 -->
+                                <div class="position-label" th:text="${pos}"></div>
                             </div>
+                        </div>
                     </div>
 
                 </div>
@@ -297,7 +304,7 @@
                 <!-- 각 매치 요약 박스 -->
                 <div class="match-summary-box"
                      th:attr="data-match-id=${match.matchId}, data-puuid=${summoner.puuid}"
-                     th:classappend="${match.win} ? 'win-bg' : 'lose-bg'"
+                     th:classappend="${match.win != null and match.win} ? 'win-bg' : 'lose-bg'"
                      onclick="loadMatchDetail(this)">
 
                     <!-- 챔피언 아이콘 -->
