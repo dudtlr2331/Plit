@@ -30,7 +30,8 @@
         </div>
         <div class="friend-actions">
           <button class="chat-btn"
-                  th:attr="onclick=|openChat('${friend.user.userNickname}')|">💬</button>
+                  th:attr="data-from=${friend.fromUserId}, data-to=${friend.toUserId}, data-friendsno=${friend.friendsNo}, data-nickname=${friend.user.userNickname}"
+                  onclick="openChatWithFriend(this)">💬</button>
           <button class="block-btn"
                   th:attr="onclick=|blockFriend(${friend.friendsNo})|">차단</button>
           <button class="delete-btn"
@@ -45,7 +46,7 @@
     <button onclick="closeChat()">×</button>
   </div>
   <div class="chat-body" id="chatBody">
-    <div class="chat-message received">안녕하세요! 무엇을 도와드릴까요?</div>
+    <div class="chat-message received"></div>
   </div>
   <div class="chat-input">
     <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." />
@@ -68,16 +69,10 @@
 </div>
 
 <script>
+  const currentUserSeq = document.querySelector('meta[name="login-user-seq"]').getAttribute('content');
   const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-  function toggleRequestPopup() {
-    const popup = document.getElementById('requestPopup');
-    popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
-    if (popup.style.display === 'flex') {
-      loadFriendRequests();
-    }
-  }
 
   function loadFriendRequests() {
     fetch('/api/friends/requests')
@@ -109,6 +104,37 @@
     document.getElementById('chatTarget').textContent = name;
     document.getElementById('chatInput').focus();
   }
+  function openChatWithFriend(btn) {
+    const from = btn.getAttribute("data-from");
+    const to = btn.getAttribute("data-to");
+    const nickname = btn.getAttribute("data-nickname");
+
+    let targetUserSeq;
+    if (currentUserSeq === from) {
+      targetUserSeq = to;
+    } else if (currentUserSeq === to) {
+      targetUserSeq = from;
+    } else {
+      alert("비정상적인 친구 관계입니다.");
+      return;
+    }
+
+    // 상대방 닉네임 표시
+    document.getElementById('chatTarget').textContent = nickname;
+    document.getElementById('chatPopup').style.display = 'flex';
+    document.getElementById('chatInput').focus();
+
+    // 여기서 채팅방 ID를 설정할 수 있음 (예: user-26_15)
+    const roomId = makeRoomId(currentUserSeq, targetUserSeq);
+    connectToChatRoom(roomId);
+  }
+
+  function makeRoomId(userA, userB) {
+    return (parseInt(userA) < parseInt(userB))
+            ? `user-${userA}_${userB}`
+            : `user-${userB}_${userA}`;
+  }
+
 
   function closeChat() {
     document.getElementById('chatPopup').style.display = 'none';
@@ -287,5 +313,62 @@
               }
             });
   }
+
+
+  //// 웹 소켓
+  let stompClient = null;
+
+  function connectToChatRoom(roomId) {
+    const socket = new SockJS('/ws/chat');
+
+    if (stompClient && stompClient.connected) {
+      return;
+    }
+
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, () => {
+      console.log("Connected to chat room: " + roomId);
+
+      // 구독
+      stompClient.subscribe(`/sub/chat/room/${roomId}`, (message) => {
+        const msg = JSON.parse(message.body);
+        const div = document.createElement('div');
+        div.className = 'chat-message received';
+        div.textContent = msg.content;
+        document.getElementById('chatBody').appendChild(div);
+        const body = document.getElementById('chatBody');
+        body.scrollTop = body.scrollHeight;
+
+      });
+    });
+
+    // 엔터 입력 시 메시지 전송
+    const input = document.getElementById('chatInput');
+    const newInput = input.cloneNode(true);  // 기존 이벤트 제거를 위해 복제
+    input.parentNode.replaceChild(newInput, input);
+
+    newInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && this.value.trim()) {
+        const msg = this.value.trim();
+        stompClient.send("/pub/chat/send", {}, JSON.stringify({
+          sender: currentUserSeq,
+          content: msg,
+          roomId: roomId
+        }));
+        const div = document.createElement('div');
+        div.className = 'chat-message sent';
+        div.textContent = msg;
+        document.getElementById('chatBody').appendChild(div);
+        const body = document.getElementById('chatBody');
+        body.scrollTop = body.scrollHeight;
+        this.value = '';
+      }
+    });
+
+  }
 </script>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
 </div>
