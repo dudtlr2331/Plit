@@ -208,20 +208,13 @@ input[type="text"] {
     background: #f3f3f3;
     padding: 10px 10px 12px;
     border-radius: 6px;
-
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    white-space: normal;
+    white-space: nowrap;
     line-height: 20px;
-    max-height: 40px;
-}
-
-.clan-card {
-    overflow: hidden;
 }
 
 .clan-card small {
@@ -360,11 +353,13 @@ footer .footer-nav {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 100%;
-    max-width: 800px;
-    min-height: 70vh;
+
+    width: calc(100% - 48px);
+    max-width: 1200px;
+
     margin: 60px auto;
-    padding: 40px;
+    padding: 40px 32px;
+
     background: white;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
@@ -431,10 +426,11 @@ footer .footer-nav {
 }
 
 .detail-image img {
-    max-width: 320px;
-    width: 100%;
+    max-width: 100%;
     height: auto;
+    object-fit: unset;
     border-radius: 12px;
+    display: block;
 }
 
 .detail-intro,
@@ -474,7 +470,7 @@ footer .footer-nav {
 
 .action-buttons a:hover,
 .action-buttons button:hover {
-    background-color: #7c4798;
+        background-color: #7c4798;
 }
 
 .social-icon-header {
@@ -499,13 +495,14 @@ footer .footer-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
+    }
 
 .clan-social-icon {
     width: 40px;
     height: 40px;
     margin-left: 12px;
     vertical-align: middle;
+    object-fit: contain;
 }
 
 .detail-intro img {
@@ -526,3 +523,292 @@ footer .footer-nav {
     max-width: 100%;
     height: auto;
 }
+
+.tab-section.hidden {
+    display: none;
+}
+
+.clan-tabs {
+    display: flex;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 24px;
+}
+
+.clan-tabs .tab {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 6px 14px;
+    margin-right: 6px;
+    color: white;
+    background-color: #5b66ae;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    text-decoration: none;
+    line-height: 1.2;
+}
+
+.clan-tabs .tab.active {
+    background-color: #774298;
+}
+
+.clan-tabs .tab:hover {
+    opacity: 0.9;
+}
+
+/*클랜 멤버 목록*/
+
+.member-table {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.member-row {
+    display: grid;
+
+    /*
+    칸 구성:
+    [소환사명 | 티어 | 주포지션 | 최근 챔피언 | 승률 | KDA | 소개 | 가입일 | 관리]
+    */
+    grid-template-columns:
+        2.2fr   /* 소환사명: 닉네임 + #태그 + 왕관까지 보여야 하니 넉넉하게 */
+        1fr     /* 티어 */
+        1fr     /* 주포지션 */
+        2fr     /* 최근 챔피언 이미지 공간 */
+        1fr     /* 승률 */
+        1.2fr   /* KDA: 2.53 / 4.91 / 8.1 같은 숫자용 */
+        2.5fr   /* 소개글: 짧은 문장들 들어갈 공간 */
+        1fr     /* 가입일 */
+        1.2fr;  /* 관리 버튼 2개 (위임, 추방) 들어갈 공간 */
+
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    align-items: center;
+    font-size: 14px;
+
+    /* ✨ 추가된 중앙 정렬 */
+    text-align: center;
+}
+
+.member-cell {
+    padding: 4px 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    word-break: keep-all;
+    white-space: nowrap;
+}
+
+.position-icon {
+    cursor: pointer;        /* 마우스 올리면 손가락 모양 */
+    padding: 4px;           /* 아이콘 주변 공간 */
+    border-radius: 4px;     /* 둥근 테두리 */
+    transition: background-color 0.3s ease;  /* 배경 색 부드럽게 변경 */
+}
+
+
+/* 소환사명 데이터 셀: 왼쪽 정렬 */
+.member-cell.name {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+/* 소환사명 헤더 셀도 왼쪽 정렬 */
+.member-row.header-row .member-cell.name {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+/*주포지션*/
+.position-icon svg {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    fill: currentColor;
+}
+
+.btn-icon.edit-btn {
+    background-color: #007bff; /* 파란색 */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon.edit-btn:hover {
+    background-color: #0056b3;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 30px 24px;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    color: #222;
+    position: relative;
+    box-sizing: border-box;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* modal-content 내의 h2 스타일 추가 */
+.modal-content > h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    text-align: center;
+    color: #333;
+}
+
+/* 닫기 버튼 스타일 - 기존 .close 유지 */
+.close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #222;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #774298;
+}
+
+/* 소환사명 영역 */
+.member-info .nickname {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #333;
+    text-align: center;
+}
+
+/* 주 포지션 라벨 */
+label {
+    display: block;
+    font-weight: 600;
+    margin: 12px 0 8px 0;
+    color: #555;
+}
+
+/* 포지션 선택 영역 */
+.position-select {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* 포지션 버튼 */
+.position-btn {
+    cursor: pointer;
+    opacity: 0.6;
+    border-radius: 8px;
+    padding: 6px;
+    transition: opacity 0.3s ease, background-color 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.position-btn:hover {
+    opacity: 1;
+    background-color: #dcd3f5;
+}
+
+/* 선택된 포지션 강조 */
+.position-btn.active {
+    opacity: 1;
+    background-color: #774298;
+    border: 2px solid #5b4090;
+}
+
+/* 포지션 SVG 아이콘 크기 조정 */
+.position-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: black;
+}
+
+/* 소개 textarea */
+textarea#memberIntro {
+    width: 100%;
+    height: 90px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid #ccc;
+    resize: none;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+textarea#memberIntro:focus {
+    outline: none;
+    border-color: #774298;
+}
+
+/* 모달 버튼 그룹 */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* 모달 버튼 스타일 */
+.modal-actions .btn {
+    background-color: #6570b4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+.modal-actions .btn:hover {
+    background-color: #4b56e8;
+}
+
+/* 취소 버튼 별도 스타일 */
+.modal-actions .btn:last-child {
+    background-color: #8a8a8a;
+}
+
+.modal-actions .btn:last-child:hover {
+    background-color: #6e6e6e;
+}
+
+
+

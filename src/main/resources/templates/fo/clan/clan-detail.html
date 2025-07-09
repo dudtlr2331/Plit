@@ -2,32 +2,17 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${clan.name} + ' - 클랜 정보'">클랜 정보</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/clan.css">
 </head>
 <body>
 
 <!-- 상단 헤더 -->
-<header>
-    <div class="logo" onclick="location.href='/main'">plit</div>
-    <nav>
-        <a href="/party">파티찾기</a>
-        <a href="/record">내전찾기</a>
-        <a href="/clan" style="color: yellow;">클랜찾기</a>
-        <a href="/report">트롤신고</a>
-    </nav>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <div onclick="toggleChatList()" style="cursor: pointer; font-size: 30px;">💬</div>
-        <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
-            <span th:text="${#authentication.name} + ' 님'" style="font-weight: bold;"></span>
-            <button onclick="location.href='/mypage'">마이페이지</button>
-            <button onclick="location.href='/logout'">로그아웃</button>
-        </div>
-        <div sec:authorize="isAnonymous()">
-            <button onclick="location.href='/login'">로그인</button>
-        </div>
-    </div>
-</header>
+<div th:replace="~{fo/common/header :: header}"></div>
 
 <!-- 상세 페이지 컨테이너 -->
 <main class="detail-container">
@@ -37,10 +22,10 @@
             <h1 th:text="${clan.name}" style="margin: 0;">클랜 이름</h1>
             <div class="social-links" style="display: flex; gap: 12px;">
                 <a th:if="${clan.discordLink != null}" th:href="${clan.discordLink}" target="_blank">
-                    <img src="/images/clan/discord-icon.png" alt="Discord" class="clan-social-icon"/>
+                    <img src="/images/clan/discord-icon.png" alt="Discord" class="clan-social-icon" />
                 </a>
                 <a th:if="${clan.kakaoLink != null}" th:href="${clan.kakaoLink}" target="_blank">
-                    <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon"/>
+                    <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="clan-social-icon" />
                 </a>
             </div>
         </div>
@@ -49,49 +34,266 @@
     <div class="detail-content">
         <!-- 탭 -->
         <div class="clan-tabs">
-            <a class="tab active" href="#">소개</a>
+            <a class="tab tab-btn active" onclick="showTab('intro')">소개</a>
             <th:block th:if="${role == 'LEADER'}">
-                <a class="tab" href="#">멤버</a>
-                <a class="tab" href="#">수락 대기</a>
+                <a class="tab tab-btn" onclick="showTab('members')">멤버</a>
+                <a class="tab tab-btn" onclick="showTab('pending')">수락 대기 중인 멤버</a>
             </th:block>
         </div>
 
-        <!-- 이미지 -->
-        <div class="detail-image">
-            <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}" alt="클랜 이미지">
+        <!-- 소개 탭 -->
+        <div class="tab-section" id="intro">
+            <div class="detail-image">
+                <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}" alt="클랜 이미지" />
+            </div>
+            <div class="detail-intro">
+                <h2>소개</h2>
+                <div class="intro-content" th:utext="${clan.intro}"></div>
+            </div>
+            <div class="detail-tier">
+                <h2>가입 최소 티어</h2>
+                <p th:text="${clan.minTier}">골드</p>
+            </div>
         </div>
 
-        <!-- 소개 -->
-        <div class="detail-intro">
-            <h2>소개</h2>
-            <div class="intro-content" th:utext="${clan.intro}"></div>
+        <!-- 멤버 탭 -->
+        <div class="tab-section hidden" id="members">
+            <div class="member-table">
+                <div class="member-row header-row">
+                    <div class="member-cell name">소환사명</div>
+                    <div class="member-cell">티어</div>
+                    <div class="member-cell">주포지션</div>
+                    <div class="member-cell">최근 챔피언</div>
+                    <div class="member-cell">승률</div>
+                    <div class="member-cell">KDA</div>
+                    <div class="member-cell">소개</div>
+                    <div class="member-cell">가입일</div>
+                    <div class="member-cell">관리</div>
+                </div>
+
+                <!-- 반복문 시작 -->
+                <div class="member-row" th:each="member : ${members}">
+                    <!-- 소환사명 + 리더 왕관 -->
+                    <div class="member-cell name">
+                        <strong th:text="${member.nickname}">닉네임</strong>
+                        <span th:if="${member.role == 'LEADER'}">👑</span>
+                    </div>
+
+                    <!-- 티어 -->
+                    <div class="member-cell" th:text="${member.tier} ?: 'Unranked'">Unranked</div>
+
+                    <!-- 주 포지션 -->
+                    <div class="member-cell">
+                        <div class="position-icon" th:switch="${member.mainPosition}">
+                            <!-- 탑 -->
+                            <svg th:case="'TOP'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="탑">
+                                <path d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="black" stroke-width="1.5" fill="none"/>
+                                <path d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z" fill="black"/>
+                            </svg>
+
+                            <!-- 정글 -->
+                            <svg th:case="'JUNGLE'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="정글">
+                                <path d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z" fill="black"/>
+                            </svg>
+
+                            <!-- 미드 -->
+                            <svg th:case="'MID'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="미드">
+                                <path d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z" fill="black"/>
+                                <path d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z" fill="black"/>
+                            </svg>
+
+                            <!-- 원딜 -->
+                            <svg th:case="'ADC'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="원딜">
+                                <path d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" fill="black"/>
+                                <path d="M2 2h17.172l-3 3H5v11.172l-3 3V2zm7 13h6V9H9v6z" fill="black"/>
+                            </svg>
+
+                            <!-- 서포터 -->
+                            <svg th:case="'SUPPORT'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="서포터">
+                                <path d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237zM14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255zM10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237zM9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255zM9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z" fill="black"/>
+                            </svg>
+
+                            <!-- 그 외 -->
+                            <span th:case="*">-</span>
+                        </div>
+                    </div>
+
+                    <!-- 최근 챔피언 -->
+                    <div class="member-cell champions">
+                        <!-- 추후 이미지 삽입 -->
+                    </div>
+
+                    <!-- 승률 -->
+                    <div class="member-cell">--%</div>
+
+                    <!-- KDA -->
+                    <div class="member-cell">-- / -- / --</div>
+
+                    <!-- 소개글 -->
+                    <div class="member-cell">소개글 자리</div>
+
+                    <!-- 가입일 -->
+                    <div class="member-cell">3일 전</div>
+
+                    <!-- 관리 -->
+                    <div class="member-cell" th:if="${member.role != 'LEADER'}">
+                        <button class="btn-small">위임</button>
+                        <button class="btn-small danger">추방</button>
+                    </div>
+                    <!-- 관리 -->
+                    <div class="member-cell" th:if="${member.role == 'LEADER'}">
+                        <button class="btn-icon edit-btn" onclick="openEditMemberModal('${member.mainPosition}')" title="수정">✏️</button>
+                    </div>
+                </div>
+                <!-- 반복문 끝 -->
+            </div>
         </div>
 
-        <!-- 최소 티어 -->
-        <div class="detail-tier">
-            <h2>가입 최소 티어</h2>
-            <p th:text="${clan.minTier}">골드</p>
+        <!-- 수락 대기 탭 -->
+        <div class="tab-section hidden" id="pending">
+            <ul>
+                <li th:each="pending : ${pendingMembers}">
+                    <strong th:text="${pending.nickname}">닉네임</strong>
+                    <span th:text="'[' + pending.tier + ']'">[티어]</span>
+                    <span style="color: orange;">수락 대기</span>
+                </li>
+            </ul>
         </div>
-    </div>
 
-    <!-- 아래 고정 버튼 -->
-    <div class="action-buttons">
-        <th:block th:if="${role == 'LEADER'}">
-            <a th:href="@{/clan/edit/{id}(id=${clan.id})}" class="btn">수정</a>
-            <form th:action="@{/clan/delete/{id}(id=${clan.id})}" method="post" style="display: inline;">
-                <button type="submit" class="btn">삭제</button>
-            </form>
-        </th:block>
+        <!-- 고정 하단 버튼 -->
+        <div class="action-buttons" id="editButtons">
+            <th:block th:if="${role == 'LEADER'}">
+                <button type="button" class="btn" onclick="openEditModal()">수정</button>
+                <form id="deleteForm" method="post" th:action="@{/clan/delete/{id}(id=${clan.id})}">
+                    <button type="button" class="btn" onclick="confirmDelete()">삭제</button>
+                </form>
+            </th:block>
 
-        <th:block th:if="${role == 'MEMBER'}">
-            <button class="btn">클랜 탈퇴</button>
-        </th:block>
+            <th:block th:if="${role == 'MEMBER'}">
+                <button class="btn">클랜 탈퇴</button>
+            </th:block>
 
-        <th:block th:if="${role == 'GUEST'}">
-            <button class="btn">가입 신청</button>
-        </th:block>
+            <th:block th:if="${role == 'GUEST'}">
+                <button class="btn">가입 신청</button>
+            </th:block>
+        </div>
     </div>
 </main>
+
+
+<!--멤버 수정 모달-->
+<div id="editMemberModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditMemberModal()">&times;</span>
+        <h2>소환사 수정하기</h2>
+
+        <div class="member-info">
+            <div class="nickname">
+                <strong th:text="${editMember != null} ? ${editMember.nickname} : '소환사명'">소환사명</strong>
+<!--                <span class="tag" th:text="${editMember != null} ? '#' + ${editMember.tag} : '#0000'">#0000</span>-->
+            </div>
+        </div>
+
+        <label>주 포지션</label>
+        <div class="position-select">
+    <span class="position-btn" data-position="ALL" title="전체" onclick="selectPosition(this)">
+        <!-- 전체 아이콘 (너가 올려준 것) -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="전체" width="32" height="32" fill="black">
+            <path d="M16.2928,17.0307c0.3621,0.6276 0.1471,1.43 -0.4803,1.7924c-0.6281,0.363 -1.4307,0.1477 -1.7929,-0.48l-2.1443,-3.7171l-2.1443,3.7171c-0.3623,0.6278 -1.1649,0.8431 -1.7929,0.48c-0.6277,-0.3631 -0.8427,-1.1655 -0.4803,-1.7924l2.1446,-3.7172h-4.2896c-0.7249,0 -1.3126,-0.5876 -1.3126,-1.3126c0,-0.7263 0.5876,-1.3137 1.3126,-1.3137h4.2896l-2.1446,-3.7172c-0.3624,-0.6277 -0.1474,-1.43 0.4803,-1.7924c0.6279,-0.3633 1.4306,-0.148 1.7929,0.48l2.1443,3.7172l2.1443,-3.7172c0.3624,-0.6277 1.1649,-0.843 1.7929,-0.48c0.6281,0.3633 0.8431,1.1647 0.4803,1.7924l-2.1446,3.7172h4.2896c0.7249,0 1.3126,0.5876 1.3126,1.3126c0,0.725  -0.5877,1.3131 -1.3126,1.3131h-4.2896l2.1446,3.7172z"></path>
+        </svg>
+    </span>
+            <span class="position-btn" data-position="TOP" title="탑" onclick="selectPosition(this)">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="탑" width="32" height="32" fill="black">
+            <path d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z"></path>
+            <path d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z"></path>
+        </svg>
+    </span>
+            <span class="position-btn" data-position="JUNGLE" title="정글" onclick="selectPosition(this)">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="정글" width="32" height="32" fill="black">
+            <path d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"></path>
+        </svg>
+    </span>
+            <span class="position-btn" data-position="MID" title="미드" onclick="selectPosition(this)">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="미드" width="32" height="32" fill="black">
+            <path d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z"></path>
+            <path d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z"></path>
+        </svg>
+    </span>
+            <span class="position-btn" data-position="ADC" title="원딜" onclick="selectPosition(this)">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="원딜" width="32" height="32" fill="black">
+            <path d="M7.828 19H19V7.828l3-3V22H4.828l3-3z"></path>
+            <path d="M2 2h17.172l-3 3H5v11.172l-3 3V2zm7 13h6V9H9v6z"></path>
+        </svg>
+    </span>
+            <span class="position-btn" data-position="SUPPORT" title="서포터" onclick="selectPosition(this)">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="서포터" width="32" height="32" fill="black">
+            <path d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237zM14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255zM10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237zM9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255zM9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"></path>
+        </svg>
+    </span>
+        </div>
+
+        <label>소개</label>
+        <textarea id="memberIntro" placeholder="나를 소개해주세요." th:text="${editMember != null} ? ${editMember.intro} : ''"></textarea>
+
+        <div class="modal-actions">
+            <button class="btn" onclick="submitMemberEdit()">수정</button>
+            <button class="btn" onclick="closeEditMemberModal()">취소</button>
+        </div>
+    </div>
+</div>
+
+<!-- 클랜 수정 모달 -->
+<div id="editClanModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>클랜 정보 수정</h2>
+        <form method="post" th:action="@{/clan/edit/{id}(id=${clan.id})}" enctype="multipart/form-data">
+            <div style="margin-bottom: 10px;">
+                <label>클랜 이름</label>
+                <div style="padding: 10px; background-color: #eee; border-radius: 4px;">
+                    <span th:text="${clan.name}">클랜 이름</span>
+                </div>
+            </div>
+
+            <label>이미지</label>
+            <input type="file" name="imageFile" accept="image/*" onchange="validateImageRatio(event)" style="margin-bottom: 10px;" />
+            <img id="imagePreview" style="max-width: 100%; margin-bottom: 10px;" />
+
+            <div style="font-size: 13px; color: gray; margin-bottom: 20px; line-height: 1.5;">
+                <p style="margin: 0;">이미지는 <strong>4:3 비율</strong> (예: <strong>800×600</strong>)로 등록하는 것이 가장 예쁘게 보여요.</p>
+                <p style="margin: 4px 0 0 0;">너무 길거나 정사각형에 가까운 이미지는 화면에서 깨져 보일 수 있어요!</p>
+            </div>
+
+            <textarea name="intro" placeholder="클랜 소개" required th:text="${clan.intro}"></textarea>
+
+            <label>최소 티어</label>
+            <select name="minTier" required>
+                <option value="상관없음" th:selected="${clan.minTier == '상관없음'}">상관 없음</option>
+                <option value="아이언" th:selected="${clan.minTier == '아이언'}">아이언</option>
+                <option value="브론즈" th:selected="${clan.minTier == '브론즈'}">브론즈</option>
+                <option value="실버" th:selected="${clan.minTier == '실버'}">실버</option>
+                <option value="골드" th:selected="${clan.minTier == '골드'}">골드</option>
+                <option value="플레티넘" th:selected="${clan.minTier == '플레티넘'}">플레티넘</option>
+                <option value="에메랄드" th:selected="${clan.minTier == '에메랄드'}">에메랄드</option>
+                <option value="다이아" th:selected="${clan.minTier == '다이아'}">다이아</option>
+                <option value="마스터" th:selected="${clan.minTier == '마스터'}">마스터</option>
+                <option value="그랜드마스터" th:selected="${clan.minTier == '그랜드마스터'}">그랜드마스터</option>
+                <option value="챌린저" th:selected="${clan.minTier == '챌린저'}">챌린저</option>
+            </select>
+
+            <label>디스코드 링크</label>
+            <input type="url" name="discordLink" th:value="${clan.discordLink}" />
+
+            <label>카카오 링크</label>
+            <input type="url" name="kakaoLink" th:value="${clan.kakaoLink}" />
+
+            <div style="text-align: right; margin-top: 16px;">
+                <button type="submit" class="btn">수정완료</button>
+                <button type="button" class="btn" onclick="closeEditModal()">취소</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- 푸터 -->
 <footer>
@@ -119,9 +321,115 @@
     function showTab(tab) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-section').forEach(section => section.classList.add('hidden'));
-
         document.querySelector(`.tab-btn[onclick*='${tab}']`).classList.add('active');
         document.getElementById(tab).classList.remove('hidden');
+
+        const actionButtons = document.getElementById('editButtons');
+        if (tab === 'intro') {
+            actionButtons.style.display = 'block';
+        } else {
+            actionButtons.style.display = 'none';
+        }
+    }
+
+    function confirmDelete() {
+        const isSure = confirm("정말 삭제하시겠습니까?");
+        if (isSure) {
+            document.getElementById("deleteForm").submit();
+        }
+    }
+
+    function openEditModal() {
+        const modal = document.getElementById("editClanModal");
+        modal.style.display = "flex";
+        modal.style.justifyContent = "center";
+        modal.style.alignItems = "center";
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById("editClanModal");
+        modal.style.display = "none";
+    }
+
+    function validateImageRatio(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            img.src = e.target.result;
+        };
+
+        img.onload = function () {
+            const width = img.width;
+            const height = img.height;
+            const ratio = width / height;
+
+            const minRatio = 0.5;
+            const maxRatio = 2.5;
+
+            if (ratio < minRatio || ratio > maxRatio) {
+                alert("업로드 전 이미지 비율을 확인해주세요.\n\n4:3 비율 이미지 (예: 800×600, 1200×900, 1600×1200)가 가장 예쁘게 보여요!");
+                event.target.value = "";
+                document.getElementById("imagePreview").src = "";
+            } else {
+                document.getElementById("imagePreview").src = img.src;
+            }
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    // 멤버 수정 모달 열기 - 포지션 값 받아서 활성화 처리
+    function openEditMemberModal(position) {
+        const modal = document.getElementById("editMemberModal");
+
+        // 기존에 active 클래스 제거
+        document.querySelectorAll(".position-btn").forEach(btn => btn.classList.remove("active"));
+
+        // position 인자에 해당하는 버튼 찾아 active 추가
+        if (position) {
+            const btn = document.querySelector(`.position-btn[data-position="${position}"]`);
+            if (btn) btn.classList.add("active");
+        }
+
+        modal.style.display = "flex";
+        modal.style.justifyContent = "center";
+        modal.style.alignItems = "center";
+
+        // 선택된 포지션 저장
+        selectedPosition = position;
+    }
+
+    function closeEditMemberModal() {
+        const modal = document.getElementById("editMemberModal");
+        modal.style.display = "none";
+    }
+
+    // 주포지션 선택
+    let selectedPosition = null;
+    function selectPosition(element) {
+        // 모든 버튼 초기화
+        document.querySelectorAll(".position-btn").forEach(btn => btn.classList.remove("active"));
+
+        // 클릭한 버튼에만 active 클래스 추가
+        element.classList.add("active");
+
+        // 선택된 포지션 저장 (data-position 속성에서 값 가져오기)
+        selectedPosition = element.getAttribute("data-position");
+    }
+
+    // 멤버 수정 제출
+    function submitMemberEdit() {
+        const intro = document.getElementById("memberIntro").value;
+
+        console.log("선택된 포지션:", selectedPosition);
+        console.log("소개글:", intro);
+
+        alert("멤버 수정 완료 (서버 연동은 추가 구현 필요)");
+        closeEditMemberModal();
     }
 </script>
 

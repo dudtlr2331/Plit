@@ -6,6 +6,9 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="login-user-seq" th:content="${loginUser.userSeq}" />
+    <meta name="login-user-nickname" th:content="${loginUser.userNickname}" />
+
 
     <title>마이페이지</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">

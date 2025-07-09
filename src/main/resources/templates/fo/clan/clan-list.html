@@ -6,12 +6,12 @@
   <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
   <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <title>클랜 찾기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/clan.css" />
 </head>
 <body>
 
 <div th:replace="~{fo/common/header :: header}"></div>
-
 
 <div class="container">
   <div class="search-bar">
@@ -124,7 +124,6 @@
         <img th:src="${clan.imageUrl != null and clan.imageUrl != ''} ? @{${clan.imageUrl}} : @{/images/clan/clan_default.png}"
              alt="클랜 이미지"
              class="clan-image"
-             style="width: 100%; height: 100%; object-fit: cover;"
              onerror="this.onerror=null; this.src='/images/clan/clan_default.png';" />
       </div>
 
@@ -136,7 +135,9 @@
         <h3 th:text="${clan.name}">클랜이름</h3>
         <span class="clan-member-count">0명</span>
       </div>
+
       <p th:text="${clan.intro}">소개글</p>
+
       <small style="display: flex; align-items: center; width: 100%;">
         <span style="padding-left: 0.75rem; flex-shrink: 0;"
               th:text="${clan.minTier == '챌린저' ? '챌린저' :
@@ -201,11 +202,11 @@
       const height = img.height;
       const ratio = width / height;
 
-      const minRatio = 1.2;   // 4:3보다 약간 좁은 비율
-      const maxRatio = 1.5;   // 4:3보다 약간 넓은 비율
+      const minRatio = 0.5;   // 4:3보다 약간 좁은 비율
+      const maxRatio = 2.5;   // 4:3보다 약간 넓은 비율
 
       if (ratio < minRatio || ratio > maxRatio) {
-        alert("업로드 전 이미지 비율을 확인해주세요.\n4:3 비율 이미지 (예: 800×600, 400×300)가 가장 깔끔하게 표시됩니다.");
+        alert("업로드 전 이미지 비율을 확인해주세요.\n4:3 비율 이미지 (예: 800×600, 1200x900, 1600×1200 등)가 가장 깔끔하게 표시됩니다.");
         event.target.value = ""; // 업로드 취소
         document.getElementById("imagePreview").src = ""; // 미리보기도 제거
       } else {

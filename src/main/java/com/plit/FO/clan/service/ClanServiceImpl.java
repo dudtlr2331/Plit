@@ -1,13 +1,20 @@
 package com.plit.FO.clan.service;
 
+import com.plit.FO.clan.dto.ClanDTO;
 import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.repository.ClanMemberRepository;
 import com.plit.FO.clan.repository.ClanRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+//import lombok.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -92,5 +99,47 @@ public class ClanServiceImpl implements ClanService {
     @Override
     public boolean existsByNameAndUseYn(String name, String useYn) {
         return clanRepository.existsByNameAndUseYn(name, useYn);
+    }
+
+    @Value("${custom.upload-path.clan}")
+    private String uploadDir;
+
+    @Override
+    @Transactional
+    public void updateClan(Long id, ClanEntity updatedClan, MultipartFile imageFile) throws IOException {
+        ClanEntity existing = clanRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("클랜을 찾을 수 없습니다."));
+
+        existing.setIntro(updatedClan.getIntro());
+        existing.setMinTier(updatedClan.getMinTier());
+        existing.setKakaoLink(updatedClan.getKakaoLink());
+        existing.setDiscordLink(updatedClan.getDiscordLink());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+            imageFile.transferTo(new File(dir, fileName));
+            existing.setImageUrl("/uploads/clan/" + fileName);
+        }
+
+        clanRepository.save(existing);
+    }
+
+    @Override
+    public ClanDTO findById(Long id) {
+        ClanEntity entity = clanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("클랜을 찾을 수 없습니다."));
+
+        return ClanDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .intro(entity.getIntro())
+                .imageUrl(entity.getImageUrl())
+                .minTier(entity.getMinTier())
+                .discordLink(entity.getDiscordLink())
+                .kakaoLink(entity.getKakaoLink())
+                .leaderId(entity.getLeaderId())
+                .build();
     }
 }

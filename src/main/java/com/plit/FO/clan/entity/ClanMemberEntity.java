@@ -31,9 +31,28 @@ public class ClanMemberEntity {
     @Column(name = "status", length = 20)
     private String status; // 예: APPROVED, PENDING, REJECTED
 
+    @Column(name = "main_position", length = 20)
+    private String mainPosition;
+
+    @Column(name = "role", length = 20, nullable = false)
+    private String role; // 예: LEADER, MEMBER
+
+    @Column(name = "tier", length = 20)
+    private String tier; // 예: Gold, Silver 등
+
+    @Column(name = "intro", columnDefinition = "TEXT")
+    private String intro; // 자기소개 글
+
     @PrePersist
     protected void onCreate() {
-        this.joinedAt = LocalDateTime.now(); // 기본 가입일 자동 설정
-        this.status = "APPROVED"; // 기본 상태
+        if (this.joinedAt == null) {
+            this.joinedAt = LocalDateTime.now(); // 기본 가입일 자동 설정
+        }
+        if (this.status == null) {
+            this.status = "APPROVED"; // 기본 상태
+        }
+        if (this.role == null) {
+            this.role = "MEMBER"; // 기본 역할
+        }
     }
 }

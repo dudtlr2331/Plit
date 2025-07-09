@@ -104,7 +104,6 @@ select {
 .recruit-header,
 .recruit-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding: 10px;
 }
@@ -121,8 +120,49 @@ select {
     border-radius: 8px;
 }
 
+.recruit-header span,
 .recruit-item span {
-    margin-right: 10px;
+    flex-shrink: 0;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+}
+
+.recruit-header span:nth-child(1),
+.recruit-item span:nth-child(1) {
+    width: 50px;
+    justify-content: center;
+}
+
+.recruit-header span:nth-child(2),
+.recruit-item span:nth-child(2) {
+    flex: 1;
+    justify-content: center;
+}
+
+.recruit-header span:nth-child(3),
+.recruit-item span:nth-child(3),
+.recruit-header span:nth-child(4),
+.recruit-item span:nth-child(4),
+.recruit-header span:nth-child(5),
+.recruit-item span:nth-child(5),
+.recruit-header span:nth-child(6),
+.recruit-item span:nth-child(6) {
+    width: 100px;
+    justify-content: center;
+}
+
+.recruit-item.empty-row {
+    justify-content: center;
+    text-align: center;
+    height: 60px;
+    background: #fdfdfd;
+}
+
+.recruit-item.empty-row span {
+    flex: 1;
+    font-size: 14px;
+    color: #666;
 }
 
 .chat-icon {
@@ -294,8 +334,6 @@ select {
     margin-top: 5px;
 }
 
-
-
 /* 주 포지션 선택 영역 */
 .position-selector span {
     display: inline-flex;
@@ -326,6 +364,7 @@ select {
 .position-icon path {
     fill: #bbb;
 }
+
 .position-icon .top-fill,
 .position-icon .mid-fill,
 .position-icon .bottom-fill,
@@ -340,12 +379,13 @@ select {
     fill: #444;
 }
 
-/* 파티 참여 멤버 */
+/* 파티 참여 멤버 탭 */
 .tabs {
     margin-top: 10px;
     display: flex;
     gap: 10px;
 }
+
 .tab-btn {
     padding: 6px 12px;
     background-color: #eee;
@@ -353,11 +393,13 @@ select {
     cursor: pointer;
     border-radius: 4px;
 }
+
 .tab-btn.active {
     background-color: #d9534f;
     color: white;
     font-weight: bold;
 }
+
 .tab-content {
     margin-top: 12px;
 }
@@ -368,4 +410,11 @@ select {
     height: 20px;
     vertical-align: middle;
     margin-right: 4px;
+}
+
+.position-icon.always-fill .top-fill,
+.position-icon.always-fill .mid-fill,
+.position-icon.always-fill .bottom-fill,
+.position-icon.always-fill .all-fill {
+    fill: #444;
 }

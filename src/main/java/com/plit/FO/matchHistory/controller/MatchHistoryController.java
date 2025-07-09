@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +49,11 @@ public class MatchHistoryController {
         MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
         Map<String, RankDTO> rankMap = matchHistoryService.getRankInfoByPuuid(puuid);
         List<FavoriteChampionDTO> favoriteChampions = matchHistoryService.getFavoriteChampions(matchList);
+
+        List<FavoriteChampionDTO> overallList = matchHistoryService.getFavoriteChampionsBySeason(puuid, "all");
+        List<FavoriteChampionDTO> soloList = matchHistoryService.getFavoriteChampionsBySeason(puuid, "solo");
+        List<FavoriteChampionDTO> flexList = matchHistoryService.getFavoriteChampionsBySeason(puuid, "flex");
+
 
         // 통계용 스타일 계산
         Map<String, String> championHeightStyles = summary.getChampionTotalGames().entrySet().stream()
@@ -90,7 +96,13 @@ public class MatchHistoryController {
         model.addAttribute("positionHeightStyles", positionHeightStyles);
         model.addAttribute("modeMap", modeMap);
         model.addAttribute("rankMap", rankMap);
-        model.addAttribute("favoriteChampions", favoriteChampions);
+        model.addAttribute("favoriteChampionsRecent", favoriteChampions);
+        model.addAttribute("favoriteChampions", Map.of(
+                "overall", overallList,
+                "solo", soloList,
+                "flex", flexList
+        ));
+
 
         // 디버깅용 출력
         System.out.println("gameName = " + gameName);
@@ -101,8 +113,27 @@ public class MatchHistoryController {
         System.out.println("매치 수: " + matchList.size());
         System.out.println("첫 매치 ID: " + matchList.get(0).getMatchId());
 
+        for (MatchHistoryDTO dto : matchList) {
+            System.out.println("챔피언 이미지 URL: " + dto.getChampionImageUrl());
+            System.out.println("프로필 이미지 URL: " + dto.getProfileIconUrl());
+            System.out.println("아이템 이미지 URL들: " + dto.getItemImageUrls());
+        }
+
 
         return "fo/matchHistory/matchHistory"; // 템플릿 경로
+    }
+
+    @GetMapping("/favorite-champions/all")
+    public Map<String, List<FavoriteChampionDTO>> getAllFavoriteChampions(@RequestParam String puuid) {
+        Map<String, List<FavoriteChampionDTO>> result = new HashMap<>();
+
+
+        // overall : ui 에서 쓸 key 이름  /  all : 실제 모드명
+        result.put("overall", matchHistoryService.getFavoriteChampionsBySeason(puuid, "all"));
+        result.put("solo", matchHistoryService.getFavoriteChampionsBySeason(puuid, "solo"));
+        result.put("flex", matchHistoryService.getFavoriteChampionsBySeason(puuid, "flex"));
+
+        return result;
     }
 
     @GetMapping("/detail")

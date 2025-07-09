@@ -14,4 +14,6 @@ public class ClanDTO {
     private String kakaoLink;      // 카카오톡 링크
     private String discordLink;    // 디스코드 링크
     private String minTier;        // 최소 티어
+    private String imageUrl;
+    private Long leaderId;
 }
