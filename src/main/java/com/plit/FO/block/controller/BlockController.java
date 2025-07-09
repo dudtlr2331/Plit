@@ -26,6 +26,7 @@ public class BlockController {
         UserDTO loginUser = userService.findByUserId(user.getUsername());
         if (loginUser != null) {
             List<BlockDTO> blockList = blockService.getBlockedUsersByBlockerId(loginUser.getUserSeq());
+            model.addAttribute("loginUser", loginUser);
             model.addAttribute("viewSection", "blocked");
             model.addAttribute("blockList", blockList);
         }

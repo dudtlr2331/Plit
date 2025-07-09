@@ -48,6 +48,10 @@ dependencies {
 	implementation "software.amazon.awssdk:s3"
 	implementation "software.amazon.awssdk:auth" // AWS 자격 증명용
 
+	// 웹 소켓 사용
+	implementation 'org.webjars:sockjs-client:1.5.1'
+	implementation 'org.webjars:stomp-websocket:2.3.4'
+
 }
 
 tasks.named('test') {
