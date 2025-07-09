@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.repository;
 
+import com.plit.FO.matchHistory.dto.FavoriteChampionDTO;
 import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Sort;
@@ -28,6 +29,7 @@ public interface RiotIdCacheRepository extends JpaRepository<RiotIdCacheEntity, 
     boolean existsByGameNameIgnoreCaseAndTagLineIgnoreCase(String gameName, String tagLine);
 
     Optional<RiotIdCacheEntity> findByNormalizedGameNameAndNormalizedTagLine(String normalizedGameName, String normalizedTagLine);
+
 }
 
 
