@@ -30,7 +30,7 @@
         </div>
         <div class="friend-actions">
           <button class="chat-btn"
-                  th:attr="data-from=${friend.fromUserId}, data-to=${friend.toUserId}, data-friendsno=${friend.friendsNo}, data-nickname=${friend.user.userNickname}"
+                  th:attr="data-myid=${loginUser.userSeq}, data-otherid=${friend.user.userSeq}, data-nickname=${friend.user.userNickname}"
                   onclick="openChatWithFriend(this)">💬</button>
           <button class="block-btn"
                   th:attr="onclick=|blockFriend(${friend.friendsNo})|">차단</button>
@@ -69,6 +69,8 @@
 </div>
 
 <script>
+  let stompClient = null;
+  let currentRoomId = null;
   const currentUserSeq = document.querySelector('meta[name="login-user-seq"]').getAttribute('content');
   const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
@@ -99,34 +101,38 @@
             });
   }
 
-  function openChat(name) {
-    document.getElementById('chatPopup').style.display = 'flex';
-    document.getElementById('chatTarget').textContent = name;
-    document.getElementById('chatInput').focus();
+  // 이전 메세지 불러오기
+  function loadPreviousMessages(roomId) {
+    fetch(`/api/chat/${roomId}`)
+            .then(res => res.json())
+            .then(messages => {
+              const body = document.getElementById('chatBody');
+              body.innerHTML = '';
+              messages.forEach(msg => {
+                appendMessage(msg.content, msg.sender == currentUserSeq);
+              });
+            });
   }
+
   function openChatWithFriend(btn) {
-    const from = btn.getAttribute("data-from");
-    const to = btn.getAttribute("data-to");
+    const myId = btn.getAttribute("data-myid");
+    const otherId = btn.getAttribute("data-otherid");
     const nickname = btn.getAttribute("data-nickname");
 
-    let targetUserSeq;
-    if (currentUserSeq === from) {
-      targetUserSeq = to;
-    } else if (currentUserSeq === to) {
-      targetUserSeq = from;
-    } else {
-      alert("비정상적인 친구 관계입니다.");
+    if (!myId || !otherId) {
+      alert("친구 정보가 잘못되었습니다.");
       return;
     }
 
-    // 상대방 닉네임 표시
-    document.getElementById('chatTarget').textContent = nickname;
-    document.getElementById('chatPopup').style.display = 'flex';
-    document.getElementById('chatInput').focus();
-
-    // 여기서 채팅방 ID를 설정할 수 있음 (예: user-26_15)
-    const roomId = makeRoomId(currentUserSeq, targetUserSeq);
-    connectToChatRoom(roomId);
+    fetch(`/api/chat/room/${myId}/${otherId}`)
+            .then(res => res.json())
+            .then(roomId => {
+              document.getElementById('chatTarget').textContent = nickname;
+              document.getElementById('chatPopup').style.display = 'flex';
+              document.getElementById('chatInput').focus();
+              loadPreviousMessages(roomId);
+              connectToChatRoom(roomId);
+            });
   }
 
   function makeRoomId(userA, userB) {
@@ -140,6 +146,7 @@
     document.getElementById('chatPopup').style.display = 'none';
     document.getElementById('chatBody').innerHTML = '';
     document.getElementById('chatInput').value = '';
+    if (stompClient) stompClient.disconnect();
   }
 
   document.getElementById('chatInput')?.addEventListener('keydown', function (e) {
@@ -316,36 +323,38 @@
 
 
   //// 웹 소켓
-  let stompClient = null;
 
   function connectToChatRoom(roomId) {
-    const socket = new SockJS('/ws/chat');
-
     if (stompClient && stompClient.connected) {
-      return;
+      stompClient.disconnect(() => {
+        console.log("기존 stomp 연결 종료");
+        doConnect(roomId);
+      });
+    } else {
+      doConnect(roomId);
     }
+  }
 
+  function doConnect(roomId) {
+    const socket = new SockJS('/ws/chat');
     stompClient = Stomp.over(socket);
+    currentRoomId = roomId;
 
     stompClient.connect({}, () => {
-      console.log("Connected to chat room: " + roomId);
-
-      // 구독
-      stompClient.subscribe(`/sub/chat/room/${roomId}`, (message) => {
+      console.log("Connected to room " + roomId);
+      stompClient.subscribe(`/sub/chat/room/${roomId}`, message => {
         const msg = JSON.parse(message.body);
-        const div = document.createElement('div');
-        div.className = 'chat-message received';
-        div.textContent = msg.content;
-        document.getElementById('chatBody').appendChild(div);
-        const body = document.getElementById('chatBody');
-        body.scrollTop = body.scrollHeight;
-
+        if (msg.sender == currentUserSeq) return; // 중복 방지
+        appendMessage(msg.content, false);
       });
     });
 
-    // 엔터 입력 시 메시지 전송
+    replaceChatInput(roomId);
+  }
+
+  function replaceChatInput(roomId) {
     const input = document.getElementById('chatInput');
-    const newInput = input.cloneNode(true);  // 기존 이벤트 제거를 위해 복제
+    const newInput = input.cloneNode(true);
     input.parentNode.replaceChild(newInput, input);
 
     newInput.addEventListener('keydown', function (e) {
@@ -356,17 +365,21 @@
           content: msg,
           roomId: roomId
         }));
-        const div = document.createElement('div');
-        div.className = 'chat-message sent';
-        div.textContent = msg;
-        document.getElementById('chatBody').appendChild(div);
-        const body = document.getElementById('chatBody');
-        body.scrollTop = body.scrollHeight;
+        appendMessage(msg, true);
         this.value = '';
       }
     });
-
   }
+
+  function appendMessage(msg, isMine) {
+    const div = document.createElement('div');
+    div.className = 'chat-message ' + (isMine ? 'sent' : 'received');
+    div.textContent = msg;
+    const body = document.getElementById('chatBody');
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
 </script>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
