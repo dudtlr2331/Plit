@@ -29,4 +29,6 @@ public interface ClanService {
     void updateClan(Long id, ClanEntity updatedClan, MultipartFile imageFile) throws IOException;
 
     ClanDTO findById(Long id);
+
+
 }

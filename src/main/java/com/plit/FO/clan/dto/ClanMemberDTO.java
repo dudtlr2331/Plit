@@ -1,12 +1,16 @@
 package com.plit.FO.clan.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@ToString
 public class ClanMemberDTO {
     private Long memberId;
     private String nickname;
@@ -17,4 +21,5 @@ public class ClanMemberDTO {
     private String mainPosition;   // 주 포지션 (TOP, MID 등)
     private String intro;          // 소개글
     private String tag;
+    private Long clanId;
 }

@@ -4,6 +4,7 @@ import com.plit.FO.clan.dto.ClanMemberDTO;
 import com.plit.FO.clan.entity.ClanMemberEntity;
 import com.plit.FO.clan.repository.ClanMemberRepository;
 import com.plit.FO.user.service.UserService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,11 @@ public class ClanMemberServiceImpl implements ClanMemberService {
 
     private final ClanMemberRepository clanMemberRepository;
     private final UserService userService;
+
+    @Override
+    public int countByClanId(Long clanId) {
+        return clanMemberRepository.countByClanId(clanId);
+    }
 
     @Override
     public List<ClanMemberDTO> findApprovedMembersByClanId(Long clanId) {
@@ -58,4 +64,16 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         return clanMemberRepository.findByClanIdAndUserId(clanId, userId)
                 .map(this::convertToDTO);
     }
+
+    @Override
+    @Transactional
+    public void updateMemberInfo(Long userId, Long clanId, ClanMemberDTO dto) {
+        ClanMemberEntity entity = clanMemberRepository.findByClanIdAndUserId(clanId, userId)
+                .orElseThrow(() -> new RuntimeException("해당 멤버를 찾을 수 없습니다."));
+
+        entity.setMainPosition(dto.getMainPosition());
+        entity.setIntro(dto.getIntro());
+    }
+
+
 }

@@ -9,7 +9,11 @@ import com.plit.FO.user.service.UserService;
 import com.plit.FO.user.dto.UserDTO;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -38,18 +42,55 @@ public class ClanController {
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
 
+//    @GetMapping
+//    public String listClans(@RequestParam(required = false) String keyword,
+//                            @RequestParam(required = false) String tier,
+//                            Model model, Principal principal)  {
+//        List<ClanEntity> clans = clanService.searchClansByKeywordAndTier(keyword, tier);
+//        model.addAttribute("clans", clans);
+//        model.addAttribute("tier", tier);
+//
+//        if (principal != null) {
+//            String userId = principal.getName();
+//            Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
+//
+//            optionalUser.ifPresent(user -> model.addAttribute("nickname", user.getUserNickname()));
+//        }
+//
+//        return "fo/clan/clan-list";
+//    }
+
     @GetMapping
     public String listClans(@RequestParam(required = false) String keyword,
                             @RequestParam(required = false) String tier,
-                            Model model, Principal principal)  {
-        List<ClanEntity> clans = clanService.searchClansByKeywordAndTier(keyword, tier);
-        model.addAttribute("clans", clans);
+                            Model model, Principal principal) {
+
+        List<ClanEntity> clanEntities = clanService.searchClansByKeywordAndTier(keyword, tier);
+
+        // ClanDTO에 memberCount 포함해서 변환
+        List<ClanDTO> clanDTOs = clanEntities.stream()
+                .map(clan -> {
+                    int memberCount = clanMemberService.countByClanId(clan.getId());
+                    return ClanDTO.builder()
+                            .id(clan.getId())
+                            .name(clan.getName())
+                            .intro(clan.getIntro())
+                            .imageUrl(clan.getImageUrl())
+                            .minTier(clan.getMinTier())
+                            .kakaoLink(clan.getKakaoLink())
+                            .discordLink(clan.getDiscordLink())
+                            .leaderId(clan.getLeaderId())
+                            .memberCount(memberCount)
+                            .build();
+                })
+                .toList();
+
+        model.addAttribute("clans", clanDTOs);
         model.addAttribute("tier", tier);
 
         if (principal != null) {
             String userId = principal.getName();
             Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
-
             optionalUser.ifPresent(user -> model.addAttribute("nickname", user.getUserNickname()));
         }
 
@@ -182,4 +223,28 @@ public class ClanController {
         return "redirect:/clan/" + id;
     }
 
+    @PostMapping("/member/update")
+    @ResponseBody
+    public ResponseEntity<String> updateMemberInfo(Principal principal,
+                                                   @RequestBody ClanMemberDTO dto) {
+        try {
+            // 로그인한 사용자 ID 가져오기
+            String userId = principal.getName();
+
+            // DB에서 실제 유저 정보 조회
+            UserDTO userDTO = userService.findByUserId(userId);
+            Long realUserId = userDTO.getUserSeq().longValue();
+
+            // 요청에서 클랜 ID 꺼내기
+            Long clanId = dto.getClanId();
+
+            // 서비스 호출
+            clanMemberService.updateMemberInfo(realUserId, clanId, dto);
+
+            return ResponseEntity.ok("멤버 정보가 수정되었습니다");
+        } catch (Exception e) {
+            e.printStackTrace(); // 콘솔 로그
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("멤버 정보 수정 실패");
+        }
+    }
 }

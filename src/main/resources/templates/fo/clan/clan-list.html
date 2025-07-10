@@ -133,7 +133,7 @@
 
       <div class="clan-title-box">
         <h3 th:text="${clan.name}">클랜이름</h3>
-        <span class="clan-member-count">0명</span>
+        <span class="clan-member-count" th:text="${clan.memberCount + '명'}"></span>
       </div>
 
       <p th:text="${clan.intro}">소개글</p>

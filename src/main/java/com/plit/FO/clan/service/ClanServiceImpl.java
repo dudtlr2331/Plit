@@ -131,6 +131,8 @@ public class ClanServiceImpl implements ClanService {
         ClanEntity entity = clanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("클랜을 찾을 수 없습니다."));
 
+        int count = clanMemberRepository.countByClanId(entity.getId());
+
         return ClanDTO.builder()
                 .id(entity.getId())
                 .name(entity.getName())
@@ -140,6 +142,7 @@ public class ClanServiceImpl implements ClanService {
                 .discordLink(entity.getDiscordLink())
                 .kakaoLink(entity.getKakaoLink())
                 .leaderId(entity.getLeaderId())
+                .memberCount(count)
                 .build();
     }
 }

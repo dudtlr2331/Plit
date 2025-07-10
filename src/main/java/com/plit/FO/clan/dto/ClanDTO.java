@@ -16,4 +16,5 @@ public class ClanDTO {
     private String minTier;        // 최소 티어
     private String imageUrl;
     private Long leaderId;
+    private int memberCount;
 }

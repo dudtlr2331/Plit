@@ -14,4 +14,6 @@ public interface ClanMemberRepository extends JpaRepository<ClanMemberEntity, Lo
     boolean existsByClanIdAndUserId(Long clanId, Long userId);
 
     Optional<ClanMemberEntity> findByClanIdAndUserId(Long clanId, Long userId);
+
+    int countByClanId(Long clanId);
 }
