@@ -30,4 +30,7 @@ public class ChatMessageEntity {
 
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
+
+    @Column(name = "is_read")
+    private Boolean isRead = false;
 }

@@ -30,8 +30,13 @@
         </div>
         <div class="friend-actions">
           <button class="chat-btn"
-                  th:attr="data-myid=${loginUser.userSeq}, data-otherid=${friend.user.userSeq}, data-nickname=${friend.user.userNickname}"
-                  onclick="openChatWithFriend(this)">💬</button>
+                  th:attr="data-myid=${loginUser.userSeq},
+                 data-otherid=${friend.user.userSeq},
+                 data-nickname=${friend.user.userNickname}"
+                  onclick="openChatWithFriend(this)">
+            💬
+          </button>
+
           <button class="block-btn"
                   th:attr="onclick=|blockFriend(${friend.friendsNo})|">차단</button>
           <button class="delete-btn"
@@ -109,7 +114,7 @@
               const body = document.getElementById('chatBody');
               body.innerHTML = '';
               messages.forEach(msg => {
-                appendMessage(msg.content, msg.sender == currentUserSeq);
+                appendMessage(msg.content, msg.sender == currentUserSeq, msg.senderNickname, msg.sentAt);
               });
             });
   }
@@ -345,7 +350,7 @@
       stompClient.subscribe(`/sub/chat/room/${roomId}`, message => {
         const msg = JSON.parse(message.body);
         if (msg.sender == currentUserSeq) return; // 중복 방지
-        appendMessage(msg.content, false);
+        appendMessage(msg.content, false, msg.senderNickname, msg.sentAt);
       });
     });
 
@@ -363,22 +368,68 @@
         stompClient.send("/pub/chat/send", {}, JSON.stringify({
           sender: currentUserSeq,
           content: msg,
-          roomId: roomId
+          roomId: roomId,
+          senderNickname: document.querySelector('meta[name="login-user-nickname"]').getAttribute('content'),
+          sentAt: new Date().toISOString()
         }));
-        appendMessage(msg, true);
+        appendMessage(msg, true, "나", new Date().toISOString());
         this.value = '';
       }
     });
   }
 
-  function appendMessage(msg, isMine) {
+  function appendMessage(content, isMine, nickname = null, sentAt = null) {
     const div = document.createElement('div');
     div.className = 'chat-message ' + (isMine ? 'sent' : 'received');
-    div.textContent = msg;
+
+    const displayName = isMine ? '나' : (nickname || '상대방');
+    const timeStr = sentAt ? new Date(sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+
+    // 닉네임 (위에)
+    const nickElem = document.createElement('div');
+    nickElem.className = 'message-nickname';
+    nickElem.textContent = displayName;
+    div.appendChild(nickElem);
+
+    // 본문 텍스트
+    const text = document.createElement('div');
+    text.className = 'message-text';
+    text.textContent = content;
+    div.appendChild(text);
+
+    // 시간
+    const timeElem = document.createElement('div');
+    timeElem.className = 'message-time';
+    timeElem.textContent = timeStr;
+    timeElem.style.textAlign = isMine ? 'left' : 'right';
+    div.appendChild(timeElem);
+
     const body = document.getElementById('chatBody');
     body.appendChild(div);
     body.scrollTop = body.scrollHeight;
   }
+
+
+  //안 읽은 메시지 수 표시
+  function fetchUnreadCounts(userId) {
+    fetch(`/api/chat/rooms/unread/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+              data.forEach(room => {
+                const btn = document.querySelector(`.chat-btn[data-roomid="${room.roomId}"]`);
+                if (btn && room.unreadCount > 0) {
+                  btn.textContent = `💬 (${room.unreadCount})`;
+                }
+              });
+            });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const userId = parseInt(currentUserSeq);
+    fetchUnreadCounts(userId);
+  });
+
+
 
 </script>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -64,5 +65,12 @@ public class ChatRoomService {
         return (userA < userB)
                 ? "user-" + userA + "_" + userB
                 : "user-" + userB + "_" + userA;
+    }
+
+    public List<ChatRoomEntity> getChatRoomsByUserId(Long userId) {
+        return chatRoomUserRepository.findByUserId(userId)
+                .stream()
+                .map(ChatRoomUserEntity::getChatRoom)
+                .toList();
     }
 }
