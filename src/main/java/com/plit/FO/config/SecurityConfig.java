@@ -2,6 +2,7 @@ package com.plit.FO.config;
 
 import com.plit.FO.user.repository.UserRepository;
 import com.plit.FO.user.service.UserServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -75,7 +76,9 @@ public class SecurityConfig {
 
                 // 비로그인 사용자가 마이페이지 접속시, 로그인 페이지 이동
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendRedirect("/login?error=unauthorized");
+                        })
                 )
 
                 .formLogin(form -> form

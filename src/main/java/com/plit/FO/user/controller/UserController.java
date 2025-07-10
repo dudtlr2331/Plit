@@ -1,14 +1,15 @@
 package com.plit.FO.user.controller;
 
-import com.plit.FO.user.security.CustomUserDetails;
 import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.security.CustomUserDetails;
 import com.plit.FO.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -20,31 +21,28 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService; // Inject UserService
+    private final UserService userService;
 
-    /// 로그인 폼
+    // 로그인 폼
     @GetMapping("/login")
     public String showLoginForm(HttpServletRequest request, Model model) {
         model.addAttribute("userDTO", new UserDTO());
-
-        // 로그인 실패 메시지 처리
         String loginError = (String) request.getSession().getAttribute("loginError");
         if (loginError != null) {
             model.addAttribute("error", loginError);
             request.getSession().removeAttribute("loginError");
         }
-
         return "fo/user/login";
     }
 
-    /// 회원가입 폼
+    // 회원가입 폼
     @GetMapping("/signup")
     public String showRegisterForm(Model model) {
         model.addAttribute("userDTO", new UserDTO());
         return "fo/user/signup";
     }
 
-    /// 아이디 중복확인
+    // 아이디 중복확인
     @GetMapping("/check-id")
     @ResponseBody
     public Map<String, Object> checkId(@RequestParam("userId") String userId) {
@@ -52,9 +50,10 @@ public class UserController {
         return Map.of("available", available);
     }
 
-    /// 회원가입
+    // 회원가입 처리
     @PostMapping("/signup")
-    public String processRegistration(@ModelAttribute UserDTO userDTO, RedirectAttributes redirectAttributes) {
+    public String processRegistration(@ModelAttribute UserDTO userDTO,
+                                      RedirectAttributes redirectAttributes) {
         try {
             userService.registerUser(userDTO);
             redirectAttributes.addFlashAttribute("message", "회원가입 성공! 로그인해주세요.");
@@ -68,43 +67,13 @@ public class UserController {
         }
     }
 
-    /// 회원 탈퇴
-    @PostMapping("/user/delete")
-    public String deleteUser(@AuthenticationPrincipal CustomUserDetails userDetails,
-                             RedirectAttributes redirectAttributes,
-                             HttpServletRequest request,
-                             HttpServletResponse response) {
-        try {
-            Integer userSeq = userDetails.getUserDTO().getUserSeq();
-            userService.deleteUser(userSeq);
-
-            // Spring Security 로그아웃 처리
-            SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
-            logoutHandler.logout(request, response, null);
-
-            redirectAttributes.addFlashAttribute("message", "회원 탈퇴가 완료되었습니다.");
-            return "redirect:/main";
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/mypage";
-        }
-    }
-
-    /// 로그아웃
-    @GetMapping("/logout")
-    public String logoutRedirect() {
-        return "redirect:/";
-    }
-
-    /// 비밀번호 변경
+    // 비밀번호 변경
     @PostMapping("/mypage/change-password")
     public String changePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
                                  @RequestParam String currentPwd,
                                  @RequestParam String newPwd,
                                  RedirectAttributes redirectAttributes) {
-
         UserDTO loginUser = userDetails.getUserDTO();
-
         boolean isChanged = userService.changePassword(loginUser.getUserId(), currentPwd, newPwd);
 
         if (isChanged) {
@@ -116,7 +85,78 @@ public class UserController {
         return "redirect:/mypage";
     }
 
-    /// 인증번호 전송
+    // 닉네임 변경
+    @PostMapping("/mypage/change-nickname")
+    public String changeNickname(@AuthenticationPrincipal Object principal,
+                                 @RequestParam("newNickname") String nickname,
+                                 RedirectAttributes redirectAttributes) {
+        String userId = null;
+
+        if (principal instanceof CustomUserDetails userDetails) {
+            userId = userDetails.getUserDTO().getUserId();
+        } else if (principal instanceof DefaultOAuth2User oAuth) {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth.getAttributes().get("kakao_account");
+            userId = (String) kakaoAccount.get("email");
+            if (userId == null) userId = "kakao_" + oAuth.getName(); // fallback
+        }
+
+        if (userId != null) {
+            try {
+                userService.updateNickname(userId, nickname);
+                redirectAttributes.addFlashAttribute("message", "닉네임이 변경되었습니다.");
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("error", e.getMessage());
+            }
+        }
+
+        return "redirect:/mypage";
+    }
+
+    // 회원 탈퇴
+    @PostMapping("/user/delete")
+    public String deleteUser(@AuthenticationPrincipal Object principal,
+                             HttpServletRequest request,
+                             RedirectAttributes redirectAttributes) {
+
+        Integer userSeq = null;
+
+        if (principal instanceof CustomUserDetails userDetails) {
+            userSeq = userDetails.getUserDTO().getUserSeq();
+        } else if (principal instanceof OAuth2User oAuth2User) {
+            try {
+                Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttributes().get("kakao_account");
+                String email = (String) kakaoAccount.get("email");
+
+                userSeq = userService.getUserByUserId(email)
+                        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."))
+                        .getUserSeq();
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "사용자 정보를 찾을 수 없습니다.");
+                return "redirect:/mypage";
+            }
+        }
+
+        if (userSeq == null) {
+            redirectAttributes.addFlashAttribute("error", "로그인 후 이용 가능합니다.");
+            return "redirect:/login";
+        }
+
+        userService.deleteUser(userSeq);
+        request.getSession().invalidate(); // 세션 초기화
+        redirectAttributes.addFlashAttribute("message", "회원 탈퇴가 완료되었습니다.");
+
+        return "redirect:/main";
+    }
+
+
+
+    // 로그아웃 리다이렉트
+    @GetMapping("/logout")
+    public String logoutRedirect() {
+        return "redirect:/";
+    }
+
+    // 이메일 인증번호 전송
     @PostMapping("/send-code")
     @ResponseBody
     public ResponseEntity<String> sendCode(@RequestParam String email) {
@@ -128,23 +168,17 @@ public class UserController {
         }
     }
 
-    /// 인증번호 확인
+    // 이메일 인증번호 확인
     @PostMapping("/verify-code")
     @ResponseBody
     public String verifyCode(@RequestParam String email,
                              @RequestParam String inputCode) {
-
         boolean ok = userService.verifyEmailCode(email, inputCode);
         return ok ? "인증 성공" : "인증 실패";
     }
 
-    /// 닉네임 변경
-    @PostMapping("/mypage/change-nickname")
-    public String changeNickname(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                 @RequestParam("newNickname") String nickname) {
-        UserDTO loginUser = userDetails.getUserDTO();
-        userService.updateNickname(loginUser.getUserId(), nickname);
-
-        return "redirect:/mypage";
+    @GetMapping("/mypage/main")
+    public String userMainPage() {
+        return "fo/user/main";
     }
 }

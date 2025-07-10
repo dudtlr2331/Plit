@@ -18,8 +18,9 @@
 
             <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
-                <!-- 닉네임 표시 (Spring Security Dialect 사용) -->
-                <span th:text="${#authentication.principal.attributes['properties']['nickname']}"></span>
+                <!-- OAuth2 로그인 사용자 -->
+                <span th:text="${nickname}">닉네임</span>
+
 
                 <button onclick="location.href='/mypage'"
                         style="background: white; color: #6570b4; border: 2px solid #7c4798;

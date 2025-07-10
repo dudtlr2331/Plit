@@ -16,4 +16,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     List<UserEntity> findByUserNicknameContaining(String keyword);
     void deleteById(Integer userSeq);
     UserEntity save(UserEntity user);
+
 }

@@ -21,7 +21,7 @@
     <div class="sidebar">
         <div style="margin-bottom: 20px;">
             <a th:href="@{/main}" style="display: inline-block;">
-                <img src="/images/logo.png" alt="로고" style="height: 40px;" />
+                <img th:src="@{/images/logo/plit_logo.png}" alt="로고" style="height: 40px;" />
             </a>
         </div>
 
@@ -50,10 +50,12 @@
             </div>
 
             <!-- 닉네임 수정 줄 -->
+
             <div class="info-row" id="nicknameEditRow" style="display: none; justify-content: space-between;">
                 <label>닉네임</label>
                 <form th:action="@{/mypage/change-nickname}" method="post"
                       style="flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="text" name="newNickname" id="newNicknameInput" placeholder="새 닉네임 입력" required style="flex: 1;" />
                     <div style="display: flex; gap: 6px;">
                         <button type="submit">저장</button>
@@ -62,8 +64,12 @@
                 </form>
             </div>
 
+            <div th:if="${error}" class="flash-message error" th:text="${error}"></div>
+            <div th:if="${message}" class="flash-message success" th:text="${message}"></div>
+
             <!-- 비밀번호 변경 섹션 -->
-            <div class="info-group" style="margin-top: 40px;">
+            <div class="info-group" style="margin-top: 40px;"
+                 th:if="${not #strings.contains(loginUser.userId, '@kakao.com')}">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="font-size: 18px; font-weight: bold; margin: 0;">비밀번호 변경</h3>
                     <button type="submit" form="passwordForm" class="password-change-btn">비밀번호 변경</button>
@@ -81,14 +87,24 @@
                     </div>
                 </form>
             </div>
-            <form th:action="@{/user/delete}" method="post" style="margin-top: 30px; text-align: right;"
-                  onsubmit="return confirmWithdrawal();">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <button type="submit" class="password-change-btn">회원 탈퇴</button>
-            </form>
-        </div>
+            <!-- 회원 탈퇴 섹션 -->
+            <div class="info-group" style="margin-top: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 18px; font-weight: bold; margin: 0;">회원 탈퇴</h3>
+                    <button type="submit" form="withdrawForm" class="password-change-btn" style="background-color: #7c4798;">
+                        회원 탈퇴
+                    </button>
+                </div>
+                <hr style="margin: 10px 0;" />
 
-        <!-- QnA -->
+                <form th:action="@{/user/delete}" method="post" id="withdrawForm" onsubmit="return confirmWithdrawal()">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                </form>
+            </div>
+
+
+
+            <!-- QnA -->
         <div th:if="${viewSection == 'qna'}">
             <div th:if="${viewMode == 'list'}" th:insert="~{fo/mypage/qna/list :: listFragment}"></div>
             <div th:if="${viewMode == 'write'}" th:insert="~{fo/mypage/qna/write :: writeFragment}"></div>

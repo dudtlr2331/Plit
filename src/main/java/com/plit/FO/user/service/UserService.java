@@ -1,6 +1,7 @@
 package com.plit.FO.user.service;
 
 import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.entity.UserEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public interface UserService {
     Optional<UserDTO> getUserByUserId(String userId);
     Optional<UserDTO> getUserBySeq(Integer userSeq);
     UserDTO findByUserId(String userId);
+    Optional<UserEntity> findByUserNickname(String nickname);
 
     /* ---------- 수정 / 삭제 ---------- */
     UserDTO updateUser(Integer userSeq, UserDTO userDTO);
@@ -30,6 +32,9 @@ public interface UserService {
     void    updateUserStatus(Integer userSeq, String action);
     void    updateUserInfo(Integer userSeq, String nickname, String auth);
 
+
     /* ---------- 검색 ---------- */
     List<UserDTO> searchByNickname(String keyword);
+
+
 }

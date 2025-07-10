@@ -137,6 +137,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return userRepository.findByUserId(userId).map(this::toDTO);
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public Optional<UserDTO> getUserBySeq(Integer userSeq) {
@@ -186,13 +187,24 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     @Transactional
+    public Optional<UserEntity> findByUserNickname(String nickname) {
+        return userRepository.findByUserNickname(nickname);
+    }
+
+    @Override
+    @Transactional
     public void updateNickname(String userId, String newNickname) {
+        if (userRepository.existsByUserNickname(newNickname)) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
         UserEntity user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
         user.setUserNickname(newNickname);
         user.setUserModiDate(LocalDate.now());
         userRepository.save(user);
     }
+
 
     @Override
     public void updateUserStatus(Integer userSeq, String action) {
