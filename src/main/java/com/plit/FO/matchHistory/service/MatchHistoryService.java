@@ -15,6 +15,7 @@ import org.springframework.web.util.UriUtils;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -29,8 +30,6 @@ public class MatchHistoryService {
     private final ImageService imageService;
 
     private final RiotIdCacheRepository riotIdCacheRepository;
-
-    private static final LocalDateTime S2025_START = LocalDateTime.of(2025, 1, 9, 12, 0);
 
     @Value("${riot.api.key}")
     private String riotApiKey;
@@ -83,6 +82,9 @@ public class MatchHistoryService {
             Integer profileIconId = summonerBody.get("profileIconId") != null
                     ? (Integer) summonerBody.get("profileIconId")
                     : null;
+            Integer summonerLevel = summonerBody.get("summonerLevel") != null
+                    ? ((Number) summonerBody.get("summonerLevel")).intValue()
+                    : null;
 
             // DTO로 리턴
             return SummonerDTO.builder()
@@ -90,6 +92,7 @@ public class MatchHistoryService {
                     .gameName(actualGameName)
                     .tagLine(actualTagLine)
                     .profileIconId(profileIconId)
+                    .summonerLevel(summonerLevel)
                     .build();
 
         } catch (Exception e) {
@@ -218,6 +221,10 @@ public class MatchHistoryService {
             double kdaRatio = sumDeaths == 0 ? sumKills + sumAssists : (sumKills + sumAssists) / sumDeaths;
             String korName = getKorName(engName);
 
+            String championImageUrl = imageService.getImage(engName + ".png", "champion")
+                    .map(ImageEntity::getImageUrl)
+                    .orElse("/images/default.png");
+
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
                     .championName(engName)
                     .korName(korName)
@@ -229,7 +236,7 @@ public class MatchHistoryService {
                     .csPerMin(round(sumCsPerMin / total, 1))
                     .flexGames(flexGames)
                     .flexPickRate(totalFlexGames == 0 ? 0 : round(flexGames * 100.0 / totalFlexGames, 1))
-                    .championImageUrl(imageService.getImageUrl(engName, "champion"))
+                    .championImageUrl(championImageUrl)
                     .gameCount(total)
                     .winCount(wins)
                     .winRate(winRate)
@@ -426,6 +433,7 @@ public class MatchHistoryService {
     // (*) puuid -> matchid <최근 매치 정보 - 전적 요약 리스트> [ match/v5 ]
     public List<MatchHistoryDTO> getMatchHistory(String puuid) {
         List<String> matchIds = getMatchIdsByPuuid(puuid);
+
         List<MatchHistoryDTO> result = new ArrayList<>();
 
         for (String matchId : matchIds) {
@@ -435,13 +443,18 @@ public class MatchHistoryService {
 
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 Map<String, Object> matchData = response.getBody();
+
+                Map<String, Object> metadata = (Map<String, Object>) matchData.get("metadata");
                 Map<String, Object> info = (Map<String, Object>) matchData.get("info");
+
                 List<Map<String, Object>> participants = (List<Map<String, Object>>) info.get("participants");
 
                 for (Map<String, Object> p : participants) {
                     if (puuid.equals(p.get("puuid"))) {
                         int teamId = (int) p.get("teamId");
                         int durationSeconds = ((Number) info.get("gameDuration")).intValue();
+                        int durationMinutes = durationSeconds / 60;
+                        int durationRemainSeconds = durationSeconds % 60;
 
                         int teamTotalKills = participants.stream()
                                 .filter(pp -> ((Number) pp.get("teamId")).intValue() == teamId)
@@ -461,43 +474,109 @@ public class MatchHistoryService {
 
                         List<String> itemImageUrls = new ArrayList<>();
                         List<String> itemIds = new ArrayList<>();
+
                         for (int i = 0; i <= 6; i++) {
                             int itemId = (int) p.get("item" + i);
                             itemIds.add(String.valueOf(itemId));
                             String itemUrl = itemId != 0
                                     ? imageService.getImage(String.valueOf(itemId) + ".png", "item")
                                     .map(ImageEntity::getImageUrl)
-                                    .orElse("/img/default.png")
+                                    .orElse("/images/default.png")
                                     : null;
                             itemImageUrls.add(itemUrl);
+                        }
+
+                        List<String> traitImageUrls = new ArrayList<>();
+                        for (int i = 1; i <= 4; i++) {
+                            Object raw = p.get("playerAugment" + i);
+                            if (raw instanceof Integer) {
+                                int augmentId = (int) raw;
+                                String imageUrl = "/images/trait/" + augmentId + ".png";
+                                traitImageUrls.add(imageUrl);
+                            }
+                        }
+
+                        List<String> otherSummoners = participants.stream()
+                                .map(participant -> (String) participant.get("summonerName"))
+                                .collect(Collectors.toList());
+
+                        List<String> metadataPuuidList = (List<String>) metadata.get("participants");
+
+
+                        List<String> otherSummonerNames = new ArrayList<>();
+                        List<String> otherProfileIconUrls = new ArrayList<>();
+
+                        for (Map<String, Object> player : participants) {
+                            String name = (String) player.get("summonerName");
+                            int iconId = (int) player.get("profileIcon");
+
+                            otherSummonerNames.add(name);
+
+                            String iconUrl = imageService.getImage(iconId + ".png", "profile-icon")
+                                    .map(ImageEntity::getImageUrl)
+                                    .orElse("/images/default.png");
+
+                            otherProfileIconUrls.add(iconUrl);
                         }
 
                         // imageService 에서 DB 에서 가져온 이미지 경로 매핑
                         String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon") + ".png"), "profile-icon")
                                 .map(ImageEntity::getImageUrl)
-                                .orElse("/img/default.png");
+                                .orElse("/images/default.png");
 
                         String championImageUrl = imageService.getImage((String) p.get("championName") + ".png", "champion")
                                 .map(ImageEntity::getImageUrl)
-                                .orElse("/img/default.png");
+                                .orElse("/images/default.png");
+
+                        String spell1ImageUrl = imageService.getImage(p.get("summoner1Id") + ".png", "spell")
+                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                        String spell2ImageUrl = imageService.getImage(p.get("summoner2Id") + ".png", "spell")
+                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+
+                        String mainRune1Url = imageService.getImage(p.get("perkPrimaryStyle") + ".png", "rune")
+                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                        String mainRune2Url = imageService.getImage(p.get("perkSubStyle") + ".png", "rune")
+                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+
+                        String tier = getTierByPuuid(puuid);
+                        String tierImageUrl = imageService.getImage(tier + ".png", "tier")
+                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+
+                        LocalDateTime endTime = LocalDateTime.ofEpochSecond(
+                                ((Number) info.get("gameEndTimestamp")).longValue() / 1000, 0, ZoneOffset.UTC);
+                        String timeAgo = getTimeAgo(endTime);
 
                         MatchHistoryDTO dto = MatchHistoryDTO.builder()
                                 .matchId(matchId)
                                 .win((Boolean) p.get("win"))
                                 .teamPosition((String) p.get("teamPosition"))
                                 .championName((String) p.get("championName"))
+                                .championLevel((int) p.get("champLevel"))
                                 .kills(kills)
                                 .deaths(deaths)
                                 .assists(assists)
-                                .kdaRatio(kdaRatio)
-                                .csPerMin(csPerMin)
-                                .killParticipation(kp)
+                                .kdaRatio(Math.round(kdaRatio * 100) / 100.0)
+                                .cs(totalMinions)
+                                .csPerMin(Math.round(csPerMin * 10) / 10.0)
+                                .killParticipation(Math.round(kp * 10) / 10.0)
                                 .gameMode((String) info.get("gameMode"))
                                 .queueType(String.valueOf(info.get("queueId")))
-                                .gameEndTimestamp(LocalDateTime.ofEpochSecond(
-                                        ((Number) info.get("gameEndTimestamp")).longValue() / 1000, 0, ZoneOffset.UTC))
+                                .gameEndTimestamp(endTime)
+                                .gameDurationMinutes(durationMinutes)
+                                .gameDurationSeconds(durationRemainSeconds)
+                                .timeAgo(timeAgo)
                                 .championImageUrl(championImageUrl)
                                 .profileIconUrl(profileIconUrl)
+                                .itemImageUrls(itemImageUrls)
+                                .spell1ImageUrl(spell1ImageUrl)
+                                .spell2ImageUrl(spell2ImageUrl)
+                                .mainRune1Url(mainRune1Url)
+                                .mainRune2Url(mainRune2Url)
+                                .tier(tier)
+                                .tierImageUrl(tierImageUrl)
+                                .traitImageUrls(traitImageUrls)
+                                .otherSummonerNames(otherSummonerNames)
+                                .otherProfileIconUrls(otherProfileIconUrls)
                                 .build();
 
 
@@ -564,27 +643,27 @@ public class MatchHistoryService {
 
                 String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon") + ".png"), "profile-icon")
                         .map(ImageEntity::getImageUrl)
-                        .orElse("/img/default.png");
+                        .orElse("/images/default.png");
 
                 String championImageUrl = imageService.getImage((String) p.get("championName") + ".png", "champion")
                         .map(ImageEntity::getImageUrl)
-                        .orElse("/img/default.png");
+                        .orElse("/images/default.png");
 
                 String mainRune1Url = imageService.getImage(String.valueOf(mainRune1) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
-                        .orElse("/img/default.png");
+                        .orElse("/images/default.png");
 
                 String mainRune2Url = imageService.getImage(String.valueOf(mainRune2) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
-                        .orElse("/img/default.png");
+                        .orElse("/images/default.png");
 
                 String statRune1Url = imageService.getImage(String.valueOf(statRune1) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
-                        .orElse("/img/default.png");
+                        .orElse("/images/default.png");
 
                 String statRune2Url = imageService.getImage(String.valueOf(statRune2) + ".png", "rune")
                         .map(ImageEntity::getImageUrl)
-                        .orElse("/img/default.png");
+                        .orElse("/images/default.png");
 
                 String teamPosition = normalizePosition((String) p.get("teamPosition"));
 
@@ -710,10 +789,10 @@ public class MatchHistoryService {
 
 
     // 소문자화 + 띄어쓰기 제거
-    private String normalizeGameName(String gameName) {
+    public String normalizeGameName(String gameName) {
         return gameName.trim().replaceAll("\\s+", "").toLowerCase();
     }
-    private String normalizeTagLine(String tagLine) {
+    public String normalizeTagLine(String tagLine) {
         return tagLine.trim().toLowerCase();
     }
     private String normalizePosition(String pos) {
@@ -749,17 +828,27 @@ public class MatchHistoryService {
         return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
     }
 
-    // 게임 모드 -> 한글
-    private String getQueueType(String code) {
-        return switch (code) {
-            case "RANKED_SOLO_5x5" -> "솔로랭크";
-            case "RANKED_FLEX_SR" -> "자유랭크";
-            case "NORMAL" -> "일반";
-            case "ARAM" -> "칼바람";
-            case "CHERRY", "CHERRY_PICK" -> "특별 모드";
-            default -> "기타";
-        };
+    // 몇 일, 몇 시간, 몇 분 전 매치였는지
+    private String getTimeAgo(LocalDateTime gameEndTime) {
+        LocalDateTime now = LocalDateTime.now();
+        Duration duration = Duration.between(gameEndTime, now);
+
+        long days = duration.toDays();
+        long hours = duration.toHours();
+        long minutes = duration.toMinutes();
+
+        if (days > 0) {
+            return days + "일 전";
+        } else if (hours > 0) {
+            return hours + "시간 전";
+        } else if (minutes > 0) {
+            return minutes + "분 전";
+        } else {
+            return "방금 전";
+        }
     }
+
+
 
     // 한글 이름으로 불러오기
     private Map<String, String> korNameMap = new HashMap<>();

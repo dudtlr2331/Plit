@@ -14,5 +14,6 @@ public class SummonerDTO { // 소환사 정보
     private String tagLine; // # 태그
     private Integer profileIconId; // DB 저장용
     private String profileIconUrl; // 이미지 url
+    private int summonerLevel;
 
 }

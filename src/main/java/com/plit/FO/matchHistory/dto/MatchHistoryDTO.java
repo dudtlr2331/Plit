@@ -31,4 +31,24 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private List<String> itemImageUrls;
     private String queueType; // 큐타입
 
+    private int gameDurationMinutes;
+    private int gameDurationSeconds;
+    private String timeAgo;
+
+    private int championLevel;
+
+    private String mainRune1Url;
+    private String mainRune2Url;
+
+    private String spell1ImageUrl;
+    private String spell2ImageUrl;
+
+    private String tierImageUrl;
+
+    private List<String> traitIds;
+    private List<String> traitImageUrls;
+
+    private List<String> otherSummonerNames;
+
+    private List<String> otherProfileIconUrls;
 }

@@ -32,6 +32,9 @@ public class MatchHistoryController {
                                @RequestParam String tagLine,
                                Model model) {
 
+        String normalizedGameName = matchHistoryService.normalizeGameName(gameName);
+        String normalizedTagLine = matchHistoryService.normalizeTagLine(tagLine);
+
         // puuid 가져오기 (자동완성에서 캐시되지 않았으면 Riot API 요청)
         String puuid = matchHistoryService.getPuuidOrRequest(gameName, tagLine);
 
@@ -82,8 +85,10 @@ public class MatchHistoryController {
                 "CHERRY", "아레나",
                 "CLASSIC", "소환사의 협곡",
                 "ARAM", "칼바람 나락",
-                "TUTORIAL", "튜토리얼"
-        );
+                "TUTORIAL", "튜토리얼",
+                "AI", "AI 상대 대전",
+                "CHALLENGEGG", "격전"
+        ); // 없으면 "이벤트 모드" -> html
 
         // 모델에 데이터 넣기
         model.addAttribute("summoner", summoner);
@@ -102,23 +107,6 @@ public class MatchHistoryController {
                 "solo", soloList,
                 "flex", flexList
         ));
-
-
-        // 디버깅용 출력
-        System.out.println("gameName = " + gameName);
-        System.out.println("summoner: " + summoner);
-        System.out.println("summoner puuid = " + summoner.getPuuid());
-        System.out.println("profileIconUrl = " + summoner.getProfileIconUrl());
-
-        System.out.println("매치 수: " + matchList.size());
-        System.out.println("첫 매치 ID: " + matchList.get(0).getMatchId());
-
-        for (MatchHistoryDTO dto : matchList) {
-            System.out.println("챔피언 이미지 URL: " + dto.getChampionImageUrl());
-            System.out.println("프로필 이미지 URL: " + dto.getProfileIconUrl());
-            System.out.println("아이템 이미지 URL들: " + dto.getItemImageUrls());
-        }
-
 
         return "fo/matchHistory/matchHistory"; // 템플릿 경로
     }

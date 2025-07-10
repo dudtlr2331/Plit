@@ -18,6 +18,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
 
     // 기본 정보
     private String championName;
+    private String championKorName;
+    private int championLevel;
     private String summonerName;
     private String tier;
     private int profileIconId;
@@ -36,10 +38,13 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
 
     private String killParticipation;
 
+    private String badge;
+
     // 시간
     private LocalDateTime gameEndTimestamp;
     private int gameDurationMinutes;
     private int gameDurationSeconds;
+    private String timeAgo;
 
     // 게임 종류
     private String gameMode;
@@ -67,6 +72,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
     // 챔피언 이미지 경로
     private String championImageUrl;
 
-    private String championKorName;
+    // 스펠 이미지 경로
+    private String spell1ImageUrl;
+    private String spell2ImageUrl;
 
 }

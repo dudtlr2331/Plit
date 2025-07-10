@@ -56,10 +56,41 @@ header nav a {
 .profile-header {
     display: flex;
     align-items: center;
-    margin: 30px auto 10px;
-    max-width: 1200px;
-    padding: 0 20px;
+    gap: 16px;
+    padding: 10px 0;
 }
+
+.profile-icon-wrapper {
+    position: relative;
+    width: 88px;
+    height: 88px;
+}
+
+.profile-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.summoner-level-circle {
+    position: absolute;
+    bottom: -10px;
+    right: -6px;
+    width: 30px;
+    height: 30px;
+    background-color: black;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+}
+
 
 .profile-header img {
     width: 80px;
@@ -120,6 +151,32 @@ header nav a {
     color: #f45b5b;
     border-bottom: 2px solid #f45b5b;
 }
+
+.profile-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+}
+
+
+.summoner-level-circle {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    background-color: black;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
 
 /* 챔피언 리스트 */
 .champion-list {
@@ -203,22 +260,22 @@ header nav a {
 /* 매치 요약 */
 .match-summary-box {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    gap: 16px;
+    padding: 14px;
     margin-bottom: 12px;
-    background-color: #fff;
+    border-radius: 12px;
+    background-color: #ffe6ec; /* 기본 패배 */
+    transition: background-color 0.2s;
     cursor: pointer;
-    transition: background-color 0.3s ease;
 }
-
 .match-summary-box:hover {
     background-color: #f9f9f9;
 }
 
-.win-bg {
-    background-color: #e0f7ff;
+.match-summary-box.win-bg {
+    background-color: #e6f0ff;
 }
 
 .lose-bg {
@@ -235,6 +292,30 @@ header nav a {
     margin-bottom: 2px;
 }
 
+.match-summary-box .champion-image {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.match-summary-box .champion-image img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #aaa;
+}
+
+.match-summary-box .champion-level {
+    position: absolute;
+    bottom: -4px;
+    right: -6px;
+    background: #222;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 5px;
+    border-radius: 12px;
+}
+
 .match-items {
     display: flex;
     gap: 4px;
@@ -245,6 +326,54 @@ header nav a {
     height: 22px;
     border-radius: 4px;
 }
+
+/* 챔피언 아이콘 박스 */
+.champion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+}
+
+/* 챔피언 이미지에만 적용 */
+.champion-icon img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* 프로필 아이콘 이미지 */
+.profile-icon img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* 아이템 아이콘 이미지 */
+.item-icon img {
+    width: 26px;
+    height: 26px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* 룬 아이콘 이미지 */
+.rune-icon img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+}
+
+/* 티어 아이콘 이미지 */
+.tier-icon img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+}
+
 
 /* KDA 요약 */
 .kda-summary {
@@ -330,49 +459,176 @@ header nav a {
 }
 
 .position-bar-container-inline {
-    text-align: center;         /* 가운데 정렬 */
-    white-space: nowrap;        /* 줄바꿈 안 되게 */
+    text-align: center;
+    white-space: nowrap;
 }
 
 .position-column {
-    display: inline-block;      /* 한 줄로 정렬되게 */
-    margin: 0 10px;             /* 간격 조절 */
-    vertical-align: top;        /* 정렬 기준 맞춤 */
+    display: inline-block;
+    margin: 0 10px;
+    vertical-align: top;
     text-align: center;
 }
 
 /* 상세 테이블 */
+.match-summary {
+    display: flex;
+    align-items: center;
+    background-color: #f5f7fb;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.match-summary:hover {
+    background-color: #e4e9f1;
+}
+
+.match-info {
+    width: 100px;
+    font-size: 12px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+.match-info .result.win {
+    color: #4189e2;
+    font-weight: bold;
+}
+
+.champion-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px;
+    margin-right: 10px;
+}
+
+.champion-image {
+    position: relative;
+}
+
+.champion-image img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.champion-level {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 10px;
+    background-color: #222;
+    color: white;
+    padding: 1px 4px;
+    border-radius: 50%;
+}
+
+.runes img {
+    width: 18px;
+    height: 18px;
+    margin: 1px;
+}
+
+.kda {
+    font-size: 14px;
+    text-align: center;
+}
+
+.kda .ratio {
+    font-size: 12px;
+    color: #888;
+}
+
+.items {
+    margin-top: 5px;
+}
+
+.items img {
+    width: 24px;
+    height: 24px;
+    margin: 1px;
+    border-radius: 4px;
+}
+
+.items .spell {
+    border: 1px solid #999;
+}
+
+.placement {
+    text-align: center;
+    font-size: 13px;
+    width: 60px;
+    margin-right: 10px;
+}
+
+.teammates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.teammate {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    gap: 4px;
+}
+
+.teammate img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.slot-img {
+    width: 28px;
+    height: 28px;
+    background-color: #ddd;  /* 회색 배경 */
+    border-radius: 4px;
+    object-fit: cover;
+    display: inline-block;
+    margin: 2px;
+    border: 1px solid #bbb;
+}
+
+/* 이미지가 없으면 회색 박스로만 보여짐 */
+.slot-img[src=""],
+.slot-img:not([src]) {
+    background-color: #ddd;
+    content: "";
+}
+
+.position-icon-img,
+.tier-icon-img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.match-items {
+    display: flex;
+    gap: 4px;
+}
+
+.item-icon-img {
+    width: 26px;
+    height: 26px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
 .match-detail {
     background: #fff;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #ccc;
     margin-bottom: 20px;
-}
-
-.match-detail table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.match-detail th, .match-detail td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: center;
-}
-
-.match-detail .win-row {
-    background-color: #eefbf3;
-}
-
-.match-detail .lose-row {
-    background-color: #fef1f1;
-}
-
-.match-detail .team-summary {
-    background-color: #ddd;
-    font-weight: bold;
 }
 
 /* 유틸 */
@@ -390,5 +646,45 @@ header nav a {
     border-radius: 8px;
     margin-right: 5px;
     vertical-align: middle;
+}
+
+.other-summoners {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.summoner-columns {
+    display: flex;
+    gap: 40px;
+}
+
+.summoner-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.summoner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.summoner img {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+.match-summary-box {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background-color: #e6f0ff !important;
+    border: 2px solid #333;
 }
 
