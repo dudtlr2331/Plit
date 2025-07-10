@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 @Setter
 public class ChatMessageDTO {
     private String roomId;
-    private String sender;
+    private Long sender;
     private String content;
+
+    //채팅창에 표시하기 위한 닉네임, 보낸 시간
+    private String senderNickname;
+    private String sentAt;
 }

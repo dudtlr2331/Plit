@@ -23,15 +23,17 @@ public class BlacklistController {
 
     @GetMapping("/report")
     public String getBlacklist(Model model, @AuthenticationPrincipal User user) {
-        Object loginUser = userService.findByUserId(user.getUsername());
-        if (loginUser != null) {
+        UserDTO loginUser = null;
+        Integer currentUserSeq = -1;
+
+        if (user != null) {
+            loginUser = userService.findByUserId(user.getUsername());
+            currentUserSeq = loginUser.getUserSeq();
             model.addAttribute("loginUser", loginUser);
         }
 
-        Integer currentUserSeq = (loginUser != null) ? ((UserDTO) loginUser).getUserSeq() : -1;
         List<BlacklistDTO> blacklist = blacklistService.getAllReportsWithCount(currentUserSeq);
         model.addAttribute("blacklist", blacklist);
-        model.addAttribute("loginUser", loginUser);
 
         return "fo/blacklist/report";
     }
