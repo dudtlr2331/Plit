@@ -70,8 +70,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/bo/manage_user").authenticated()
                         .requestMatchers(HttpMethod.POST, "/bo/trol/**").authenticated()
 
+                        .requestMatchers(HttpMethod.GET, "/mypage/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/report").permitAll()
 
+                        // 웹 소켓 사용을 위한 설정
+                        .requestMatchers("/ws/**", "/chat/**", "/sub/**", "/pub/**").permitAll()
                         .anyRequest().permitAll() //위에 명시하지 않은 모든 요청은 기본적으로 인증 없이 접근 허용
+                )
+                // csrf 가 web socket 에 영향을 줄 수 있어 예외 등록
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/ws/**", "/chat/**", "/sub/**", "/pub/**")
                 )
 
                 // 비로그인 사용자가 마이페이지 접속시, 로그인 페이지 이동
