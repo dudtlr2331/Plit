@@ -176,7 +176,7 @@ function renderParties(data) {
                     data-createdby="${party.createdBy}"
                 >${party.partyName}</a>
             </span>
-            <span>${party.partyStatus}</span>
+            <span>${translateStatus(party.partyStatus)}</span>
             <span title="주 포지션">${mainIcon}</span>
             <span title="모집 포지션">${recruitIcons}</span>
             <span class="chat-icon" onclick="toggleChatBox('partyId-${party.partySeq}')">💬</span>
@@ -303,7 +303,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     <p><strong>타입:</strong> ${type}</p>
                     <p><strong>생성일자:</strong> ${formatDateTime(createDate)}</p>
                     <p><strong>종료일자:</strong> ${formatDateTime(endDate)}</p>
-                    <p><strong>상태:</strong> ${status}</p>
+                    <p><strong>상태:</strong> ${translateStatus(status)}</p>
                     <p><strong>현재 인원:</strong> ${headcount}</p>
                     <p><strong>최대 인원:</strong> ${max}</p>
                     <p><strong>메모:</strong> ${memo}</p>
@@ -526,7 +526,22 @@ function openPartyFormPopup(party = null) {
         ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
         
         <label>종료일자: <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
-        <label>상태: <input type="text" name="partyStatus" value="${party?.partyStatus ?? 'WAITING'}" required></label><br>
+        ${isEdit
+            ? `<label>상태:
+                  <select name="partyStatus" required>
+                    ${[
+                            { value: 'WAITING', label: '모집 중' },
+                            { value: 'FULL', label: '인원 꽉참' },
+                            { value: 'CLOSED', label: '모집 마감' }
+                        ].map(option => `
+                      <option value="${option.value}" ${party?.partyStatus === option.value ? 'selected' : ''}>
+                        ${option.label}
+                      </option>
+                    `).join('')}
+                  </select>
+                </label><br>`
+            : `<input type="hidden" name="partyStatus" value="WAITING">`
+        }
         <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
         
         <label>주 포지션:
@@ -586,7 +601,7 @@ function submitPartyForm() {
     const partyName = popup.querySelector('input[name="partyName"]').value;
     const partyType = popup.querySelector('select[name="partyType"]').value;
     const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
-    const partyStatus = popup.querySelector('input[name="partyStatus"]').value;
+    const partyStatus = popup.querySelector('[name="partyStatus"]').value;
     const memo = popup.querySelector('textarea[name="memo"]').value;
     const mainPosition = popup.querySelector('select[name="mainPosition"]').value;
     const positions = Array.from(popup.querySelectorAll('input[name="positions"]:checked'))
@@ -627,13 +642,11 @@ function submitPartyForm() {
                 const type = activeTab === 'freeTab' ? 'team' : 'solo';
                 loadParties(type);
             } else {
-                alert('실패했습니다.');
+                return res.text().then(msg => {
+                    alert(msg || '실패했습니다.');
+                });
             }
         })
-        .catch(err => {
-            console.error(err);
-            alert('서버 오류');
-        });
 }
 
 function getPositionIconClass(pos) {
@@ -672,5 +685,15 @@ function closePartyPopup() {
 function formatDateTime(dateTimeStr) {
     if (!dateTimeStr) return '';
     return dateTimeStr.replace('T', ' ').slice(0, 16);
+}
+
+// 상태 값 한글로 변환
+function translateStatus(status) {
+    switch (status) {
+        case "WAITING": return "모집 중";
+        case "FULL": return "인원 꽉참";
+        case "CLOSED": return "모집 마감";
+        default: return status;
+    }
 }
 

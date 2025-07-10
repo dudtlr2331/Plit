@@ -98,6 +98,11 @@ public class PartyServiceImpl implements PartyService {
     @Override
     @Transactional
     public void updateParty(Long id, PartyDTO dto) {
+        // 종료일이 지난 파티는 재모집이 안되도록 설정
+        if (dto.getPartyEndTime().isBefore(LocalDateTime.now()) && PartyStatus.valueOf(dto.getPartyStatus()) == PartyStatus.WAITING) {
+            throw new IllegalArgumentException("종료된 파티는 다시 모집할 수 없습니다.");
+        }
+
         PartyEntity party = partyRepository.findById(id).orElseThrow();
 
         party.setPartyName(dto.getPartyName());

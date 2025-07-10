@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,10 +48,22 @@ public class PartyRestController {
 
     // 파티 생성 (로그인 유저 기반)
     @PostMapping
-    public ResponseEntity<Void> createParty(@RequestBody PartyDTO dto,
-                                            @AuthenticationPrincipal User user) {
-        partyService.saveParty(dto, user.getUsername());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<String> createParty(@RequestBody PartyDTO dto,
+                                              @AuthenticationPrincipal Object principal) {
+        String userId = null;
+
+        if (principal instanceof UserDetails userDetails) {
+            userId = userDetails.getUsername();
+        } else if (principal instanceof OAuth2User oauthUser) {
+            userId = oauthUser.getAttribute("email"); // 또는 "id", "nickname"
+        }
+
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요한 서비스입니다.");
+        }
+
+        partyService.saveParty(dto, userId);
+        return ResponseEntity.ok("OK");
     }
 
     // 파티 수정
