@@ -203,54 +203,75 @@ h2 {
     position: fixed;
     right: 20px;
     bottom: 20px;
-    width: 280px;
-    height: 380px;
+    width: 560px;
+    height: 760px;
     background: white;
     border: 1px solid #ccc;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     z-index: 1000;
 }
-.chat-header {
-    background: #ff4d4d;
-    color: white;
-    padding: 10px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+
 .chat-body {
     flex: 1;
     padding: 10px;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
+
+/* 메시지 한 줄 단위로 블록 정렬 */
 .chat-message {
-    margin-bottom: 8px;
-    padding: 8px 10px;
-    border-radius: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 내 메시지 오른쪽 정렬 */
+.chat-message.sent {
+    align-items: flex-end;
+}
+
+/* 상대 메시지 왼쪽 정렬 */
+.chat-message.received {
+    align-items: flex-start;
+}
+
+/* 말풍선 */
+.message-bubble {
+    background-color: #f1f0f0;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    max-width: 75%;
+    display: inline-block;
+    word-break: break-word;
+}
+
+/* 내 메시지 색상 */
+.chat-message.sent .message-bubble {
+    background-color: #dcf8c6;
+}
+
+/* 닉네임 */
+.message-nickname {
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 4px;
     max-width: 75%;
     word-break: break-word;
 }
-.chat-message.sent {
-    background: #dcf8c6;
-    margin-left: auto;
+
+/* 시간 */
+.message-time {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    max-width: 75%;
 }
-.chat-message.received {
-    background: #f1f0f0;
-}
-.chat-input {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid #eee;
-}
-.chat-input input {
-    flex: 1;
-    padding: 8px;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-}
+
 
 .memo-edit-btn {
     margin-left: 6px;

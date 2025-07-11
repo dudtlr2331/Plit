@@ -45,12 +45,16 @@ public class ChatService {
 
     @Transactional
     public void markMessagesAsRead(Long roomId, Long userId) {
-        List<ChatMessageEntity> messages = chatMessageRepository.findByChatRoom_ChatRoomIdAndSenderIdNotAndIsReadFalse(roomId, userId);
-        for (ChatMessageEntity msg : messages) {
+        List<ChatMessageEntity> unreadMessages =
+                chatMessageRepository.findByChatRoom_ChatRoomIdAndSenderIdNotAndIsReadFalse(roomId, userId);
+
+        for (ChatMessageEntity msg : unreadMessages) {
             msg.setIsRead(true);
         }
-        chatMessageRepository.saveAll(messages);
+
+        chatMessageRepository.saveAll(unreadMessages);
     }
+
 
     public int countUnreadMessages(Long roomId, Long userId) {
         return chatMessageRepository.countByChatRoom_ChatRoomIdAndSenderIdNotAndIsReadFalse(roomId, userId);

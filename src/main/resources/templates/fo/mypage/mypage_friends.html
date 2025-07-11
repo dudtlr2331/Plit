@@ -30,9 +30,12 @@
         </div>
         <div class="friend-actions">
           <button class="chat-btn"
-                  th:attr="data-myid=${loginUser.userSeq},
-                 data-otherid=${friend.user.userSeq},
-                 data-nickname=${friend.user.userNickname}"
+                  th:data-myid="${loginUser.userSeq}"
+                  th:data-otherid="${friend.user.userSeq}"
+                  th:data-nickname="${friend.user.userNickname}"
+                  th:data-roomid="${loginUser.userSeq < friend.user.userSeq} ?
+                         ${loginUser.userSeq + '_' + friend.user.userSeq} :
+                         ${friend.user.userSeq + '_' + loginUser.userSeq}"
                   onclick="openChatWithFriend(this)">
             💬
           </button>
@@ -137,6 +140,7 @@
               document.getElementById('chatInput').focus();
               loadPreviousMessages(roomId);
               connectToChatRoom(roomId);
+              markMessagesAsRead(roomId);
             });
   }
 
@@ -379,35 +383,37 @@
   }
 
   function appendMessage(content, isMine, nickname = null, sentAt = null) {
-    const div = document.createElement('div');
-    div.className = 'chat-message ' + (isMine ? 'sent' : 'received');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chat-message ' + (isMine ? 'sent' : 'received');
 
-    const displayName = isMine ? '나' : (nickname || '상대방');
-    const timeStr = sentAt ? new Date(sentAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    // 닉네임 (상대방만 표시)
+    if (!isMine && nickname) {
+      const nickElem = document.createElement('div');
+      nickElem.className = 'message-nickname';
+      nickElem.textContent = nickname;
+      wrapper.appendChild(nickElem);
+    }
 
-    // 닉네임 (위에)
-    const nickElem = document.createElement('div');
-    nickElem.className = 'message-nickname';
-    nickElem.textContent = displayName;
-    div.appendChild(nickElem);
+    // 말풍선 (내용)
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.textContent = content;
+    wrapper.appendChild(bubble);
 
-    // 본문 텍스트
-    const text = document.createElement('div');
-    text.className = 'message-text';
-    text.textContent = content;
-    div.appendChild(text);
-
-    // 시간
+    // 전송 시간
     const timeElem = document.createElement('div');
     timeElem.className = 'message-time';
-    timeElem.textContent = timeStr;
-    timeElem.style.textAlign = isMine ? 'left' : 'right';
-    div.appendChild(timeElem);
+    timeElem.textContent = sentAt
+            ? new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '';
+    wrapper.appendChild(timeElem);
 
+    // 채팅창에 추가
     const body = document.getElementById('chatBody');
-    body.appendChild(div);
+    body.appendChild(wrapper);
     body.scrollTop = body.scrollHeight;
   }
+
 
 
   //안 읽은 메시지 수 표시
@@ -429,6 +435,21 @@
     fetchUnreadCounts(userId);
   });
 
+  // 안 읽은 메세지 표시
+  function markMessagesAsRead(roomId) {
+    fetch(`/api/chat/${roomId}/read?userId=${currentUserSeq}`, {
+      method: 'POST',
+      headers: {
+        [csrfHeader]: csrfToken
+      }
+    }).then(res => {
+      if (!res.ok) {
+        console.error('읽음 처리 실패');
+      } else {
+        fetchUnreadCounts(currentUserSeq);
+      }
+    });
+  }
 
 
 </script>
