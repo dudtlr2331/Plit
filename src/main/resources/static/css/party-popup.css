@@ -1,32 +1,3 @@
-body {
-    font-family: sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #fff;
-}
-
-header {
-    background: #ff5a5a;
-    color: white;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-header nav {
-    display: flex;
-    align-items: center;
-}
-
-header nav a {
-    margin: 0 10px;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    cursor: pointer;
-}
-
 .chat-button {
     background: none;
     border: none;
@@ -70,7 +41,7 @@ header nav a {
 }
 
 .tab.active {
-    background: #ff5a5a;
+    background: #6570b4;
     color: white;
 }
 
@@ -171,24 +142,55 @@ select {
 
 .recruit-button {
     padding: 6px 12px;
-    background: #ff5a5a;
+    background: #6570b4;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
+/* 주 포지션 선택 영역 */
 .position-selector span {
-    font-size: 24px;
-    margin-right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    margin-right: 6px;
+    border-radius: 6px;
     cursor: pointer;
-    padding: 5px;
-    border-radius: 5px;
+    background-color: transparent;
+    transition: background 0.2s;
+}
+
+.position-selector span:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .position-selector span.selected {
-    background-color: #ff5a5a;
-    color: white;
+    background-color: #6570b4;
+}
+
+.position-selector svg.position-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.position-icon path {
+    fill: #bbb;
+}
+
+.position-icon .top-fill,
+.position-icon .mid-fill,
+.position-icon .bottom-fill,
+.position-icon .all-fill {
+    fill: #bbb;
+}
+
+.position-selector span.selected .top-fill,
+.position-selector span.selected .mid-fill,
+.position-selector span.selected .bottom-fill,
+.position-selector span.selected .all-fill {
+    fill: #444;
 }
 
 /* 팝업 공통 스타일 */
@@ -203,8 +205,8 @@ select {
     border: 1px solid #ccc;
     padding: 30px;
     border-radius: 12px;
-    width: 700px;
-    max-height: 80vh;
+    width: 600px;
+    max-height: 90vh;
     overflow-y: auto;
     z-index: 1000;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -243,23 +245,7 @@ select {
 
 .recruit-popup textarea {
     resize: vertical;
-}
-
-.position-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 5px;
-}
-
-.position-group label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.position-group input[type="checkbox"] {
-    transform: scale(1.2);
+    font-size: 13px;
 }
 
 .popup-buttons {
@@ -269,7 +255,7 @@ select {
 
 .popup-buttons button,
 .recruit-popup button {
-    background: #ff5a5a;
+    background: #6570b4;
     color: white;
     border: none;
     padding: 8px 14px;
@@ -281,7 +267,7 @@ select {
 
 .popup-buttons button:hover,
 .recruit-popup button:hover {
-    background: #ff7777;
+    background: #6570b4;
 }
 
 .chatbox {
@@ -298,85 +284,62 @@ select {
     z-index: 1000;
 }
 
-.recruit-popup,
-#partyDetailPopup {
-    width: 600px;
-    padding: 20px;
-    max-height: 90vh;
-}
-
-.recruit-popup h3 {
-    font-size: 18px;
-    margin-bottom: 15px;
-}
-
-.recruit-popup label {
-    font-size: 13px;
-    margin-bottom: 8px;
-}
-
-.recruit-popup input[type="text"],
-.recruit-popup input[type="datetime-local"],
-.recruit-popup input[type="number"],
-.recruit-popup select,
-.recruit-popup textarea {
-    padding: 5px;
-    font-size: 13px;
-}
-
-.recruit-popup textarea {
-    rows: 2;
-    font-size: 13px;
-}
-
+/* 모집 포지션 아이콘만 보이게, 버튼처럼 선택 UI */
 .position-group {
-    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 5px;
 }
 
-/* 주 포지션 선택 영역 */
-.position-selector span {
-    display: inline-flex;
+.position-group label {
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
-    margin-right: 6px;
+    width: 36px;
+    height: 36px;
     border-radius: 6px;
     cursor: pointer;
+    transition: background 0.2s ease;
     background-color: transparent;
-    transition: background 0.2s;
+    padding: 0;
+    border: none;
+    position: relative;
 }
 
-.position-selector span:hover {
+.position-group input[type="checkbox"] {
+    display: none;
+}
+
+.position-group svg {
+    width: 22px;
+    height: 22px;
+}
+
+.position-group .position-icon path {
+    fill: #bbb;
+}
+
+.position-group .position-icon .top-fill,
+.position-group .position-icon .mid-fill,
+.position-group .position-icon .bottom-fill,
+.position-group .position-icon .all-fill {
+    fill: #bbb;
+}
+
+.position-group label.selected {
+    background-color: #6570b4;
+}
+
+.position-group label.selected .position-icon .top-fill,
+.position-group label.selected .position-icon .mid-fill,
+.position-group label.selected .position-icon .bottom-fill,
+.position-group label.selected .position-icon .all-fill {
+    fill: white;
+}
+
+.position-group label:hover {
     background-color: rgba(0, 0, 0, 0.05);
-}
-
-.position-selector span.selected {
-    background-color: #ff5a5a;
-}
-
-/* 모든 아이콘 기본 SVG 색상: 연한 회색 유지 */
-.position-selector svg.position-icon {
-    width: 24px;
-    height: 24px;
-}
-
-.position-icon path {
-    fill: #bbb;
-}
-
-.position-icon .top-fill,
-.position-icon .mid-fill,
-.position-icon .bottom-fill,
-.position-icon .all-fill {
-    fill: #bbb;
-}
-
-.position-selector span.selected .top-fill,
-.position-selector span.selected .mid-fill,
-.position-selector span.selected .bottom-fill,
-.position-selector span.selected .all-fill {
-    fill: #444;
 }
 
 /* 파티 참여 멤버 탭 */
@@ -395,7 +358,7 @@ select {
 }
 
 .tab-btn.active {
-    background-color: #d9534f;
+    background-color: #6570b4;
     color: white;
     font-weight: bold;
 }

@@ -265,13 +265,16 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalStateException("최대 인원을 초과할 수 없습니다.");
         }
 
-        // 포지션 중복 수락 제한
+        // 포지션 중복 수락 제한 (단, ALL은 중복 허용)
         List<PartyMemberEntity> acceptedMembers = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, "ACCEPTED");
-        boolean positionTaken = acceptedMembers.stream()
-                .anyMatch(m -> m.getPosition().equalsIgnoreCase(member.getPosition()));
+        boolean isAllPosition = "ALL".equalsIgnoreCase(member.getPosition());
 
-        if (positionTaken) {
-            throw new IllegalStateException("해당 포지션은 이미 다른 참가자가 수락되었습니다.");
+        if (!isAllPosition) {
+            boolean positionTaken = acceptedMembers.stream()
+                    .anyMatch(m -> m.getPosition().equalsIgnoreCase(member.getPosition()));
+            if (positionTaken) {
+                throw new IllegalStateException("해당 포지션은 이미 다른 참가자가 수락되었습니다.");
+            }
         }
 
         member.setStatus("ACCEPTED");
