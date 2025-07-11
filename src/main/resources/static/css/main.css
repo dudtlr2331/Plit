@@ -1,0 +1,103 @@
+.search-box {
+    display: flex;
+    justify-content: center;
+    margin: 30px;
+}
+.search-box input {
+    width: 400px;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+}
+.player-list {
+    max-width: 600px;
+    margin: 0 auto;
+}
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+.more-button {
+    display: block;
+    margin: 20px auto;
+    background: #6570b4;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.clan-section {
+    max-width: 600px;
+    margin: 0 auto 50px;
+}
+.clan-title {
+    font-weight: bold;
+    margin: 20px 0 10px;
+    cursor: pointer;
+}
+.clan-cards {
+    display: flex;
+    gap: 20px;
+}
+.clan-card {
+    flex: 1;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+}
+.chat-list, .chat-popup {
+    position: fixed;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1000;
+}
+.chat-list {
+    top: 60px;
+    right: 20px;
+    display: none;
+    width: 250px;
+}
+.chat-popup {
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    width: 300px;
+}
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+}
+.chat-body {
+    height: 200px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    margin: 10px 0;
+    padding: 10px;
+}
+.autocomplete-box {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.autocomplete-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.autocomplete-item:hover {
+    background-color: #eee;
+}

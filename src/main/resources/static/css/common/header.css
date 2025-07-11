@@ -1,4 +1,9 @@
-body { font-family: sans-serif; margin: 0; padding: 0; }
+/* 기본 설정 */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 0;
+    padding: 0;
+}
 
 header {
     background: linear-gradient(to right, #7c4798, #6570b4);
@@ -9,7 +14,12 @@ header {
     color: white;
 }
 
-header .logo { font-weight: bold; cursor: pointer; text-decoration: none; color: inherit; }
+header .logo {
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
 
 header nav a {
     margin: 0 10px;
@@ -19,80 +29,168 @@ header nav a {
     cursor: pointer;
 }
 
-/*.main-header {*/
-/*    display: flex;*/
-/*    align-items: center;      !* 수직 정렬 *!*/
-/*    padding: 0 20px;*/
-/*    height: 60px;*/
-/*    background: linear-gradient(to right, #7c4798, #6570b4);*/
-/*}*/
+/* 채팅 리스트 팝업 */
 
-/*.logo img {*/
-/*    height: 30px;*/
-/*    display: block;*/
-/*    margin: 0;                !* 불필요한 여백 제거 *!*/
-/*    padding: 0;*/
-/*}*/
+#chatListPopup {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    padding: 10px;
+}
+#chatListPopup h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
 
-/*.main-nav {*/
-/*    display: flex;*/
-/*    gap: 20px;*/
-/*}*/
 
-/*.main-nav a {*/
-/*    color: white;*/
-/*    text-decoration: none;*/
-/*    font-weight: bold;*/
-/*}*/
+.chat-list-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    color: #333;
+}
 
-/*.main-nav a:hover {*/
-/*    text-decoration: underline;*/
-/*}*/
+.chat-list-item:hover {
+    background: #f0f0f0;
+}
 
-/*.header-right {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    gap: 15px;*/
-/*}*/
+/* 채팅 팝업 */
+.chat-popup {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    height: 450px;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif;
+}
 
-/*.chat-icon {*/
-/*    font-size: 28px;*/
-/*    cursor: pointer;*/
-/*}*/
+/* 채팅 제목 영역 */
+#chatTarget {
+    background: linear-gradient(to right, #7c4798, #6570b4);
+    color: white;
+    font-weight: bold;
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+}
 
-/*.mypage-btn,*/
-/*.logout-btn,*/
-/*.login-btn {*/
-/*    background: white;*/
-/*    color: #ff5a5a;*/
-/*    border: 1px solid #ff5a5a;*/
-/*    padding: 6px 12px;*/
-/*    border-radius: 6px;*/
-/*    font-weight: bold;*/
-/*    cursor: pointer;*/
-/*    transition: all 0.2s ease;*/
-/*}*/
+/* 채팅 본문 */
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    background: #f4f4f4;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
 
-/*.mypage-btn:hover,*/
-/*.logout-btn:hover,*/
-/*.login-btn:hover {*/
-/*    background-color: #ffebeb;*/
-/*}*/
+/* 입력창 */
+#chatInput {
+    border: none;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+}
 
-/*!* 반응형: 768px 이하일 때 메뉴 숨김 + 오른쪽 요소 줄세움 *!*/
-/*@media (max-width: 768px) {*/
-/*    .main-nav {*/
-/*        display: none;*/
-/*    }*/
+/* 채팅 메시지 구조 */
+.chat-message-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+    max-width: 70%;
+    word-break: break-word;
+}
 
-/*    .header-right {*/
-/*        flex-direction: column;*/
-/*        align-items: flex-end;*/
-/*        gap: 10px;*/
-/*    }*/
+.chat-message-wrapper.sent {
+    align-self: flex-end;
+    text-align: right;
+    align-items: flex-end;
+}
 
-/*    .main-header {*/
-/*        height: auto;*/
-/*        padding: 10px 15px;*/
-/*    }*/
-/*}*/
+.chat-message-wrapper.received {
+    align-self: flex-start;
+    text-align: left;
+    align-items: flex-start;
+}
+
+.chat-nickname {
+    font-size: 12px;
+    color: #444;
+    margin-bottom: 4px;
+}
+
+.chat-bubble {
+    background-color: #f1f1f1;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    color: #000;
+}
+
+.chat-message-wrapper.sent .chat-bubble {
+    background-color: #d0f0c0;
+}
+
+.chat-time {
+    font-size: 10px;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* 헤더 사용자 영역 */
+.header-user-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.chat-icon {
+    font-size: 30px;
+    cursor: pointer;
+}
+
+/* 버튼 스타일 */
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-mypage,
+.btn-logout,
+.btn-login {
+    background: white;
+    color: #6570b4;
+    border: 2px solid #7c4798;
+}
+
+.btn-login {
+    border: 1px solid #7c4798;
+}
+
+.btn:hover {
+    background-color: #7c4798;
+    color: white;
+}

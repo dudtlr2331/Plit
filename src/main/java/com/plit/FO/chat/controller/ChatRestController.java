@@ -93,6 +93,37 @@ public class ChatRestController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/rooms/{userId}")
+    public ResponseEntity<List<Map<String, Object>>> getRoomsByUserId(@PathVariable Long userId) {
+        List<ChatRoomEntity> rooms = chatRoomService.getChatRoomsByUserId(userId);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (ChatRoomEntity room : rooms) {
+            int unread = chatService.countUnreadMessages(room.getChatRoomId(), userId);
+
+            List<Long> userIds = chatRoomService.getUserIdsInRoom(room.getChatRoomId());
+            if (userIds.size() != 2) continue;
+
+            Long otherId = userIds.stream()
+                    .filter(id -> !id.equals(userId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (otherId == null) continue;
+
+            UserDTO otherUser = userService.getUserBySeq(otherId.intValue()).orElseThrow(() -> new RuntimeException("상대 유저 정보를 찾을 수 없습니다."));;
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("roomId", room.getChatRoomId());
+            map.put("otherUserId", otherId);
+            map.put("otherNickname", otherUser.getUserNickname());
+            map.put("unreadCount", unread);
+
+            result.add(map);
+        }
+
+        return ResponseEntity.ok(result);
+    }
 
 
 }
