@@ -2,115 +2,9 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <link rel="stylesheet" href="/css/common/header.css">
-
+    <link rel="stylesheet" href="/css/main.css">
     <meta charset="UTF-8">
     <title>플레이어 매칭 UI</title>
-    <style>
-        .search-box {
-            display: flex;
-            justify-content: center;
-            margin: 30px;
-        }
-        .search-box input {
-            width: 400px;
-            padding: 10px;
-            border-radius: 20px;
-            border: 1px solid #ccc;
-        }
-        .player-list {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .player-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f0f0f0;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-        }
-        .more-button {
-            display: block;
-            margin: 20px auto;
-            background: #6570b4;
-            color: white;
-            border: none;
-            padding: 10px 30px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .clan-section {
-            max-width: 600px;
-            margin: 0 auto 50px;
-        }
-        .clan-title {
-            font-weight: bold;
-            margin: 20px 0 10px;
-            cursor: pointer;
-        }
-        .clan-cards {
-            display: flex;
-            gap: 20px;
-        }
-        .clan-card {
-            flex: 1;
-            background: #f5f5f5;
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-        }
-        .chat-list, .chat-popup {
-            position: fixed;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            padding: 10px;
-            z-index: 1000;
-        }
-        .chat-list {
-            top: 60px;
-            right: 20px;
-            display: none;
-            width: 250px;
-        }
-        .chat-popup {
-            bottom: 20px;
-            right: 20px;
-            display: none;
-            width: 300px;
-        }
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-        }
-        .chat-body {
-            height: 200px;
-            overflow-y: auto;
-            background: #f9f9f9;
-            margin: 10px 0;
-            padding: 10px;
-        }
-        .autocomplete-box {
-            position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 10;
-        }
-
-        .autocomplete-item {
-            padding: 8px;
-            cursor: pointer;
-        }
-
-        .autocomplete-item:hover {
-            background-color: #eee;
-        }
-
-    </style>
 
     <!-- 로그인 필요 팝업 스크립트 -->
     <script th:if="${popup}" defer>
@@ -153,26 +47,7 @@
     </div>
 </div>
 
-<div class="chat-list" id="chatList">
-    <div class="chat-header">
-        <strong>채팅 목록</strong>
-        <button onclick="toggleChatList()">X</button>
-    </div>
-    <p onclick="toggleChatPopup()">플레이어1</p>
-    <p onclick="toggleChatPopup()">플레이어2</p>
-</div>
 
-<div class="chat-popup" id="chatPopup">
-    <div class="chat-header">
-        <strong>플레이어1</strong>
-        <button onclick="toggleChatPopup()">X</button>
-    </div>
-    <div class="chat-body">
-        <p>안녕하세요!</p>
-        <p>파티 하실래요?</p>
-    </div>
-    <input type="text" placeholder="메시지 입력..." style="width: 100%; padding: 10px;">
-</div>
 
 <!-- 팝업 메시지 -->
 <div th:if="${popup}">
@@ -182,15 +57,6 @@
 </div>
 
 <script>
-    function toggleChatList() {
-        const el = document.getElementById('chatList');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function toggleChatPopup() {
-        const el = document.getElementById('chatPopup');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    }
 
     const searchInput = document.getElementById("searchInput");
     const autocompleteList = document.getElementById("autocompleteList");
