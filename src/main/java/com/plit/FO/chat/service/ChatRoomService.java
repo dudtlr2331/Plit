@@ -73,4 +73,12 @@ public class ChatRoomService {
                 .map(ChatRoomUserEntity::getChatRoom)
                 .toList();
     }
+
+    public List<Long> getUserIdsInRoom(Long chatRoomId) {
+        return chatRoomUserRepository.findByChatRoom_ChatRoomId(chatRoomId)
+                .stream()
+                .map(ChatRoomUserEntity::getUserId)
+                .toList();
+    }
+
 }

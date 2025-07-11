@@ -30,9 +30,12 @@
         </div>
         <div class="friend-actions">
           <button class="chat-btn"
-                  th:attr="data-myid=${loginUser.userSeq},
-                 data-otherid=${friend.user.userSeq},
-                 data-nickname=${friend.user.userNickname}"
+                  th:data-myid="${loginUser.userSeq}"
+                  th:data-otherid="${friend.user.userSeq}"
+                  th:data-nickname="${friend.user.userNickname}"
+                  th:data-roomid="${loginUser.userSeq < friend.user.userSeq} ?
+                         ${loginUser.userSeq + '_' + friend.user.userSeq} :
+                         ${friend.user.userSeq + '_' + loginUser.userSeq}"
                   onclick="openChatWithFriend(this)">
             💬
           </button>
@@ -137,6 +140,7 @@
               document.getElementById('chatInput').focus();
               loadPreviousMessages(roomId);
               connectToChatRoom(roomId);
+              markMessagesAsRead(roomId);
             });
   }
 
@@ -429,6 +433,21 @@
     fetchUnreadCounts(userId);
   });
 
+  // 안 읽은 메세지 표시
+  function markMessagesAsRead(roomId) {
+    fetch(`/api/chat/${roomId}/read?userId=${currentUserSeq}`, {
+      method: 'POST',
+      headers: {
+        [csrfHeader]: csrfToken
+      }
+    }).then(res => {
+      if (!res.ok) {
+        console.error('읽음 처리 실패');
+      } else {
+        fetchUnreadCounts(currentUserSeq);
+      }
+    });
+  }
 
 
 </script>
