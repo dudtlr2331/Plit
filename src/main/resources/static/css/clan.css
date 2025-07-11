@@ -75,6 +75,12 @@ header nav a[style*="color: yellow"] {
     font-size: 14px;
 }
 
+.social-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
 .social-icon-header {
     width: 28px;
     height: 28px;
@@ -86,14 +92,16 @@ header nav a[style*="color: yellow"] {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0; /* 이미지 간 간격 조절을 위해 사용된 것으로 보임 */
 }
 
-.social-links a {
-    font-size: 14px; /* 링크 내 텍스트가 있을 경우 대비 */
+.social-links a img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    margin-right: 6px;
 }
 
-/* 버튼 (Buttons) */
+/* 버튼 스타일 통합 */
 .btn {
     background: #6570b4;
     color: white;
@@ -111,38 +119,37 @@ header nav a[style*="color: yellow"] {
     background: #7c4798;
 }
 
-.submit-btn {
-    composes: btn; /* .btn 스타일 상속 */
+/* 취소 버튼 */
+.btn.cancel {
+    background-color: #8a8a8a;
 }
 
-.cancel-btn {
-    background-color: #666;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    margin-left: 8px;
+.btn.cancel:hover {
+    background-color: #6e6e6e;
 }
 
-.btn-icon.edit-btn {
-    background-color: #007bff; /* 파란색 */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 0;
+/* 아이콘 버튼 */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: #6570b4;
+    color: white; /* 아이콘 색상 설정 */
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-.btn-icon.edit-btn:hover {
-    background-color: #0056b3;
+.btn-icon:hover {
+    background-color: #7c4798;
 }
 
+.submit-btn {
+    composes: btn;
+}
 
 /* 폼 요소 (Form Elements) */
 select,
@@ -182,7 +189,7 @@ label {
     padding: 6px 14px;
     margin-right: 6px;
     color: white;
-    background-color: #5b66ae;
+    background-color: #6570b4;
     border: none;
     border-radius: 4px 4px 0 0;
     cursor: pointer;
@@ -327,19 +334,13 @@ label {
     width: 100%;
 }
 
-.social-icon {
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-}
-
 .clan-links {
     display: flex;
     gap: 0px;
 }
 
 
-/* 클랜 상세 페이지 관련 (Clan Detail Page) */
+/* 클랜 상세 페이지 관련 */
 .detail-container {
     display: flex;
     flex-direction: column;
@@ -423,12 +424,12 @@ label {
     transition: background 0.2s;
 }
 
-.detail-category a:hover,
-.detail-category a.active {
-    background: #ffecec;
-    color: #ff5c5c;
-    font-weight: bold;
-}
+/*.detail-category a:hover,*/
+/*.detail-category a.active {*/
+/*    background: #ffecec;*/
+/*    color: #ff5c5c;*/
+/*    font-weight: bold;*/
+/*}*/
 
 .detail-section {
     margin-bottom: 28px;
@@ -522,7 +523,7 @@ label {
     background-color: #7c4798;
 }
 
-/* 클랜 멤버 목록 (Clan Member List) */
+/* 클랜 멤버 목록 */
 .member-table {
     padding-left: 8px;
     display: flex;
@@ -567,7 +568,7 @@ label {
     white-space: nowrap;
 }
 
-/* 예외: 소환사명만 왼쪽 정렬 */
+/* 소환사명만 왼쪽 정렬 */
 .member-cell.name {
     justify-content: flex-start;
     text-align: left;
@@ -586,6 +587,13 @@ label {
     text-align: left;
 }
 
+.member-cell.intro {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
 
 /* 포지션 아이콘 (Position Icons) */
 /* 기본 SVG 크기 및 정렬 */
@@ -598,17 +606,17 @@ label {
 
 /* 기본 아이콘 색상 (연한 회색) */
 .position-icon .fill-area {
-    fill: #bbb;
+    fill: #888888;
 }
 
 /* 선택 상태 또는 강조할 경우 */
 .position-icon .active .fill-area,
 .position-icon.active .fill-area {
-    fill: #444;
+    fill: #333333;
 }
 
 .position-icon .center-line {
-    stroke: #444;
+    stroke: #333333;
     stroke-width: 2;
     fill: none;
 }
@@ -669,10 +677,10 @@ label {
 .modal-content h2 {
     margin-top: 0;
     text-align: center;
-    margin-bottom: 20px; /* 기존 */
-    font-size: 20px; /* 추가된 스타일 */
-    font-weight: 600; /* 추가된 스타일 */
-    color: #333; /* 추가된 스타일 */
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
 }
 
 .close {
@@ -682,7 +690,6 @@ label {
     font-size: 20px;
     cursor: pointer;
     color: #222;
-    font-size: 24px;
     transition: color 0.3s;
 }
 
@@ -702,32 +709,6 @@ label {
     justify-content: flex-end;
     gap: 12px;
     margin-top: 24px;
-}
-
-/* 모달 버튼 스타일 */
-.modal-actions .btn {
-    background-color: #6570b4;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-family: 'Noto Sans KR', sans-serif;
-}
-
-.modal-actions .btn:hover {
-    background-color: #4b56e8;
-}
-
-/* 취소 버튼 별도 스타일 */
-.modal-actions .btn:last-child {
-    background-color: #8a8a8a;
-}
-
-.modal-actions .btn:last-child:hover {
-    background-color: #6e6e6e;
 }
 
 
@@ -750,7 +731,6 @@ label {
 
 .position-btn {
     cursor: pointer;
-    opacity: 0.6;
     border-radius: 8px;
     padding: 6px;
     transition: opacity 0.3s ease, background-color 0.3s ease;
@@ -763,21 +743,39 @@ label {
 }
 
 .position-btn:hover {
-    opacity: 1;
-    background-color: #dcd3f5;
+    background-color: #6170ac;
 }
 
+/* 선택된 포지션 버튼 */
 .position-btn.active {
-    opacity: 1;
-    background-color: #774298;
-    border: 2px solid #5b4090;
+    background-color: #6170ac;
+    border: 2px solid #6170ac;
+}
+
+/* 강조된 아이콘 색상은 흰색으로 */
+.position-btn.active .fill-area:not(.emphasis) {
+    fill: #959cce !important;
+}
+
+.position-btn.active .fill-area.emphasis {
+    fill: #f0f0f0 !important;
 }
 
 .position-btn svg {
-    width: 28px;
-    height: 28px;
-    fill: black;
+    width: 32px;
+    height: 32px;
 }
+
+/* 기본 연한 회색 (모든 fill-area) */
+.edit-position-btn .fill-area {
+    fill: #888888 !important; /* 밝은 회색 - 기본 */
+}
+
+.edit-position-btn .fill-area.emphasis {
+    fill: #333333 !important; /* 진한 회색 - 강조 */
+}
+
+
 
 textarea#memberIntro {
     width: 100%;
