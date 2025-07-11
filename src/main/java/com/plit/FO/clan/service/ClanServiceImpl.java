@@ -2,6 +2,7 @@ package com.plit.FO.clan.service;
 
 import com.plit.FO.clan.dto.ClanDTO;
 import com.plit.FO.clan.entity.ClanEntity;
+import com.plit.FO.clan.entity.ClanMemberEntity;
 import com.plit.FO.clan.repository.ClanMemberRepository;
 import com.plit.FO.clan.repository.ClanRepository;
 import jakarta.transaction.Transactional;
@@ -30,8 +31,20 @@ public class ClanServiceImpl implements ClanService {
 
     @Override
     public void createClan(ClanEntity clan) {
-        clan.setUseYn("Y"); // 보험!!
-        clanRepository.save(clan);
+        clan.setUseYn("Y");
+        ClanEntity saved = clanRepository.save(clan);
+
+        // 리더 자동 등록
+        if (saved.getLeaderId() != null) {
+            ClanMemberEntity leader = ClanMemberEntity.builder()
+                    .userId(saved.getLeaderId())
+                    .clanId(saved.getId())
+                    .role("LEADER")
+                    .status("승인")
+                    .intro("리더입니다 👑")
+                    .build();
+            clanMemberRepository.save(leader);
+        }
     }
 
     @Override
