@@ -228,6 +228,22 @@ public class ClanController {
     public ResponseEntity<String> updateMemberInfo(Principal principal,
                                                    @RequestBody ClanMemberDTO dto) {
         try {
+            // 주 포지션 선택 확인
+            String mainPosition = dto.getMainPosition();
+            if (mainPosition == null || mainPosition.trim().isEmpty()) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body("주 포지션을 선택해주세요.");
+            }
+
+            // intro 길이 검사
+            String intro = dto.getIntro();
+            if (intro != null && intro.length() > 30) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body("자기소개는 30자 이하로 입력해주세요.");
+            }
+
             // 로그인한 사용자 ID 가져오기
             String userId = principal.getName();
 
