@@ -10,20 +10,56 @@
             const buttons = document.querySelectorAll(".tab-button");
             const tabContents = document.querySelectorAll(".champion-tab-content");
 
-            buttons.forEach((btn) => {
-                btn.addEventListener("click", function () {
-                    // 탭 버튼 상태 변경
-                    buttons.forEach(b => b.classList.remove("active"));
-                    this.classList.add("active");
+            // buttons.forEach((btn) => {
+            //     btn.addEventListener("click", function () {
+            //         // 탭 버튼 상태 변경
+            //         buttons.forEach(b => b.classList.remove("active"));
+            //         this.classList.add("active");
+            //
+            //         const mode = this.dataset.mode;
+            //
+            //         // 콘텐츠 보여주기
+            //         tabContents.forEach(tab => {
+            //             tab.style.display = (tab.dataset.mode === mode) ? "block" : "none";
+            //         });
+            //     });
+            // });
+            //
+            // const defaultTab = document.querySelector('.tab-button[data-mode="s2025"]');
+            // if (defaultTab) {
+            //     defaultTab.click();
+            // }
 
-                    const mode = this.dataset.mode;
+            function activateTab(mode) {
+                // 버튼 클래스 갱신
+                buttons.forEach(btn => btn.classList.toggle("active", btn.dataset.mode === mode));
 
-                    // 콘텐츠 보여주기
-                    tabContents.forEach(tab => {
-                        tab.style.display = (tab.dataset.mode === mode) ? "block" : "none";
+                tabContents.forEach(tab => {
+                    const isActive = tab.dataset.mode === mode;
+                    tab.style.display = isActive ? "block" : "none";
+
+                    const rows = tab.querySelectorAll(".champion-row");
+                    const moreBtn = tab.querySelector(".show-more-button");
+
+                    rows.forEach((row, i) => {
+                        row.classList.toggle("hidden-champ", i >= 6);
                     });
+
+                    if (moreBtn) {
+                        moreBtn.style.display = rows.length > 6 ? "block" : "none";
+                    }
+                });
+            }
+
+            buttons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    activateTab(btn.dataset.mode);
                 });
             });
+
+            // 초기 탭 설정
+            activateTab("overall");
+
         });
 
         // 더보기 버튼
@@ -31,11 +67,17 @@
             const parent = button.closest('.champion-tab-content');
             const hiddenRows = parent.querySelectorAll('.hidden-champ');
 
+            // // 더 이상 숨긴 게 없으면 버튼 제거
+            // if (parent.querySelectorAll('.hidden-champ').length === 0) {
+            //     button.style.display = 'none';
+            // }
+
             hiddenRows.forEach(row => {
                 row.classList.remove('hidden-champ');
             });
 
             button.style.display = 'none';
+
         }
 
         // 매치 요약 박스 클릭시 실행( 상세 페이지 )  (element) 는 match-summary-box
@@ -81,15 +123,26 @@
                                         </div>
                                         <div class="summoner-info">
                                             <div class="summoner-name">${player.summonerName}</div>
+                                            <img src="@{${player.tierImageUrl}}" alt="티어 이미지" class="tier-icon" />
                                             <div class="summoner-tier">${player.tier}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>${player.kills}/${player.deaths}/${player.assists}<br/><small>${player.kdaRatio}:1</small></td>
                                 <td>
-                                    <div class="damage-bar">
-                                        <div class="damage-dealt" style="width:${damageDealt}%"></div>
-                                        <div class="damage-taken" style="width:${damageTaken}%"></div>
+                                    <div class="damage-wrapper">
+                                        <div class="damage-line">
+                                            <span class="damage-value">${player.totalDamageDealtToChampions.toLocaleString()}</span>
+                                                <div class="damage-bar red">
+                                                    <div class="bar" style="width:${damageDealt}%"></div>
+                                                </div>
+                                        </div>
+                                        <div class="damage-line">
+                                            <span class="damage-value">${player.totalDamageTaken.toLocaleString()}</span>
+                                                <div class="damage-bar gray">
+                                                    <div class="bar" style="width:${damageTaken}%"></div>
+                                                </div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td>설치: ${player.wardsPlaced}<br/>제거: ${player.wardsKilled}</td>
@@ -99,9 +152,14 @@
                         `;
                     }; // makeRow 함수 끝
 
-                    // 표 제목 부분 <tr> 행 ( 한 층 ) / <td> 열 ( 하나의 호수 ) / <th> 헤더 셀( 굵게 가운데 정렬 - 표 제목 )
-                    const blueHeader = '<tr class="team-summary"><td colspan="6">블루팀</td></tr>';
-                    const redHeader = '<tr class="team-summary"><td colspan="6">레드팀</td></tr>';
+                    const isBlueWin = data.blueTeam[0]?.win; // 승리 여부 가져오기
+
+                    const blueHeader = `<tr class="team-summary ${isBlueWin ? 'team-blue' : 'team-red'}">
+                                        <td colspan="6">${isBlueWin ? '승리 (블루팀)' : '패배 (블루팀)'}</td></tr>`;
+
+                    const redHeader = `<tr class="team-summary ${isBlueWin ? 'team-red' : 'team-blue'}">
+                                        <td colspan="6">${isBlueWin ? '패배 (레드팀)' : '승리 (레드팀)'}</td></tr>`;
+
                     const headerRow = '<tr><th>소환사</th><th>KDA</th><th>피해량</th><th>와드</th><th>CS</th><th>아이템</th></tr>';
 
                     // 응답 데이터에서 각각 makeRow 함수로 줄 생성
@@ -157,6 +215,7 @@
 
 
 <div class="main">
+
 
     <!-- 왼쪽 파넬 -->
     <div class="left-panel">
@@ -223,7 +282,7 @@
                 <div class="champion-tab-content" data-mode="overall">
                     <div class="champion-row"
                          th:each="champ, iterStat : ${favoriteChampions.overall}"
-                         th:classappend="${iterStat.index > 2} ? 'hidden-champ'">
+                         th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
                         <div class="champion-icon">
                             <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
@@ -244,13 +303,16 @@
                                  th:text="|${champ.gameCount}게임|">게임</div>
                         </div>
                     </div>
+                    <!-- 더보기 버튼 -->
+                    <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
+
                 </div>
 
                 <!-- 개인/2인 랭크 -->
                 <div class="champion-tab-content" data-mode="solo">
                     <div class="champion-row"
                          th:each="champ, iterStat : ${favoriteChampions.solo}"
-                         th:classappend="${iterStat.index > 2} ? 'hidden-champ'">
+                         th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
                         <div class="champion-icon">
                             <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
@@ -271,13 +333,16 @@
                                  th:text="|${champ.gameCount}게임|">게임</div>
                         </div>
                     </div>
+                    <!-- 더보기 버튼 -->
+                    <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
+
                 </div>
 
                 <!-- 자유 랭크 -->
                 <div class="champion-tab-content" data-mode="flex">
                     <div class="champion-row"
                          th:each="champ, iterStat : ${favoriteChampions.flex}"
-                         th:classappend="${iterStat.index > 2} ? 'hidden-champ'">
+                         th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
                         <div class="champion-icon">
                             <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
@@ -298,10 +363,10 @@
                                  th:text="|${champ.gameCount}게임|">게임</div>
                         </div>
                     </div>
-                </div>
+                    <!-- 더보기 버튼 -->
+                    <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
 
-                <!-- 더보기 버튼 -->
-                <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
+                </div>
 
             </div>
         </div>
@@ -357,7 +422,8 @@
                 </div>
 
                 <!-- 선호 챔피언 -->
-                <div class="favorite-champions-section" th:if="${#lists.isEmpty(summary.sortedChampionList) == false}">
+                <div class="favorite-champions-section"
+                     th:if="${summary != null and summary.sortedChampionList != null and !summary.sortedChampionList.isEmpty()}">
                     <h4 class="section-title">최근 선호 챔피언</h4>
                     <div class="favorite-champions">
                         <!-- th:block 렌더링 시 브라우저에 표시 되지 않음 -->
@@ -369,13 +435,24 @@
                                 <div class="champion">
 <!--                                        -->
 
-                                    <div class="graph-bar" th:style="${championHeightStyles[entry.key]}"></div>
-
-                                    <div class="percentage"
-                                         th:text="${summary.championWinRates[entry.key]} + '%'">승률</div>
-                                    <div class="record"
-                                         th:text="${summary.championTotalGames[entry.key]} + '전 ' + ${summary.championWins[entry.key]} + '승 ' + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
+                                    <div class="graph-bar"
+                                         th:style="${championHeightStyles != null and championHeightStyles[entry.key] != null
+                                    ? championHeightStyles[entry.key] : ''}">
                                     </div>
+
+                                    <!-- 승률 -->
+                                    <div class="percentage"
+                                         th:text="${summary.championWinRates[entry.key] != null
+                                    ? summary.championWinRates[entry.key] + '%' : '0%'}">
+                                    </div>
+
+                                    <!-- 전적 -->
+                                    <div class="record"
+                                         th:text="${summary.championTotalGames[entry.key]} + '전 '
+                                                  + ${summary.championWins[entry.key]} + '승 '
+                                                  + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
+                                    </div>
+
                                 </div>
                             </th:block>
                         </th:block>
@@ -414,9 +491,9 @@
             <!-- 각 매치 요약 박스 -->
             <th:block th:each="match : ${matchList}">
 
-                <div class="match-summary-box"
+                <div class="match-summary-box match-card"
                      th:attr="data-match-id=${match.matchId}, data-puuid=${summoner.puuid}"
-                     th:classappend="${match.win != null and match.win} ? 'win-bg' : 'lose-bg'"
+                     th:classappend="${match.win != null and match.win} ? 'win' : 'lose'"
                      onclick="loadMatchDetail(this)">
 
                     <!-- 매치 정보 (모드, 시간, 결과, 지속시간) -->
@@ -459,8 +536,12 @@
                         <!-- 아이템 + 스펠 -->
                         <div class="items">
                             <th:block th:each="i : ${#numbers.sequence(0, 6)}">
-                                <img th:src="${i < match.itemImageUrls.size()} ? ${match.itemImageUrls[i]} : ''"
-                                     class="slot-img" alt="아이템" />
+                                <th:block th:if="${i < match.itemImageUrls.size() and match.itemImageUrls[i] != '/images/default.png'}">
+                                    <img th:src="${match.itemImageUrls[i]}" class="slot-img" alt="아이템" />
+                                </th:block>
+                                <th:block th:if="${i >= match.itemImageUrls.size() or match.itemImageUrls[i] == '/images/default.png'}">
+                                    <div class="empty-slot"></div>
+                                </th:block>
                             </th:block>
                         </div>
                     </div>

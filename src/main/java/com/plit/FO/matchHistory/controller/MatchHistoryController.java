@@ -34,21 +34,30 @@ public class MatchHistoryController {
 
         String normalizedGameName = matchHistoryService.normalizeGameName(gameName);
         String normalizedTagLine = matchHistoryService.normalizeTagLine(tagLine);
+//
+//        // puuid 가져오기 (자동완성에서 캐시되지 않았으면 Riot API 요청)
+//        String puuid = matchHistoryService.getPuuidOrRequest(gameName, tagLine);
 
-        // puuid 가져오기 (자동완성에서 캐시되지 않았으면 Riot API 요청)
-        String puuid = matchHistoryService.getPuuidOrRequest(gameName, tagLine);
-
-        // puuid로 소환사 정보 가져오기
+        // gameName, tagLine 으로 소환사 정보 가져오기
         SummonerDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
         if (summoner == null) {
-            throw new IllegalArgumentException("잘못된 Riot ID입니다.");
+            System.out.println("소환사 정보를 찾을 수 없음 (null)");
+        } else {
+            System.out.println("소환사 정보 가져옴");
+            System.out.println("puuid = " + summoner.getPuuid());
+            System.out.println("gameName = " + summoner.getGameName());
+            System.out.println("tagLine = " + summoner.getTagLine());
         }
+
+        String puuid = summoner.getPuuid();
 
         summoner.setProfileIconUrl(imageService.getProfileIconUrl(summoner.getProfileIconId()));
 
         // puuid로 매치 정보 조회
         List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(puuid);
         String tier = matchHistoryService.getTierByPuuid(puuid);
+        String tierImageUrl = "/images/tier/" + tier.split(" ")[0].toUpperCase().replace(" ", "") + ".png";
+
         MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
         Map<String, RankDTO> rankMap = matchHistoryService.getRankInfoByPuuid(puuid);
         List<FavoriteChampionDTO> favoriteChampions = matchHistoryService.getFavoriteChampions(matchList);
@@ -56,6 +65,7 @@ public class MatchHistoryController {
         List<FavoriteChampionDTO> overallList = matchHistoryService.getFavoriteChampionsBySeason(puuid, "all");
         List<FavoriteChampionDTO> soloList = matchHistoryService.getFavoriteChampionsBySeason(puuid, "solo");
         List<FavoriteChampionDTO> flexList = matchHistoryService.getFavoriteChampionsBySeason(puuid, "flex");
+
 
 
         // 통계용 스타일 계산
@@ -93,6 +103,7 @@ public class MatchHistoryController {
         // 모델에 데이터 넣기
         model.addAttribute("summoner", summoner);
         model.addAttribute("tier", tier);
+        model.addAttribute("tierImageUrl", tierImageUrl);
         model.addAttribute("matchList", matchList);
         model.addAttribute("winCount", matchList.stream().filter(MatchHistoryDTO::isWin).count());
         model.addAttribute("totalCount", matchList.size());
@@ -171,6 +182,7 @@ public class MatchHistoryController {
         // 전적, 티어 등 가져오기
         List<MatchHistoryDTO> matchList = matchHistoryService.getMatchHistory(puuid);
         String tier = matchHistoryService.getTierByPuuid(puuid);
+
         MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
         Map<String, RankDTO> rankMap = matchHistoryService.getRankInfoByPuuid(puuid);
         List<FavoriteChampionDTO> favoriteChampions = matchHistoryService.getFavoriteChampions(matchList);
@@ -227,7 +239,7 @@ public class MatchHistoryController {
     public String testClanMemberStats(Model model) {
 
         // 테스트용 Riot ID
-        String gameName = "hide on bush";
+        String gameName = "뭉청망청";
         String tagLine = "kr1";
 
         System.out.println("테스트: 멤버 = " + gameName + "#" + tagLine);

@@ -38,6 +38,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
 
     private String killParticipation;
 
+    private double kdaRatio;
+
     private String badge;
 
     // 시간
@@ -75,5 +77,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
     // 스펠 이미지 경로
     private String spell1ImageUrl;
     private String spell2ImageUrl;
+
+    // 티어 이미지 경로
+    private String tierImageUrl;
 
 }

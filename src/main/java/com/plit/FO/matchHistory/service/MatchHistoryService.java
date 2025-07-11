@@ -40,18 +40,28 @@ public class MatchHistoryService {
     // (*) riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
     public SummonerDTO getAccountByRiotId(String gameName, String tagLine) {
         try {
-            // Riot ID -> puuid, gameName, tagLine // uri( 자원 식별 방식 ) 만들기
-            URI riotIdUri = UriComponentsBuilder // URI 생성도구
-                    // riot api의 riot id 앤드포인트에 접속하기 위한 url( uri 의 한 종류 ) 구성
-                    .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}")
-                    .queryParam("api_key", riotApiKey) // 인증
-                    .buildAndExpand(gameName.trim(), tagLine.trim())// 대입
-                    .encode(StandardCharsets.UTF_8)
-                    .toUri();
+//            // Riot ID -> puuid, gameName, tagLine // uri( 자원 식별 방식 ) 만들기
+//            URI riotIdUri = UriComponentsBuilder // URI 생성도구
+//                    // riot api의 riot id 앤드포인트에 접속하기 위한 url( uri 의 한 종류 ) 구성
+//                    .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}")
+//                    .queryParam("api_key", riotApiKey) // 인증
+//                    .buildAndExpand(gameName.trim(), tagLine.trim())// 대입
+//                    .toUri();
+
+            String encodedGameName = UriUtils.encodePathSegment(gameName.trim(), StandardCharsets.UTF_8);
+            String encodedTagLine = UriUtils.encodePathSegment(tagLine.trim(), StandardCharsets.UTF_8);
+
+            String riotIdUrl = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
+                    + encodedGameName + "/" + encodedTagLine + "?api_key=" + riotApiKey;
+
+            URI riotIdUri = URI.create(riotIdUrl);
+            System.out.println("[요청 URI] " + riotIdUri);
 
             // http get 요청
             ResponseEntity<Map> riotIdResponse = restTemplate.getForEntity(riotIdUri, Map.class); // Map.class -> JSON 을 Map 형식으로 변환
             Map<String, Object> riotIdBody = riotIdResponse.getBody(); // body 부분만 꺼내기
+
+            System.out.println("[응답 내용] = " + riotIdBody);
 
             /* 예시 riot api 응답 구조 ( json )
             {
@@ -79,12 +89,16 @@ public class MatchHistoryService {
             ResponseEntity<Map> summonerResponse = restTemplate.getForEntity(summonerUri, Map.class);
             Map<String, Object> summonerBody = summonerResponse.getBody();
 
+
+            System.out.println("[응답 내용] = " + summonerBody);
+
             Integer profileIconId = summonerBody.get("profileIconId") != null
                     ? (Integer) summonerBody.get("profileIconId")
                     : null;
             Integer summonerLevel = summonerBody.get("summonerLevel") != null
                     ? ((Number) summonerBody.get("summonerLevel")).intValue()
                     : null;
+
 
             // DTO로 리턴
             return SummonerDTO.builder()
@@ -335,7 +349,34 @@ public class MatchHistoryService {
     // (*) 전체 20 게임 통계 요약
     public MatchSummaryDTO getMatchSummary(List<MatchHistoryDTO> matchList) {
         int total = matchList.size();
-        if (total == 0) return new MatchSummaryDTO();
+        System.out.println("getMatchSummary() 호출됨 matchList size = " + matchList.size());
+
+
+        if (total == 0) {
+            System.out.println("matchList가 비어있어서 요약 통계를 만들 수 없음");
+            return MatchSummaryDTO.builder()
+                    .avgKills(0)
+                    .avgDeaths(0)
+                    .avgAssists(0)
+                    .kdaRatio(0.0)
+                    .killParticipation(0.0)
+                    .winCount(0)
+                    .loseCount(0)
+                    .totalCount(0)
+
+                    .championTotalGames(new HashMap<>())
+                    .championWins(new HashMap<>())
+                    .championWinRates(new HashMap<>())
+                    .sortedChampionList(new ArrayList<>())
+
+                    .positionTotalGames(new HashMap<>())
+                    .positionWins(new HashMap<>())
+                    .positionWinRates(new HashMap<>())
+                    .favoritePositions(new LinkedHashMap<>())
+                    .sortedPositionList(List.of("TOP", "JUNGLE", "MID", "BOTTOM", "UTILITY"))
+                    .build();
+        }
+
 
         double sumKills = 0, sumDeaths = 0, sumAssists = 0, sumKp = 0;
         int wins = 0;
@@ -343,6 +384,7 @@ public class MatchHistoryService {
         // 챔피언
         Map<String, Integer> championTotalGames = new HashMap<>();
         Map<String, Integer> championWins = new HashMap<>();
+
 
         // 포지션
         Map<String, Integer> positionTotalGames = new HashMap<>();
@@ -383,8 +425,9 @@ public class MatchHistoryService {
         // 챔피언 승률
         Map<String, Integer> championWinRates = new HashMap<>();
         for (String champ : championTotalGames.keySet()) {
+            championWins.putIfAbsent(champ, 0);
             int count = championTotalGames.get(champ);
-            int win = championWins.getOrDefault(champ, 0);
+            int win = championWins.get(champ);
             int rate = (int) round(win * 100.0 / count, 0);
             championWinRates.put(champ, rate);
         }
@@ -398,6 +441,15 @@ public class MatchHistoryService {
             positionWinRates.put(pos, rate);
         }
 
+        // 선호 챔피언
+        Map<String, Integer> favoritePositions = new HashMap<>();
+        for (MatchHistoryDTO match : matchList) {
+            String position = match.getTeamPosition();
+            if (position != null && !position.isBlank()) {
+                favoritePositions.put(position, favoritePositions.getOrDefault(position, 0) + 1);
+            }
+        }
+
         // 정렬 (챔피언은 많이 쓴 순 / 포지션은 고정 X)
         List<Map.Entry<String, Integer>> sortedChampionList = championTotalGames.entrySet()
                 .stream()
@@ -405,6 +457,14 @@ public class MatchHistoryService {
                 .toList();
 
         int lose = total - wins;
+
+        List<String> sortedPositionList = favoritePositions.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        System.out.println("[정렬된 챔피언 리스트] = " + sortedChampionList);
+
 
         return MatchSummaryDTO.builder()
                 .avgKills(sumKills / total)
@@ -424,8 +484,8 @@ public class MatchHistoryService {
                 .positionTotalGames(positionTotalGames)
                 .positionWins(positionWins)
                 .positionWinRates(positionWinRates)
-                .favoritePositions(new LinkedHashMap<>(positionTotalGames))
-                .sortedPositionList(allPositions)
+                .favoritePositions(favoritePositions)
+                .sortedPositionList(sortedPositionList)
                 .build();
 
     }
@@ -434,12 +494,17 @@ public class MatchHistoryService {
     public List<MatchHistoryDTO> getMatchHistory(String puuid) {
         List<String> matchIds = getMatchIdsByPuuid(puuid);
 
+        System.out.println("[getMatchHistory] puuid = " + puuid);
+        System.out.println("[getMatchHistory] matchIds = " + matchIds);
+
         List<MatchHistoryDTO> result = new ArrayList<>();
 
         for (String matchId : matchIds) {
             try {
                 String url = "https://asia.api.riotgames.com/lol/match/v5/matches/"
                         + matchId + "?api_key=" + riotApiKey;
+
+                System.out.println("[getMatchIdsByPuuid] Request URL: " + url);
 
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 Map<String, Object> matchData = response.getBody();
@@ -618,13 +683,23 @@ public class MatchHistoryService {
                     String itemUrl = itemId != 0
                             ? imageService.getImage(String.valueOf(itemId) + ".png", "item")
                             .map(ImageEntity::getImageUrl)
-                            .orElse("/img/default.png")
+                            .orElse("")
                             : null;
                     itemImageUrls.add(itemUrl);
                 }
 
                 String puuid = (String) p.get("puuid");
+                int kills = ((Number) p.get("kills")).intValue();
+                int deaths = ((Number) p.get("deaths")).intValue();
+                int assists = ((Number) p.get("assists")).intValue();
+
+                double kdaRatio = deaths != 0 ? (double)(kills + assists) / deaths : kills + assists;
+
                 String tier = tierCache.computeIfAbsent(puuid, k -> getTierByPuuid(k));
+                String tierImageUrl = imageService.getImage(tier + ".png", "tier")
+                        .map(ImageEntity::getImageUrl)
+                        .orElse("");
+
 
                 Map<String, Object> perks = (Map<String, Object>) p.get("perks");
                 List<Map<String, Object>> styles = (List<Map<String, Object>>) perks.get("styles");
@@ -676,7 +751,9 @@ public class MatchHistoryService {
                         .deaths(((Number) p.get("deaths")).intValue())
                         .assists(((Number) p.get("assists")).intValue())
                         .summonerName((String) p.get("summonerName"))
+                        .kdaRatio(Math.round(kdaRatio * 100) / 100.0)
                         .tier(tier)
+                        .tierImageUrl(tierImageUrl)
                         .totalDamageDealtToChampions(((Number) p.get("totalDamageDealtToChampions")).intValue())
                         .totalDamageTaken(((Number) p.get("totalDamageTaken")).intValue())
                         .gameMode((String) info.get("gameMode"))
@@ -879,6 +956,5 @@ public class MatchHistoryService {
     private String getKorName(String engName) {
         return korNameMap.getOrDefault(engName, engName);
     }
-
 
 }
