@@ -336,7 +336,12 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 `;
 
                 const approvedHtml = approved.length > 0
-                    ? `<ul>${approved.map(m => `<li>${m.userId} - ${m.message || ''}</li>`).join('')}</ul>`
+                    ? `<ul>${approved.map(m => {
+                        const kickBtn = (isOwner && m.userId !== createdBy)
+                            ? `<button onclick="kickMember(${seq}, ${m.id})">내보내기</button>`
+                            : '';
+                        return `<li>${m.userId} - ${m.message || ''} ${kickBtn}</li>`;
+                    }).join('')}</ul>`
                     : '<p>참가 멤버 없음</p>';
 
                 const pendingHtml = pending.length > 0
@@ -380,6 +385,37 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
 
                 popup.style.display = 'block';
             });
+        });
+}
+
+/* 파티원 내보내기 */
+function kickMember(partyId, memberId) {
+    if (!confirm("정말 이 멤버를 내보내시겠습니까?")) return;
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${partyId}/members/${memberId}/kick`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                alert('멤버를 내보냈습니다.');
+                closePartyDetail();
+                loadParties('team');
+            } else {
+                return res.text().then(text => {
+                    alert(`실패: ${text || '알 수 없는 오류'}`);
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('서버 오류로 강퇴에 실패했습니다.');
         });
 }
 

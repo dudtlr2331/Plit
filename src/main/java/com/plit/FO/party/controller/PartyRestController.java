@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -135,5 +136,11 @@ public class PartyRestController {
                                                 @AuthenticationPrincipal(expression = "username") String userId) {
         String status = partyService.getJoinStatus(partyId, userId); // NONE, PENDING, ACCEPTED, REJECTED
         return ResponseEntity.ok(status);
+    }
+
+    @PostMapping("/api/parties/{partyId}/members/{memberId}/kick")
+    public ResponseEntity<String> kickMember(@PathVariable Long partyId, @PathVariable Long memberId, Principal principal) {
+        partyService.kickMember(partyId, memberId, principal.getName());
+        return ResponseEntity.ok("KICKED");
     }
 }

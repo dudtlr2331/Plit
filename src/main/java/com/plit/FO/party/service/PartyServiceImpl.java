@@ -10,6 +10,7 @@ import com.plit.FO.party.entity.PartyMemberEntity;
 import com.plit.FO.party.repository.PartyFindPositionRepository;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.repository.PartyRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -310,5 +311,32 @@ public class PartyServiceImpl implements PartyService {
     @Override
     public boolean existsByParty_PartySeqAndStatusAndPosition(Long partySeq, String status, String position) {
         return partyMemberRepository.existsByParty_PartySeqAndStatusAndPosition(partySeq, status, position);
+    }
+
+    @Override
+    public void kickMember(Long partyId, Long memberId, String requesterId) {
+        PartyEntity party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new RuntimeException("파티가 존재하지 않습니다."));
+
+        if (!party.getCreatedBy().equals(requesterId)) {
+            throw new AccessDeniedException("파티장만 내보내기를 할 수 있습니다.");
+        }
+
+        PartyMemberEntity member = partyMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("멤버가 존재하지 않습니다."));
+
+        if (!member.getParty().getPartySeq().equals(partyId)) {
+            throw new IllegalArgumentException("해당 파티의 멤버가 아닙니다.");
+        }
+
+        if (member.getStatus() != "ACCEPTED") {
+            throw new IllegalStateException("수락된 멤버만 내보낼 수 있습니다.");
+        }
+
+        partyMemberRepository.delete(member);
+
+        // 인원수 업데이트 (필요시)
+        party.setPartyHeadcount(party.getPartyHeadcount() - 1);
+        partyRepository.save(party);
     }
 }

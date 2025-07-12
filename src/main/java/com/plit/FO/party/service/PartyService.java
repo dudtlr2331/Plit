@@ -20,4 +20,5 @@ public interface PartyService {
     List<PartyMemberDTO> getPartyMemberDTOs(Long partySeq);
     String getJoinStatus(Long partyId, String userId);
     boolean existsByParty_PartySeqAndStatusAndPosition(Long partyId, String status, String position);
+    void kickMember(Long partyId, Long memberId, String requesterId);
 }
