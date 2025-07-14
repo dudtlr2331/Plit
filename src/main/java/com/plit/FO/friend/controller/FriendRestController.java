@@ -3,8 +3,10 @@ package com.plit.FO.friend.controller;
 import com.plit.FO.friend.dto.FriendDTO;
 import com.plit.FO.friend.service.FriendService;
 import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/friends")
@@ -70,4 +73,28 @@ public class FriendRestController {
         friendService.deleteFriend(friendNo, currentUser.getUserSeq());
         return ResponseEntity.ok().build();
     }
+
+    // 친구 신청
+    @PostMapping("/request")
+    public ResponseEntity<?> sendFriendRequest(@AuthenticationPrincipal User user,
+                                               @RequestBody Map<String, String> request) {
+        UserDTO loginUser = userService.findByUserId(user.getUsername());
+        if (loginUser == null) return ResponseEntity.badRequest().build();
+
+        String nickname = request.get("toUserId"); // 닉네임 기반
+        Optional<UserEntity> toUserOpt = userService.findByUserNickname(nickname);
+
+        if (toUserOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("해당 닉네임을 가진 사용자가 존재하지 않습니다.");
+        }
+
+        Integer toUserSeq = toUserOpt.get().getUserSeq();
+        String memo = request.getOrDefault("memo", null);
+
+        friendService.sendFriendRequest(loginUser.getUserSeq(), toUserSeq, memo);
+        return ResponseEntity.ok().build();
+    }
+
+
 }
