@@ -19,6 +19,14 @@
 
 <div class="search-box">
     <input type="text" id="searchInput" placeholder="플레이어 이름 (플레이어#KR1)">
+
+    <button id="searchButton" class="search-button" aria-label="검색">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+    </button>
+
     <div id="autocompleteList" class="autocomplete-box"></div>
 </div>
 
@@ -60,6 +68,7 @@
 
     const searchInput = document.getElementById("searchInput");
     const autocompleteList = document.getElementById("autocompleteList");
+    const searchButton = document.getElementById("searchButton");
 
     searchInput.addEventListener("input", async function () {
         const keyword = searchInput.value.trim();
@@ -76,19 +85,29 @@
     `).join("");
     });
 
+    // Enter 키 검색
     searchInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
-            const inputValue = searchInput.value.trim();
-            const [gameName, tagLine] = inputValue.split("#");
-
-            if (!gameName || !tagLine) {
-                alert("Riot ID 형식은 '닉네임#태그'입니다.");
-                return;
-            }
-
-            window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+            executeSearch();
         }
     });
+
+    // 돋보기 버튼 클릭 검색
+    searchButton.addEventListener("click", executeSearch);
+
+    // 검색 실행 함수
+    function executeSearch() {
+        const inputValue = searchInput.value.trim();
+        const [gameName, tagLine] = inputValue.split("#");
+
+        if (!gameName || !tagLine) {
+            alert("Riot ID 형식은 '닉네임#태그'입니다.");
+            return;
+        }
+
+        window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+    }
+
 
     function selectRiotId(riotId) {
         const [gameName, tagLine] = riotId.split("#");

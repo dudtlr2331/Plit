@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @ToString
-public class ImageEntity {
+public class ImageEntity { // 이미지 url 테이블
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
