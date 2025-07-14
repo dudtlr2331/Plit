@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<div th:replace="~{fo/common/header :: header}"></div>
+<th:block th:replace="~{fo/common/header :: header}"></th:block>
 
 <div class="container">
   <div class="search-bar">
@@ -122,7 +122,7 @@
   <div class="clan-grid">
     <div class="clan-card" th:each="clan : ${clans}" th:onclick="|location.href='/clan/${clan.id}'|" style="cursor: pointer;">
       <div class="clan-image-placeholder">
-        <img th:src="${clan.imageUrl != null and clan.imageUrl != ''} ? @{${clan.imageUrl}} : @{/images/clan/clan_default.png}"
+        <img th:src="${#strings.isEmpty(clan.imageUrl)} ? '/images/clan/clan_default.png' : ${clan.imageUrl}"
              alt="클랜 이미지"
              class="clan-image"
              onerror="this.onerror=null; this.src='/images/clan/clan_default.png';" />
@@ -158,22 +158,22 @@
   </div>
 </div>
 
-<footer>
-  <div class="container">
-    <div class="footer-nav">
-      <a href="#">공지사항</a>
-      <a href="#">사용방법</a>
-      <a href="#">개인정보처리방침</a>
-      <a href="#">광고/제휴문의</a>
-      <a href="#">개발문의</a>
-      <a href="#">404 Squad</a>
-    </div>
-    <div>
-      lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.
-      League of Legends is a trademark of Riot Games.
-    </div>
-  </div>
-</footer>
+<!--<footer>-->
+<!--  <div class="container">-->
+<!--    <div class="footer-nav">-->
+<!--      <a href="#">공지사항</a>-->
+<!--      <a href="#">사용방법</a>-->
+<!--      <a href="#">개인정보처리방침</a>-->
+<!--      <a href="#">광고/제휴문의</a>-->
+<!--      <a href="#">개발문의</a>-->
+<!--      <a href="#">404 Squad</a>-->
+<!--    </div>-->
+<!--    <div>-->
+<!--      lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.-->
+<!--      League of Legends is a trademark of Riot Games.-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</footer>-->
 
 <script>
   function openModal() {

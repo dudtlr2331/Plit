@@ -1,18 +1,18 @@
 /* 기본 설정 및 전체 레이아웃 (Base & Layout) */
 html,
-body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
+/*body {*/
+/*    height: 100%;*/
+/*    margin: 0;*/
+/*    padding: 0;*/
+/*}*/
 
-body {
-    font-family: 'Noto Sans KR', sans-serif;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background: #fff;
-}
+/*body {*/
+/*    font-family: 'Noto Sans KR', sans-serif;*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*    min-height: 100vh;*/
+/*    background: #fff;*/
+/*}*/
 
 main {
     flex: 1;
@@ -66,14 +66,14 @@ main {
 /*    color: yellow;*/
 /*}*/
 
-.top-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: white;
-    font-weight: bold;
-    font-size: 14px;
-}
+/*.top-right {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    gap: 15px;*/
+/*    color: white;*/
+/*    font-weight: bold;*/
+/*    font-size: 14px;*/
+/*}*/
 
 .social-icon {
     width: 24px;
@@ -149,6 +149,11 @@ main {
 
 .submit-btn {
     composes: btn;
+}
+
+.back-btn-right {
+    margin-left: auto;
+    margin-top: 8px;
 }
 
 /* 폼 요소 (Form Elements) */
@@ -623,6 +628,75 @@ label {
     max-width: 100%;
 }
 
+/*수락 대기 탭*/
+
+.pending-table {
+    padding-left: 8px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.pending-row {
+    display: grid;
+    /*
+    칸 구성:
+    [소환사명 | 티어 | 주포지션 | 소개 | 신청일 | 관리]
+    */
+    grid-template-columns:
+        2.2fr  /* 소환사명 */
+        1fr    /* 티어 */
+        1fr    /* 주포지션 */
+        2.5fr  /* 소개글 */
+        1.2fr  /* 신청일 */
+        1.2fr; /* 관리 버튼 */
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    align-items: center;
+    font-size: 14px;
+    text-align: center;
+}
+
+.pending-row.header-row {
+    background-color: #e9e1f9;
+    color: #4B2D88;
+    font-weight: 800;
+}
+
+.pending-cell {
+    padding: 4px 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* 소환사명만 왼쪽 정렬 */
+.pending-cell.name {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.pending-row.header-row .pending-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.pending-row.header-row .pending-cell.name {
+    display: flex;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.pending-cell.intro {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
 
 /* 포지션 아이콘 (Position Icons) */
 /* 기본 SVG 크기 및 정렬 */
@@ -729,6 +803,7 @@ label {
 .modal-btn-group {
     display: flex;
     justify-content: flex-end;
+    justify-content: flex-end;
     gap: 8px;
     margin-top: 8px;
 }
@@ -825,20 +900,20 @@ textarea#memberIntro:focus {
 }
 
 /* 푸터 (Footer) */
-footer {
-    background: #333;
-    color: white;
-    padding: 30px 20px;
-    font-size: 13px;
-    line-height: 1.5;
-}
+/*footer {*/
+/*    background: #333;*/
+/*    color: white;*/
+/*    padding: 30px 20px;*/
+/*    font-size: 13px;*/
+/*    line-height: 1.5;*/
+/*}*/
 
-footer a {
-    color: white;
-    margin-right: 10px;
-    text-decoration: none;
-}
+/*footer a {*/
+/*    color: white;*/
+/*    margin-right: 10px;*/
+/*    text-decoration: none;*/
+/*}*/
 
-footer .footer-nav {
-    margin-bottom: 10px;
-}
+/*footer .footer-nav {*/
+/*    margin-bottom: 10px;*/
+/*}*/

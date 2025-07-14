@@ -15,4 +15,7 @@ public interface ClanMemberService {
     void updateMemberInfo(Long userId, Long clanId, ClanMemberDTO dto);
 
     int countByClanId(Long clanId);
+
+    void addMember(Long clanId, Long userId, String position, String tier, String intro);
+
 }

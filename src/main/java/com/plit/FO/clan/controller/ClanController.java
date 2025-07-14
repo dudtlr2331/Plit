@@ -1,8 +1,10 @@
 package com.plit.FO.clan.controller;
 
 import com.plit.FO.clan.dto.ClanDTO;
+import com.plit.FO.clan.dto.ClanJoinRequestDTO;
 import com.plit.FO.clan.dto.ClanMemberDTO;
 import com.plit.FO.clan.entity.ClanEntity;
+import com.plit.FO.clan.service.ClanJoinRequestService;
 import com.plit.FO.clan.service.ClanMemberService;
 import com.plit.FO.clan.service.ClanService;
 import com.plit.FO.user.service.UserService;
@@ -38,6 +40,7 @@ public class ClanController {
     private final ClanService clanService;
     private final UserService userService;
     private final ClanMemberService clanMemberService;
+    private final ClanJoinRequestService clanJoinRequestService;
 
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
@@ -141,17 +144,15 @@ public class ClanController {
         model.addAttribute("clan", clan);
 
         List<ClanMemberDTO> members = clanMemberService.findApprovedMembersByClanId(id);
-        List<ClanMemberDTO> pendingMembers = clanMemberService.findPendingMembersByClanId(id);
+        List<ClanJoinRequestDTO> pendingMembers = clanJoinRequestService.getJoinRequests(id);
 
-        // 리더 정보 가져오기 (중복 체크 포함)
+        // 리더 정보 추가
         if (clan.getLeaderId() != null) {
             clanMemberService.findByClanIdAndUserId(id, clan.getLeaderId()).ifPresent(leaderDto -> {
                 leaderDto.setRole("LEADER");
-                leaderDto.setIntro(leaderDto.getIntro() != null ? leaderDto.getIntro() : "리더입니다 👑");
-
+                leaderDto.setIntro(leaderDto.getIntro() != null ? leaderDto.getIntro() : "리더입니다");
                 boolean leaderExists = members.stream()
                         .anyMatch(m -> m.getMemberId().equals(leaderDto.getMemberId()));
-
                 if (!leaderExists) {
                     members.add(0, leaderDto);
                 }
@@ -161,29 +162,41 @@ public class ClanController {
         model.addAttribute("members", members);
         model.addAttribute("pendingMembers", pendingMembers);
 
-        // 로그인한 멤버 정보와 권한 한 번에 처리
+        // 로그인 유저일 경우
         if (principal != null) {
             String userIdStr = principal.getName();
             userService.getUserByUserId(userIdStr).ifPresent(userDTO -> {
                 Long userSeq = userDTO.getUserSeq().longValue();
+                model.addAttribute("nickname", userDTO.getUserNickname());
 
-                clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresent(memberDto -> {
-                    model.addAttribute("editMember", memberDto);  // 수정 대상 멤버
-                    // 권한 설정
-                    String role = memberDto.getRole();
-                    if ("LEADER".equals(role) || "MEMBER".equals(role)) {
-                        model.addAttribute("role", role);
-                    } else {
-                        model.addAttribute("role", "GUEST");
-                    }
-                });
+                boolean isJoinPending = clanJoinRequestService.isJoinPending(id, userSeq);
+
+                clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresentOrElse(
+                        memberDto -> {
+                            model.addAttribute("editMember", memberDto);
+                            String role = memberDto.getRole();
+                            if ("LEADER".equals(role) || "MEMBER".equals(role)) {
+                                model.addAttribute("role", role);
+                            } else {
+                                model.addAttribute("role", "GUEST");
+                                model.addAttribute("joinPending", isJoinPending);
+                            }
+                        },
+                        () -> {
+                            model.addAttribute("role", "GUEST");
+                            model.addAttribute("joinPending", isJoinPending);
+                        }
+                );
             });
 
-            if (!model.containsAttribute("role")) {
+            if (!model.containsAttribute("role") || model.getAttribute("role") == null) {
                 model.addAttribute("role", "GUEST");
             }
+
         } else {
+            // 로그인 안한 사용자
             model.addAttribute("role", "GUEST");
+            model.addAttribute("joinPending", false);
         }
 
         return "fo/clan/clan-detail";
@@ -261,6 +274,65 @@ public class ClanController {
         } catch (Exception e) {
             e.printStackTrace(); // 콘솔 로그
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("멤버 정보 수정 실패");
+        }
+    }
+
+    // 클랜 가입
+    @PostMapping("/join")
+    public ResponseEntity<Void> joinClan(@RequestBody ClanJoinRequestDTO dto, Principal principal) {
+        String userId = principal.getName();
+        UserDTO userDTO = userService.findByUserId(userId);
+        dto.setUserId(userDTO.getUserSeq().longValue());
+
+        clanJoinRequestService.requestJoin(dto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{clanId}/approve/{userId}")
+    @ResponseBody
+    public ResponseEntity<String> approveJoinRequest(@PathVariable Long clanId,
+                                                     @PathVariable Long userId,
+                                                     Principal principal) {
+        try {
+            String requesterUserId = principal.getName();
+            UserDTO loginUser = userService.findByUserId(requesterUserId);
+            Long loginUserSeq = loginUser.getUserSeq().longValue();
+            ClanDTO clan = clanService.findById(clanId);
+
+
+            if (!clan.getLeaderId().equals(loginUserSeq)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더만 수락할 수 있습니다.");
+            }
+
+            clanJoinRequestService.approveJoinRequest(clanId, userId);
+            return ResponseEntity.ok("가입 신청이 수락되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("수락 실패: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{clanId}/reject/{userId}")
+    @ResponseBody
+    public ResponseEntity<String> rejectJoinRequest(@PathVariable Long clanId,
+                                                    @PathVariable Long userId,
+                                                    Principal principal) {
+        try {
+            String requesterUserId = principal.getName();
+            UserDTO loginUser = userService.findByUserId(requesterUserId);
+            Long loginUserSeq = loginUser.getUserSeq().longValue();
+
+            ClanDTO clan = clanService.findById(clanId);
+
+            if (!clan.getLeaderId().equals(loginUserSeq)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더만 거절할 수 있습니다.");
+            }
+
+            clanJoinRequestService.rejectJoinRequest(clanId, userId);
+            return ResponseEntity.ok("가입 신청이 거절되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("거절 실패: " + e.getMessage());
         }
     }
 }

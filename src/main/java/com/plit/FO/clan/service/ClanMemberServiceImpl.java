@@ -48,12 +48,10 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         dto.setJoinedAt(entity.getJoinedAt());
         dto.setMainPosition(entity.getMainPosition());
 
-        // 유저 정보 불러오기
         userService.getUserBySeq(entity.getUserId().intValue()).ifPresent(user -> {
             dto.setNickname(user.getUserNickname());
         });
 
-        // 직접 entity에서 가져오기
         dto.setTier(entity.getTier() != null ? entity.getTier() : "Unranked");
         dto.setIntro(entity.getIntro() != null ? entity.getIntro() : "소개글이 없습니다.");
 
@@ -75,5 +73,20 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         entity.setIntro(dto.getIntro());
     }
 
+    @Override
+    @Transactional
+    public void addMember(Long clanId, Long userId, String position, String tier, String intro) {
+        ClanMemberEntity entity = ClanMemberEntity.builder()
+                .clanId(clanId)
+                .userId(userId)
+                .mainPosition(position)
+                .tier(tier)
+                .intro(intro)
+                .status("APPROVED") // 승인 상태
+                .role("MEMBER")     // 기본 멤버
+                .build();
+
+        clanMemberRepository.save(entity);
+    }
 
 }
