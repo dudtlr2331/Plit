@@ -315,20 +315,26 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     }
 
     /** OAuth2 로그인 후 신규 사용자 처리 */
-    private void processOAuthPostLogin(String email, String nickname) {
+    private void processOAuthPostLogin(String email, String unusedNicknameFromKakao) {
         userRepository.findByUserId(email)
-                .orElseGet(() -> userRepository.save(
-                        UserEntity.builder()
-                                .userId(email)
-                                .userPwd(passwordEncoder.encode(UUID.randomUUID().toString()))
-                                .userNickname(
-                                        nickname != null ? nickname : generateRandomNickname()
-                                )
-                                .useYn("Y")
-                                .isBanned(false)
-                                .userAuth("user")
-                                .userCreateDate(LocalDate.now())
-                                .build()
-                ));
+                .orElseGet(() -> {
+                    String nickname;
+                    do {
+                        nickname = generateRandomNickname();
+                    } while (userRepository.existsByUserNickname(nickname));
+
+                    return userRepository.save(
+                            UserEntity.builder()
+                                    .userId(email)
+                                    .userPwd(passwordEncoder.encode(UUID.randomUUID().toString()))
+                                    .userNickname(nickname)
+                                    .useYn("Y")
+                                    .isBanned(false)
+                                    .userAuth("user")
+                                    .userCreateDate(LocalDate.now())
+                                    .build()
+                    );
+                });
     }
+
 }

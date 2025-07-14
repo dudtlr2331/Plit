@@ -20,7 +20,9 @@
 
             <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" class="auth-area">
-                <span th:text="${nickname}">닉네임</span>
+                <span th:if="${loginUser != null}" th:text="${loginUser.userNickname}">닉네임</span>
+                <span th:if="${loginUser == null}">비회원</span>
+
 
                 <button class="btn btn-mypage" onclick="location.href='/mypage'">마이페이지</button>
 
