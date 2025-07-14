@@ -1,5 +1,6 @@
 package com.plit.FO.qna.controller;
 
+import com.plit.FO.block.dto.BlockDTO;
 import com.plit.FO.qna.dto.QnaDTO;
 import com.plit.FO.qna.entity.QnaEntity;
 import com.plit.FO.qna.service.QnaService;
@@ -12,6 +13,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
@@ -39,21 +41,8 @@ public class QnaController {
     @Value("${custom.upload-path.qna}")
     private String uploadDir;
 
-    private Long getCurrentUserId(RedirectAttributes ra) {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof User user) {
-            String loginId = user.getUsername();
-            UserDTO userDTO = userService.findByUserId(loginId);
-            if (userDTO != null) {
-                return Long.valueOf(userDTO.getUserSeq());
-            }
-        }
-        ra.addFlashAttribute("error", "로그인이 필요합니다.");
-        return null;
-    }
-
     @GetMapping("/write")
-    public String showWriteForm(Model model) {
+    public String showWriteForm(@ModelAttribute("loginUser") UserDTO loginUser, Model model) {
         model.addAttribute("viewSection", "qna");
         model.addAttribute("viewMode", "write");
         model.addAttribute("qnaDTO", new QnaDTO());
@@ -61,8 +50,8 @@ public class QnaController {
     }
 
     @PostMapping("/write")
-    public String writeQna(@ModelAttribute @Valid QnaDTO dto, BindingResult bindingResult, RedirectAttributes ra, Model model) {
-        Long userId = getCurrentUserId(ra);
+    public String writeQna(@ModelAttribute("loginUser") UserDTO loginUser, @ModelAttribute @Valid QnaDTO dto, BindingResult bindingResult, RedirectAttributes ra, Model model) {
+        Long userId = loginUser.getUserSeq().longValue();
         if (userId == null) return "redirect:/login";
 
         if (bindingResult.hasErrors()) {
@@ -105,8 +94,8 @@ public class QnaController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteQna(@PathVariable Long id, RedirectAttributes ra) {
-        Long userId = getCurrentUserId(ra);
+    public String deleteQna(@ModelAttribute("loginUser") UserDTO loginUser, @PathVariable Long id, RedirectAttributes ra) {
+        Long userId = loginUser.getUserSeq().longValue();
         if (userId == null) return "redirect:/login";
 
         qnaService.deleteQna(id, userId);
@@ -114,8 +103,8 @@ public class QnaController {
     }
 
     @GetMapping("/list")
-    public String getMyQuestions(Model model, RedirectAttributes ra) {
-        Long userId = getCurrentUserId(ra);
+    public String getMyQuestions(@ModelAttribute("loginUser") UserDTO loginUser, Model model, RedirectAttributes ra) {
+        Long userId = loginUser.getUserSeq().longValue();
         if (userId == null) return "redirect:/login";
 
         List<QnaEntity> myQuestions = qnaService.getMyQuestions(userId);
@@ -126,8 +115,8 @@ public class QnaController {
     }
 
     @GetMapping("/view/{id}")
-    public String viewQna(@PathVariable Long id, Model model, RedirectAttributes ra) {
-        Long userId = getCurrentUserId(ra);
+    public String viewQna(@ModelAttribute("loginUser") UserDTO loginUser, @PathVariable Long id, Model model, RedirectAttributes ra) {
+        Long userId = loginUser.getUserSeq().longValue();
         if (userId == null) return "redirect:/login";
 
         QnaEntity qna = qnaService.findById(id);
