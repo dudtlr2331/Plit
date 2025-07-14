@@ -1,6 +1,7 @@
 package com.plit.FO.party.service;
 
 import com.plit.FO.party.dto.PartyMemberDTO;
+import com.plit.FO.party.enums.MemberStatus;
 import com.plit.FO.party.enums.PartyStatus;
 import com.plit.FO.party.enums.PositionEnum;
 import com.plit.FO.party.dto.PartyDTO;
@@ -89,7 +90,7 @@ public class PartyServiceImpl implements PartyService {
                 .party(party)
                 .userId(userId)
                 .position(dto.getMainPosition())
-                .status("ACCEPTED")
+                .status(MemberStatus.ACCEPTED)
                 .message("파티장")
                 .build();
 
@@ -203,7 +204,7 @@ public class PartyServiceImpl implements PartyService {
                 .userId(userId)
                 .role("MEMBER")
                 .message(message)
-                .status("PENDING")
+                .status(MemberStatus.PENDING)
                 .position(position)
                 .build();
 
@@ -278,7 +279,7 @@ public class PartyServiceImpl implements PartyService {
             }
         }
 
-        member.setStatus("ACCEPTED");
+        member.setStatus(MemberStatus.ACCEPTED);
         party.setPartyHeadcount(party.getPartyHeadcount() + 1);
 
         partyMemberRepository.save(member);
@@ -289,7 +290,7 @@ public class PartyServiceImpl implements PartyService {
     public void rejectMember(Long partyId, Long memberId) {
         PartyMemberEntity member = partyMemberRepository.findById(memberId).orElseThrow();
         if (!member.getParty().getPartySeq().equals(partyId)) throw new IllegalArgumentException("파티 불일치");
-        member.setStatus("REJECTED");
+        member.setStatus(MemberStatus.REJECTED);
         partyMemberRepository.save(member);
     }
 
@@ -302,10 +303,10 @@ public class PartyServiceImpl implements PartyService {
     }
 
     @Override
-    public String getJoinStatus(Long partyId, String userId) {
+    public MemberStatus getJoinStatus(Long partyId, String userId) {
         return partyMemberRepository.findByParty_PartySeqAndUserId(partyId, userId)
                 .map(PartyMemberEntity::getStatus)
-                .orElse("NONE");
+                .orElse(null); // 또는 Optional<MemberStatus>로 감싸도 OK
     }
 
     @Override
@@ -329,7 +330,7 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalArgumentException("해당 파티의 멤버가 아닙니다.");
         }
 
-        if (member.getStatus() != "ACCEPTED") {
+        if (member.getStatus() != MemberStatus.ACCEPTED) {
             throw new IllegalStateException("수락된 멤버만 내보낼 수 있습니다.");
         }
 

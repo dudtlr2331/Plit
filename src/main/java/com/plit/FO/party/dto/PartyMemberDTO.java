@@ -1,6 +1,7 @@
 package com.plit.FO.party.dto;
 
 import com.plit.FO.party.entity.PartyMemberEntity;
+import com.plit.FO.party.enums.MemberStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public class PartyMemberDTO {
     private LocalDateTime joinTime;
     private String role;
     private String message;
-    private String status;
+    private MemberStatus status;
     private String position;
 
     public PartyMemberDTO(PartyMemberEntity entity) {

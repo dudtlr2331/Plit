@@ -2,6 +2,7 @@ package com.plit.FO.party.service;
 
 import com.plit.FO.party.dto.PartyDTO;
 import com.plit.FO.party.dto.PartyMemberDTO;
+import com.plit.FO.party.enums.MemberStatus;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public interface PartyService {
     void acceptMember(Long partyId, Long memberId);
     void rejectMember(Long partyId, Long memberId);
     List<PartyMemberDTO> getPartyMemberDTOs(Long partySeq);
-    String getJoinStatus(Long partyId, String userId);
+    MemberStatus getJoinStatus(Long partyId, String userId);
     boolean existsByParty_PartySeqAndStatusAndPosition(Long partyId, String status, String position);
     void kickMember(Long partyId, Long memberId, String requesterId);
 }

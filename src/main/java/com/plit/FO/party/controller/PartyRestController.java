@@ -3,6 +3,7 @@ package com.plit.FO.party.controller;
 import com.plit.FO.party.dto.JoinRequestDTO;
 import com.plit.FO.party.dto.PartyDTO;
 import com.plit.FO.party.dto.PartyMemberDTO;
+import com.plit.FO.party.enums.MemberStatus;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.service.PartyService;
 import org.springframework.http.HttpStatus;
@@ -134,11 +135,12 @@ public class PartyRestController {
     @GetMapping("/{partyId}/join-status")
     public ResponseEntity<String> getJoinStatus(@PathVariable Long partyId,
                                                 @AuthenticationPrincipal(expression = "username") String userId) {
-        String status = partyService.getJoinStatus(partyId, userId); // NONE, PENDING, ACCEPTED, REJECTED
-        return ResponseEntity.ok(status);
+        MemberStatus status = partyService.getJoinStatus(partyId, userId); // enum or null
+        String result = status != null ? status.name() : "NONE"; // "ACCEPTED", "PENDING", "REJECTED", or "NONE"
+        return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/api/parties/{partyId}/members/{memberId}/kick")
+    @PostMapping("/{partyId}/members/{memberId}/kick")
     public ResponseEntity<String> kickMember(@PathVariable Long partyId, @PathVariable Long memberId, Principal principal) {
         partyService.kickMember(partyId, memberId, principal.getName());
         return ResponseEntity.ok("KICKED");

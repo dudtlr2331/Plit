@@ -1,5 +1,6 @@
 package com.plit.FO.party.entity;
 
+import com.plit.FO.party.enums.MemberStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -38,8 +39,9 @@ public class PartyMemberEntity {
     @Column(name = "message")
     private String message;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private String status = "PENDING";  // PENDING, ACCEPTED, REJECTED
+    private MemberStatus status = MemberStatus.PENDING; // PENDING, ACCEPTED, REJECTED
 
     @Column(name = "position", nullable = false)
     private String position;
