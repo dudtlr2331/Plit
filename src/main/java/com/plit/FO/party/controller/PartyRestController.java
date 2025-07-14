@@ -104,7 +104,7 @@ public class PartyRestController {
     @GetMapping("/{partyId}/joined")
     public boolean checkIfJoined(@PathVariable Long partyId,
                                  @AuthenticationPrincipal(expression = "username") String userId) {
-        return partyMemberRepository.existsByParty_PartySeqAndUserIdAndStatus(partyId, userId, "ACCEPTED");
+        return partyMemberRepository.existsByParty_PartySeqAndUserIdAndStatus(partyId, userId, MemberStatus.ACCEPTED);
     }
 
     // 파티에 참가 중인 멤버 목록
@@ -144,5 +144,13 @@ public class PartyRestController {
     public ResponseEntity<String> kickMember(@PathVariable Long partyId, @PathVariable Long memberId, Principal principal) {
         partyService.kickMember(partyId, memberId, principal.getName());
         return ResponseEntity.ok("KICKED");
+    }
+
+    /* 파티 나가기 */
+    @DeleteMapping("/{partyId}/members/leave")
+    public ResponseEntity<String> leaveParty(@PathVariable Long partyId,
+                                             @AuthenticationPrincipal(expression = "username") String userId) {
+        partyService.leaveParty(partyId, userId);
+        return ResponseEntity.ok("LEAVED");
     }
 }

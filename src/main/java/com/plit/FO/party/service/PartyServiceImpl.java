@@ -11,6 +11,7 @@ import com.plit.FO.party.entity.PartyMemberEntity;
 import com.plit.FO.party.repository.PartyFindPositionRepository;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.repository.PartyRepository;
+import com.plit.FO.user.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,12 +27,14 @@ public class PartyServiceImpl implements PartyService {
     private final PartyFindPositionRepository positionRepository;
     private final PartyFindPositionRepository partyFindPositionRepository;
     private final PartyMemberRepository partyMemberRepository;
+    private final UserRepository userRepository;
 
-    public PartyServiceImpl(PartyRepository partyRepository, PartyFindPositionRepository positionRepository, PartyFindPositionRepository partyFindPositionRepository, PartyMemberRepository partyMemberRepository) {
+    public PartyServiceImpl(PartyRepository partyRepository, PartyFindPositionRepository positionRepository, PartyFindPositionRepository partyFindPositionRepository, PartyMemberRepository partyMemberRepository, UserRepository userRepository) {
         this.partyRepository = partyRepository;
         this.positionRepository = positionRepository;
         this.partyFindPositionRepository = partyFindPositionRepository;
         this.partyMemberRepository = partyMemberRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -50,14 +53,20 @@ public class PartyServiceImpl implements PartyService {
     @Override
     @Transactional
     public void saveParty(PartyDTO dto, String userId) {
+        int calculatedMax;
+
+        if ("solo".equals(dto.getPartyType())) {
+            calculatedMax = 2; // 파티장 + 1명
+        } else {
+            calculatedMax = (dto.getPositions() != null && dto.getPositions().contains("ALL"))
+                    ? 5
+                    : Math.min((dto.getPositions() != null ? dto.getPositions().size() : 0) + 1, 5);
+        }
+
         // 종료일이 현재보다 과거인 경우 예외 처리
         if (dto.getPartyEndTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("종료일은 현재보다 미래여야 합니다.");
         }
-
-        int calculatedMax = (dto.getPositions() != null && dto.getPositions().contains("ALL"))
-                ? 5
-                : Math.min((dto.getPositions() != null ? dto.getPositions().size() : 0) + 1, 5);
 
         PartyEntity party = PartyEntity.builder()
                 .partyName(dto.getPartyName())
@@ -65,7 +74,7 @@ public class PartyServiceImpl implements PartyService {
                 .partyStatus(PartyStatus.valueOf(dto.getPartyStatus()))
                 .partyCreateDate(LocalDateTime.now())
                 .partyEndTime(dto.getPartyEndTime())
-                .partyHeadcount(1) // 파티장 1명
+                .partyHeadcount(1)
                 .partyMax(calculatedMax)
                 .memo(dto.getMemo())
                 .mainPosition(dto.getMainPosition())
@@ -74,7 +83,6 @@ public class PartyServiceImpl implements PartyService {
 
         partyRepository.save(party);
 
-        // 모집 포지션 저장
         if (dto.getPositions() != null) {
             List<PartyFindPositionEntity> positionEntities = dto.getPositions().stream()
                     .map(pos -> PartyFindPositionEntity.builder()
@@ -85,7 +93,6 @@ public class PartyServiceImpl implements PartyService {
             partyFindPositionRepository.saveAll(positionEntities);
         }
 
-        // 파티장을 멤버로 등록
         PartyMemberEntity leader = PartyMemberEntity.builder()
                 .party(party)
                 .userId(userId)
@@ -180,10 +187,6 @@ public class PartyServiceImpl implements PartyService {
         PartyEntity party = partyRepository.findById(partySeq)
                 .orElseThrow(() -> new IllegalArgumentException("해당 파티가 존재하지 않습니다."));
 
-        if (!"team".equals(party.getPartyType())) {
-            throw new IllegalStateException("자유랭크 파티만 참가할 수 있습니다.");
-        }
-
         if (party.getPartyStatus() == PartyStatus.FULL || party.getPartyStatus() == PartyStatus.CLOSED) {
             throw new IllegalStateException("마감된 파티에는 참가할 수 없습니다.");
         }
@@ -193,7 +196,7 @@ public class PartyServiceImpl implements PartyService {
         }
 
         // 인원수 조건은 현재 ACCEPTED 된 멤버만 체크
-        int acceptedCount = partyMemberRepository.countByParty_PartySeqAndStatus(partySeq, "ACCEPTED");
+        int acceptedCount = partyMemberRepository.countByParty_PartySeqAndStatus(partySeq, MemberStatus.ACCEPTED);
         if (acceptedCount >= party.getPartyMax()) {
             throw new IllegalStateException("파티 인원이 가득 찼습니다.");
         }
@@ -245,7 +248,7 @@ public class PartyServiceImpl implements PartyService {
 
     @Override
     public List<String> getPartyMembers(Long partySeq) {
-        return partyMemberRepository.findByParty_PartySeqAndStatus(partySeq, "ACCEPTED").stream()
+        return partyMemberRepository.findByParty_PartySeqAndStatus(partySeq, MemberStatus.ACCEPTED).stream()
                 .map(PartyMemberEntity::getUserId)
                 .collect(Collectors.toList());
     }
@@ -268,7 +271,7 @@ public class PartyServiceImpl implements PartyService {
         }
 
         // 포지션 중복 수락 제한 (단, ALL은 중복 허용)
-        List<PartyMemberEntity> acceptedMembers = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, "ACCEPTED");
+        List<PartyMemberEntity> acceptedMembers = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED);
         boolean isAllPosition = "ALL".equalsIgnoreCase(member.getPosition());
 
         if (!isAllPosition) {
@@ -297,8 +300,14 @@ public class PartyServiceImpl implements PartyService {
     @Override
     public List<PartyMemberDTO> getPartyMemberDTOs(Long partySeq) {
         PartyEntity party = partyRepository.findById(partySeq).orElseThrow();
+
         return partyMemberRepository.findByParty(party).stream()
-                .map(PartyMemberDTO::new)
+                .map(member -> {
+                    Integer userSeq = userRepository.findByUserNickname(member.getUserId())
+                            .map(user -> user.getUserSeq())
+                            .orElse(null); // 없으면 null로 설정
+                    return new PartyMemberDTO(member, userSeq);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -337,6 +346,25 @@ public class PartyServiceImpl implements PartyService {
         partyMemberRepository.delete(member);
 
         // 인원수 업데이트 (필요시)
+        party.setPartyHeadcount(party.getPartyHeadcount() - 1);
+        partyRepository.save(party);
+    }
+
+    /* 파티 나가기 */
+    @Override
+    @Transactional
+    public void leaveParty(Long partyId, String userId) {
+        PartyMemberEntity member = partyMemberRepository
+                .findByParty_PartySeqAndUserId(partyId, userId)
+                .orElseThrow(() -> new IllegalStateException("파티 참가 기록이 없습니다."));
+
+        if (member.getStatus() != MemberStatus.ACCEPTED) {
+            throw new IllegalStateException("수락된 멤버만 탈퇴할 수 있습니다.");
+        }
+
+        partyMemberRepository.delete(member);
+
+        PartyEntity party = member.getParty();
         party.setPartyHeadcount(party.getPartyHeadcount() - 1);
         partyRepository.save(party);
     }

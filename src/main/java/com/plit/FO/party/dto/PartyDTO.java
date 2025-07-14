@@ -6,16 +6,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.plit.FO.party.entity.PartyFindPositionEntity;
-
 import java.util.stream.Collectors;
 
-import com.plit.FO.party.entity.PartyEntity;
-import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -56,7 +48,7 @@ public class PartyDTO {
                 .collect(Collectors.toList());
 
         this.members = entity.getPartyMembers().stream()
-                .map(PartyMemberDTO::new)
+                .map(member -> new PartyMemberDTO(member, null))
                 .collect(Collectors.toList());
     }
 }

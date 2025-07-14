@@ -22,4 +22,5 @@ public interface PartyService {
     MemberStatus getJoinStatus(Long partyId, String userId);
     boolean existsByParty_PartySeqAndStatusAndPosition(Long partyId, String status, String position);
     void kickMember(Long partyId, Long memberId, String requesterId);
+    void leaveParty(Long partyId, String userId);
 }

@@ -302,7 +302,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
         .then(joinStatus => {
             let joinBtnHtml = '';
 
-            if (type === 'team' && status === 'WAITING') {
+            if (status === 'WAITING') {
                 if (currentUserId === createdBy) {
                     joinBtnHtml = `<p style="color: gray;"><strong>파티장은 참가 신청할 수 없습니다.</strong></p>`;
                 } else if (headcount >= max) {
@@ -340,7 +340,16 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                         const kickBtn = (isOwner && m.userId !== createdBy)
                             ? `<button onclick="kickMember(${seq}, ${m.id})">내보내기</button>`
                             : '';
-                        return `<li>${m.userId} - ${m.message || ''} ${kickBtn}</li>`;
+
+                        const isCurrentUser = m.userId === currentUserId;
+                        const leaveBtn = (!isOwner && isCurrentUser && m.userId !== createdBy)
+                            ? `<button onclick="leaveParty(${seq})">나가기</button>`
+                            : '';
+
+                        return `<li>${m.userId} - ${m.message || ''} ${kickBtn} ${leaveBtn}
+                            <button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>
+                            <button onclick="blockMember('${m.userId}')">차단</button>
+                        </li>`;
                     }).join('')}</ul>`
                     : '<p>참가 멤버 없음</p>';
 
@@ -416,6 +425,35 @@ function kickMember(partyId, memberId) {
         .catch(err => {
             console.error(err);
             alert('서버 오류로 강퇴에 실패했습니다.');
+        });
+}
+
+/* 파티 나가기 */
+function leaveParty(partyId) {
+    if (!confirm("정말 이 파티에서 나가시겠습니까?")) return;
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${partyId}/members/leave`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                alert("파티에서 나갔습니다.");
+                closePartyDetail();
+                loadParties('team');
+            } else {
+                return res.text().then(msg => alert("실패: " + msg));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("나가기 중 오류 발생");
         });
 }
 
@@ -829,4 +867,45 @@ function updatePartyHeadcountFromSelection(popup) {
     }
 
     headcountInput.value = 1;
+}
+
+// 친구 신청 팝업
+function openFriendMemoPopup(nickname) {
+    const memo = prompt("메모를 입력해주세요 (선택):", "");
+    if (memo !== null) {
+        const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+        fetch(`/api/friends/request`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({ toUserId: nickname, memo: memo })
+        })
+            .then(res => {
+                if (res.ok) alert("친구 요청을 보냈습니다.");
+                else alert("친구 요청에 실패했습니다.");
+            });
+    }
+}
+
+
+// 차단
+function blockMember(targetUserId) {
+    if (!confirm("정말로 이 사용자를 차단하시겠습니까?")) return;
+    const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+    fetch(`/api/blocks/direct`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({ blockedUserId: targetUserId })
+    })
+        .then(res => {
+            if (res.ok) alert("차단되었습니다.");
+            else alert("차단에 실패했습니다.");
+        });
 }
