@@ -6,7 +6,7 @@ import com.plit.FO.friend.entity.FriendEntity;
 import java.util.List;
 
 public interface FriendService {
-    FriendDTO sendFriendRequest(Integer fromUserId, Integer toUserId);
+    FriendDTO sendFriendRequest(Integer fromUserId, Integer toUserId, String memo);
     List<FriendDTO> getPendingFriendRequests(Integer currentUserSeq);
     List<FriendDTO> getAcceptedFriends(Integer currentUserSeq);
     void acceptFriendByNo(Integer friendNo, Integer currentUserSeq);

@@ -8,6 +8,7 @@ import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,4 +43,18 @@ public class BlockServiceImpl implements BlockService {
         block.setIsReleased(true);
         blockRepository.save(block); // 상태만 true로 변경
     }
+
+    public void blockUser(Integer blockerId, Integer blockedUserId) {
+        if (blockRepository.existsByBlockerIdAndBlockedUserIdAndIsReleasedFalse(blockerId, blockedUserId)) return;
+
+        BlockEntity block = BlockEntity.builder()
+                .blockerId(blockerId)
+                .blockedUserId(blockedUserId)
+                .blockedAt(LocalDateTime.now())
+                .isReleased(false)
+                .build();
+
+        blockRepository.save(block);
+    }
+
 }

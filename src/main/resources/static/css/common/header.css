@@ -194,3 +194,9 @@ header nav a {
     background-color: #7c4798;
     color: white;
 }
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}

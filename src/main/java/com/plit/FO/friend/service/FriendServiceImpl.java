@@ -30,12 +30,13 @@ public class FriendServiceImpl implements FriendService {
     @Autowired
     private BlockRepository blockRepository;
 
-    public FriendDTO sendFriendRequest(Integer fromUserId, Integer toUserId) {
+    public FriendDTO sendFriendRequest(Integer fromUserId, Integer toUserId, String memo) {
         FriendEntity friend = FriendEntity.builder()
                 .fromUserId(fromUserId)
                 .toUserId(toUserId)
                 .status("PENDING")
                 .createdAt(LocalDateTime.now().toString())
+                .memo(memo)
                 .build();
         FriendEntity saved = friendRepository.save(friend);
         return toDTO(saved);

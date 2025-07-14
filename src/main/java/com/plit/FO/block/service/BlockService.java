@@ -7,4 +7,5 @@ import java.util.List;
 public interface BlockService {
     List<BlockDTO> getBlockedUsersByBlockerId(Integer currentUserId);
     void releaseBlock(Integer blockNo);
+    void blockUser(Integer blockerId, Integer blockedUserId);
 }

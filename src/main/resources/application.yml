@@ -70,5 +70,5 @@ riot:
 # 파일 업로드 경로 설정
 custom:
   upload-path:
-    qna: /Users/minseok/qna/uploads
-    clan: /Users/minseok/dev/plit-image/
+    qna: ${user.dir}/upload/qna
+    clan: ${user.dir}/upload/clan
