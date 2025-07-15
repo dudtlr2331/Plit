@@ -1,5 +1,9 @@
 package com.plit.FO.party.service;
 
+import com.plit.FO.chat.entity.ChatRoomEntity;
+import com.plit.FO.chat.entity.ChatRoomUserEntity;
+import com.plit.FO.chat.repository.ChatRoomRepository;
+import com.plit.FO.chat.repository.ChatRoomUserRepository;
 import com.plit.FO.party.dto.PartyMemberDTO;
 import com.plit.FO.party.enums.MemberStatus;
 import com.plit.FO.party.enums.PartyStatus;
@@ -12,6 +16,7 @@ import com.plit.FO.party.repository.PartyFindPositionRepository;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.repository.PartyRepository;
 import com.plit.FO.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,12 +34,20 @@ public class PartyServiceImpl implements PartyService {
     private final PartyMemberRepository partyMemberRepository;
     private final UserRepository userRepository;
 
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
+
+    @Autowired
+    private ChatRoomUserRepository chatRoomUserRepository;
+
     public PartyServiceImpl(PartyRepository partyRepository, PartyFindPositionRepository positionRepository, PartyFindPositionRepository partyFindPositionRepository, PartyMemberRepository partyMemberRepository, UserRepository userRepository) {
         this.partyRepository = partyRepository;
         this.positionRepository = positionRepository;
         this.partyFindPositionRepository = partyFindPositionRepository;
         this.partyMemberRepository = partyMemberRepository;
         this.userRepository = userRepository;
+        this.chatRoomRepository = chatRoomRepository;
+        this.chatRoomUserRepository = chatRoomUserRepository;
     }
 
     @Override
@@ -102,6 +115,30 @@ public class PartyServiceImpl implements PartyService {
                 .build();
 
         partyMemberRepository.save(leader);
+
+        // 채팅방 생성
+        ChatRoomEntity chatRoom = ChatRoomEntity.builder()
+                .chatRoomType("party")
+                .chatRoomName(party.getPartyName()) // 파티 ID 기반 이름
+                .chatRoomMax(party.getPartyMax())
+                .chatRoomHeadcount(1) // 파티장 포함
+                .chatRoomCreatedAt(LocalDateTime.now())
+                .partyId(party.getPartySeq())
+                .build();
+
+        chatRoomRepository.save(chatRoom);
+
+        // 파티장을 채팅방에 등록
+        ChatRoomUserEntity leaderUser = ChatRoomUserEntity.builder()
+                .chatRoom(chatRoom)
+                .userId(
+                        userRepository.findByUserId(userId).get().getUserSeq().longValue()
+                )
+                .joinedAt(LocalDateTime.now())
+                .build();
+
+        chatRoomUserRepository.save(leaderUser);
+
     }
 
     @Override
@@ -287,6 +324,24 @@ public class PartyServiceImpl implements PartyService {
 
         partyMemberRepository.save(member);
         partyRepository.save(party);
+
+        // 파티 참여 시 채팅방 참가
+        ChatRoomEntity room = chatRoomRepository.findAll().stream()
+                .filter(r -> "party".equals(r.getChatRoomType()) && r.getChatRoomName().equals("party-" + partyId))
+                .findFirst()
+                .orElseThrow();
+
+        ChatRoomUserEntity newUser = ChatRoomUserEntity.builder()
+                .chatRoom(room)
+                .userId(userRepository.findByUserNickname(member.getUserId()).get().getUserSeq().longValue())
+                .joinedAt(LocalDateTime.now())
+                .build();
+        chatRoomUserRepository.save(newUser);
+
+        // 채팅방 인원수 증가
+        room.setChatRoomHeadcount(room.getChatRoomHeadcount() + 1);
+        chatRoomRepository.save(room);
+
     }
 
     @Transactional

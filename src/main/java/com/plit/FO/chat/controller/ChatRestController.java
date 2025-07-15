@@ -3,6 +3,7 @@ package com.plit.FO.chat.controller;
 import com.plit.FO.chat.dto.ChatMessageDTO;
 import com.plit.FO.chat.entity.ChatMessageEntity;
 import com.plit.FO.chat.entity.ChatRoomEntity;
+import com.plit.FO.chat.repository.ChatRoomRepository;
 import com.plit.FO.chat.service.ChatRoomService;
 import com.plit.FO.chat.service.ChatService;
 import com.plit.FO.user.dto.UserDTO;
@@ -26,6 +27,7 @@ public class ChatRestController {
     private final ChatService chatService;
     private final ChatRoomService chatRoomService;
     private final UserService userService;
+    private final ChatRoomRepository chatRoomRepository;
 
     @GetMapping("/{roomId}")
     public List<ChatMessageDTO> getMessages(@PathVariable Long roomId) {
@@ -101,23 +103,27 @@ public class ChatRestController {
         for (ChatRoomEntity room : rooms) {
             int unread = chatService.countUnreadMessages(room.getChatRoomId(), userId);
 
-            List<Long> userIds = chatRoomService.getUserIdsInRoom(room.getChatRoomId());
-            if (userIds.size() != 2) continue;
-
-            Long otherId = userIds.stream()
-                    .filter(id -> !id.equals(userId))
-                    .findFirst()
-                    .orElse(null);
-
-            if (otherId == null) continue;
-
-            UserDTO otherUser = userService.getUserBySeq(otherId.intValue()).orElseThrow(() -> new RuntimeException("상대 유저 정보를 찾을 수 없습니다."));;
-
             Map<String, Object> map = new HashMap<>();
             map.put("roomId", room.getChatRoomId());
-            map.put("otherUserId", otherId);
-            map.put("otherNickname", otherUser.getUserNickname());
             map.put("unreadCount", unread);
+
+            if ("friend".equals(room.getChatRoomType())) {
+                // 기존 친구채팅 로직
+                List<Long> userIds = chatRoomService.getUserIdsInRoom(room.getChatRoomId());
+                Long otherId = userIds.stream().filter(id -> !id.equals(userId)).findFirst().orElse(null);
+                if (otherId != null) {
+                    UserDTO otherUser = userService.getUserBySeq(otherId.intValue())
+                            .orElseThrow(() -> new RuntimeException("상대 유저 정보를 찾을 수 없습니다."));
+                    map.put("type", "friend");
+                    map.put("otherUserId", otherId);
+                    map.put("otherNickname", otherUser.getUserNickname());
+                }
+            } else if ("party".equals(room.getChatRoomType())) {
+                // 파티채팅 로직 추가
+                map.put("type", "party");
+                map.put("partyName", room.getChatRoomName()); // partyName으로 저장해둔 값
+                map.put("partyId", room.getPartyId());
+            }
 
             result.add(map);
         }
@@ -125,5 +131,13 @@ public class ChatRestController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/room/party/{partyId}")
+    public ResponseEntity<Long> getPartyChatRoom(@PathVariable Long partyId) {
+        ChatRoomEntity room = chatRoomRepository.findAll().stream()
+                .filter(r -> "party".equals(r.getChatRoomType()) && partyId.equals(r.getPartyId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("채팅방이 없습니다."));
+        return ResponseEntity.ok(room.getChatRoomId());
+    }
 
 }
