@@ -1,0 +1,298 @@
+/* ================================
+   기본 설정
+================================ */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #fff;
+}
+
+/* ================================
+   컨테이너
+================================ */
+.container {
+    max-width: 1100px;
+    margin: 30px auto 0;
+    padding: 0 20px;
+    flex: 1;
+}
+
+/* ================================
+   검색바
+================================ */
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: flex-start;
+}
+
+.search-bar input[type="text"] {
+    padding: 8px 12px;
+    width: 180px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.search-bar button {
+    padding: 8px 12px;
+    font-size: 16px;
+    background: #eee;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#openReportPopup {
+    margin-left: auto;
+    background: #6570b4;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+#openReportPopup:hover {
+    background: linear-gradient(to right, #8d5aa8, #7383c0);
+}
+
+/* ================================
+   테이블
+================================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border-bottom: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+th {
+    background: #6570b4;
+    color: white;
+}
+
+tr:hover {
+    background: #f9f9f9;
+}
+
+/* ================================
+   소환사 정보
+================================ */
+.summoner-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-direction: row;
+}
+
+.profile-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #000;
+}
+
+.summoner-name {
+    font-weight: bold;
+}
+
+.summoner-tag {
+    font-size: 12px;
+    color: gray;
+}
+
+.tier-icon {
+    width: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.memo-input {
+    background: #f3f3f3;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.time-ago {
+    font-size: 13px;
+    color: #666;
+}
+
+/* ================================
+   신고 버튼
+================================ */
+.report-btn {
+    background: #6570b4;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s ease;
+}
+.report-btn:hover {
+    background: linear-gradient(to right, #8d5aa8, #7383c0);
+}
+
+/* ================================
+   신고 팝업
+================================ */
+#reportPopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 600px;
+    background: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    padding: 20px;
+    z-index: 1000;
+}
+
+#reportPopup h2 {
+    margin-top: 0;
+    color: #7c4798;
+}
+
+#reportPopup input,
+#reportPopup textarea {
+    width: 90%;
+    padding: 8px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+#reportPopup textarea {
+    height: 220px;
+    resize: none;
+}
+
+#reportPopup button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#reportPopup button:first-of-type {
+    background: #eee;
+    border: none;
+}
+#reportPopup button:last-of-type {
+    background: #6570b4;
+    color: #fff;
+    border: none;
+}
+#reportPopup button:last-of-type:hover {
+    background: linear-gradient(to right, #8d5aa8, #7383c0);
+}
+
+/* ================================
+   채팅 리스트 팝업
+================================ */
+#chatList {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    display: none;
+    width: 250px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1000;
+}
+#chatList .chat-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+/* ================================
+   채팅 팝업
+================================ */
+.chat-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    width: 300px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1000;
+}
+.chat-popup .chat-header {
+    display: flex;
+    justify-content: space-between;
+    background: #6570b4;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 8px 8px 0 0;
+}
+.chat-popup .chat-body {
+    height: 200px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    margin: 10px 0;
+    padding: 10px;
+}
+.chat-popup input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* ================================
+   footer
+================================ */
+footer {
+    background: #222;
+    color: white;
+    padding: 30px 20px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+footer a {
+    color: white;
+    margin-right: 10px;
+    text-decoration: none;
+}
+
+.footer-nav {
+    margin-bottom: 10px;
+}
+
+.footer-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
