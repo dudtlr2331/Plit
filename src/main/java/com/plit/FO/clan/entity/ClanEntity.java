@@ -32,7 +32,7 @@ public class ClanEntity {
     private String discordLink;  // 디스코드 초대 링크
 
     @Column(name = "tier", length = 30)
-    private String tier;  // 클랜 자체 티어 수준 (선택사항)
+    private String tier;  // 클랜 자체 티어 수준
 
     @Column(name = "min_tier", length = 30)
     private String minTier;  // 가입 가능한 최소 티어

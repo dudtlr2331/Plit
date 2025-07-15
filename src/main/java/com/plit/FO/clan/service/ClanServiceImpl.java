@@ -133,7 +133,7 @@ public class ClanServiceImpl implements ClanService {
             File dir = new File(uploadDir);
             if (!dir.exists()) dir.mkdirs();
             imageFile.transferTo(new File(dir, fileName));
-            existing.setImageUrl("/uploads/clan/" + fileName);
+            existing.setImageUrl("/upload/clan/" + fileName);
         }
 
         clanRepository.save(existing);

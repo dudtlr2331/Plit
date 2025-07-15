@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="_csrf" th:content="${_csrf.token}">
@@ -11,7 +12,7 @@
     <link rel="stylesheet" href="/css/common/header.css" />
 </head>
 
-<body>
+<body class="clan-detail">
 <!-- 상단 헤더 -->
 <div th:replace="~{fo/common/header :: header}"></div>
 
@@ -44,10 +45,17 @@
         <!-- 탭 -->
         <div class="clan-tabs">
             <a class="tab tab-btn active" onclick="showTab('intro')">소개</a>
-            <th:block th:if="${role == 'LEADER'}">
-                <a class="tab tab-btn" onclick="showTab('members')">멤버</a>
-                <a class="tab tab-btn" onclick="showTab('pending')">수락 대기 중인 멤버</a>
-            </th:block>
+
+            <a class="tab tab-btn"
+               th:if="${role == 'LEADER' or role == 'MEMBER' or role == 'GUEST'}"
+               onclick="showTab('members')">멤버</a>
+
+            <a class="tab tab-btn"
+               th:if="${role == 'LEADER'}"
+               onclick="showTab('pending')">
+                수락 대기 중인 멤버
+                <span th:if="${pendingCount > 0}" class="badge bg-danger" th:text="${pendingCount}"></span>
+            </a>
         </div>
 
         <div id="memberCountLabel" class="clan-member-count-container hidden">
@@ -89,7 +97,9 @@
                     <div class="member-cell">관리</div>
                 </div>
 
-                <div class="member-row" th:each="member : ${members}">
+                <div class="member-row"
+                     th:each="member : ${members}"
+                     th:classappend="${member.memberId == currentUserId} ? ' current-user'">
                     <!-- 소환사명 + 리더 왕관 -->
                     <div class="member-cell name">
                         <strong th:text="${member.nickname}">닉네임</strong>
@@ -154,7 +164,7 @@
 
                     <!-- 최근 챔피언 -->
                     <div class="member-cell champions">
-                        <!-- 추후 이미지 삽입 -->
+                        <!-- 추후 api -->
                     </div>
 
                     <!-- 승률 -->
@@ -168,15 +178,20 @@
                          th:text="${#strings.isEmpty(member.intro) ? '소개글 없음' : member.intro}">
                     </div>
                     <!-- 가입일 -->
-                    <div class="member-cell">3일 전</div>
+                    <div class="member-cell" th:text="${member.joinedAgo}">가입일</div>
 
                     <!-- 관리 -->
-                    <div class="member-cell" th:if="${member.role != 'LEADER'}">
-                        <button class="btn-small">위임</button>
-                        <button class="btn-small danger">추방</button>
+                    <div class="member-cell manage-cell"
+                         th:if="${role == 'LEADER' and member != null and member.memberId != null and member.role != null and member.role != 'LEADER'}">
+                        <button class="btn-small"
+                                th:onclick="'delegateLeader(' + ${clan.id} + ', ' + ${member.memberId} + ')'">위임</button>
+                        <button class="btn-small danger"
+                                th:onclick="'kickMember(' + ${clan.id} + ', ' + ${member.memberId} + ')'">추방</button>
                     </div>
+
                     <!-- 관리 -->
-                    <div class="member-cell" th:if="${member.role == 'LEADER'}">
+                    <div class="member-cell manage-cell"
+                         th:if="${member != null and currentUserId != null and member.memberId == currentUserId}">
                         <button class="btn-icon edit-btn"
                                 th:attr="data-main-position=${member.mainPosition}"
                                 onclick="openEditMemberModalByAttr(this)"
@@ -191,93 +206,120 @@
             </div>
         </div>
 
-            <!-- 수락 대기 탭을 바깥으로 분리함 -->
-            <div class="tab-section hidden" id="pending">
-                <div class="pending-table">
-                    <div class="pending-row header-row">
-                        <div class="pending-cell name">소환사명</div>
-                        <div class="pending-cell">티어</div>
-                        <div class="pending-cell">주포지션</div>
-                        <div class="pending-cell">소개</div>
-                        <div class="pending-cell">신청일</div>
-                        <div class="pending-cell">관리</div>
+            <!-- 수락 대기 탭 -->
+        <div class="tab-section hidden" id="pending">
+            <div class="member-table">
+                <div class="member-row header-row">
+                    <div class="member-cell name">소환사명</div>
+                    <div class="member-cell">티어</div>
+                    <div class="member-cell">주포지션</div>
+                    <div class="member-cell">최근 챔피언</div>
+                    <div class="member-cell">승률</div>
+                    <div class="member-cell">KDA</div>
+                    <div class="member-cell">소개</div>
+                    <div class="member-cell">신청일</div>
+                    <div class="member-cell">관리</div>
+                </div>
+
+                <div class="member-row" th:if="${#lists.isEmpty(pendingMembers)}"
+                     style="display: flex; justify-content: center; align-items: center; height: 80px;">
+                    <div style="color: gray; font-weight: normal;">
+                        가입 신청한 유저가 없습니다.
+                    </div>
+                </div>
+
+                <div class="member-row" th:each="member : ${pendingMembers}">
+                    <!-- 소환사명 -->
+                    <div class="member-cell name">
+                        <strong th:text="${member.nickname}">닉네임</strong>
                     </div>
 
-                    <div class="pending-row" th:each="member : ${pendingMembers}">
-                        <div class="pending-cell name">
-                            <strong th:text="${member.nickname}">닉네임</strong>
+                    <!-- 티어 -->
+                    <div class="member-cell" th:text="${member.tier} ?: 'Unranked'">Unranked</div>
+
+                    <!-- 주포지션 -->
+                    <div class="member-cell">
+                        <div class="position-icon" th:switch="${member.mainPosition}">
+                            <svg th:case="'TOP'" width="24" height="24" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-label="탑">
+                                <path d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
+                                <path d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z" class="fill-area"/>
+                            </svg>
+
+                            <!-- JUNGLE  -->
+                            <svg th:case="'JUNGLE'" width="24" height="24" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-label="정글"
+                                 class="active">
+                                <path d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"
+                                      class="fill-area"/>
+                            </svg>
+
+                            <!-- MID -->
+                            <svg th:case="'MID'" width="24" height="24" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-label="미드">
+                                <path d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z" />
+                                <path class="fill-area" d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z" />
+                            </svg>
+
+                            <!-- ADC -->
+                            <svg th:case="'ADC'" width="24" height="24" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-label="원딜">
+                                <path d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" stroke="none" />
+                                <path d="M2 2h17.172l-3 3H5v11.172l-3 3V2zM9 9h6v6H9V9z" class="fill-area" />
+                            </svg>
+
+                            <!-- SUPPORT -->
+                            <svg th:case="'SUPPORT'" width="24" height="24" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-label="서포터"
+                                 class="active">
+                                <path class="fill-area" d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237z"/>
+                                <path class="fill-area" d="M14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255z"/>
+                                <path class="fill-area" d="M10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237z"/>
+                                <path class="fill-area" d="M9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255z"/>
+                                <path class="fill-area" d="M9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"/>
+                            </svg>
+
+                            <!-- ALL ROUND -->
+                            <svg th:case="'ALL'" width="24" height="24" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-label="올라운더"
+                                 class="active">
+                                <path class="fill-area" d="M16.2928076,17.0307921 C16.6549683,17.6584306 16.4399705,18.4608135 15.8125108,18.8232841 C15.1844161,19.1872046 14.3817451,18.9719172 14.0194579,18.3440595 L11.8751153,14.6269842 L9.73077279,18.3440595 C9.36848556,18.9719172 8.56581451,19.1872046 7.93795682,18.8249174 C7.31026014,18.4608135 7.09526232,17.6584306 7.45742309,17.0307921 L9.60202464,13.3132678 L5.31251922,13.3132678 C4.58763487,13.3132678 4,12.7256329 4,12.0007486 C4,11.2743674 4.58763487,10.6867325 5.31251922,10.6867325 L9.60202464,10.6867325 L7.45742309,6.96920825 C7.09526232,6.34156972 7.31026014,5.53918682 7.93771981,5.17671625 C8.56581451,4.8127957 9.36848556,5.0280831 9.73077279,5.65594079 L11.8751153,9.37301611 L14.0194579,5.65594079 C14.3817451,5.0280831 15.1844161,4.8127957 15.8122738,5.17508293 C16.4399705,5.53918682 16.6549683,6.34156972 16.2928076,6.96920825 L14.148206,10.6867325 L18.4377114,10.6867325 C19.1625958,10.6867325 19.7502307,11.2743674 19.7502307,11.9992518 C19.7502307,12.7256329 19.1625958,13.3132678 18.4377114,13.3132678 L14.148206,13.3132678 L16.2928076,17.0307921 Z"/>
+                            </svg>
+
                         </div>
-                        <div class="pending-cell" th:text="${member.tier} ?: 'Unranked'">Unranked</div>
-                        <div class="member-cell">
-                            <div class="position-icon" th:switch="${member.mainPosition}">
+                    </div>
 
-                                <!-- TOP -->
-                                <svg th:case="'TOP'" width="24" height="24" viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg" aria-label="탑">
-                                    <path d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
-                                    <path d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z" class="fill-area"/>
-                                </svg>
+                    <!-- 최근 챔피언 -->
+                    <div class="member-cell champions">
+                        <!-- 추후 api로 교체 -->
+                    </div>
 
-                                <!-- JUNGLE  -->
-                                <svg th:case="'JUNGLE'" width="24" height="24" viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg" aria-label="정글"
-                                     class="active">
-                                    <path d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"
-                                          class="fill-area"/>
-                                </svg>
+                    <!-- 승률 -->
+                    <div class="member-cell">--%</div>
 
-                                <!-- MID -->
-                                <svg th:case="'MID'" width="24" height="24" viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg" aria-label="미드">
-                                    <path d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z" />
-                                    <path class="fill-area" d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z" />
-                                </svg>
+                    <!-- KDA -->
+                    <div class="member-cell">-- / -- / --</div>
 
-                                <!-- ADC -->
-                                <svg th:case="'ADC'" width="24" height="24" viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg" aria-label="원딜">
-                                    <path d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" stroke="none" />
-                                    <path d="M2 2h17.172l-3 3H5v11.172l-3 3V2zM9 9h6v6H9V9z" class="fill-area" />
-                                </svg>
+                    <!-- 소개 -->
+                    <div class="member-cell intro"
+                         th:text="${#strings.isEmpty(member.intro) ? '소개글 없음' : member.intro}">소개글</div>
 
-                                <!-- SUPPORT -->
-                                <svg th:case="'SUPPORT'" width="24" height="24" viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg" aria-label="서포터"
-                                     class="active">
-                                    <path class="fill-area" d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237z"/>
-                                    <path class="fill-area" d="M14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255z"/>
-                                    <path class="fill-area" d="M10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237z"/>
-                                    <path class="fill-area" d="M9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255z"/>
-                                    <path class="fill-area" d="M9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"/>
-                                </svg>
+                    <!-- 신청일 -->
+                    <div class="member-cell"
+                         th:text="${member.requestAt != null ? #temporals.format(member.requestAt, '  yyyy-MM-dd') : '날짜 없음'}">
+                        2025-07-15 15:49
+                    </div>
 
-                                <!-- ALL ROUND -->
-                                <svg th:case="'ALL'" width="24" height="24" viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg" aria-label="올라운더"
-                                     class="active">
-                                    <path class="fill-area" d="M16.2928076,17.0307921 C16.6549683,17.6584306 16.4399705,18.4608135 15.8125108,18.8232841 C15.1844161,19.1872046 14.3817451,18.9719172 14.0194579,18.3440595 L11.8751153,14.6269842 L9.73077279,18.3440595 C9.36848556,18.9719172 8.56581451,19.1872046 7.93795682,18.8249174 C7.31026014,18.4608135 7.09526232,17.6584306 7.45742309,17.0307921 L9.60202464,13.3132678 L5.31251922,13.3132678 C4.58763487,13.3132678 4,12.7256329 4,12.0007486 C4,11.2743674 4.58763487,10.6867325 5.31251922,10.6867325 L9.60202464,10.6867325 L7.45742309,6.96920825 C7.09526232,6.34156972 7.31026014,5.53918682 7.93771981,5.17671625 C8.56581451,4.8127957 9.36848556,5.0280831 9.73077279,5.65594079 L11.8751153,9.37301611 L14.0194579,5.65594079 C14.3817451,5.0280831 15.1844161,4.8127957 15.8122738,5.17508293 C16.4399705,5.53918682 16.6549683,6.34156972 16.2928076,6.96920825 L14.148206,10.6867325 L18.4377114,10.6867325 C19.1625958,10.6867325 19.7502307,11.2743674 19.7502307,11.9992518 C19.7502307,12.7256329 19.1625958,13.3132678 18.4377114,13.3132678 L14.148206,13.3132678 L16.2928076,17.0307921 Z"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="pending-cell intro"
-                             th:text="${#strings.isEmpty(member.intro) ? '소개글 없음' : member.intro}">
-                        </div>
-                        <div class="pending-cell"
-                             th:text="${member.requestAt != null ? #temporals.format(member.requestAt, 'yyyy-MM-dd HH:mm') : '날짜 없음'}">
-                        </div>
-                        <div class="pending-cell">
-                            <button class="btn-small"
-                                    th:onclick="'approveRequest(' + ${clan.id} + ',' + ${member.userId} + ')'">
-                                수락
-                            </button>
-                            <button class="btn-small danger"
-                                    th:onclick="'rejectRequest(' + ${clan.id} + ',' + ${member.userId} + ')'">
-                                거절
-                            </button>
-                        </div>
+                    <!-- 수락/거절 버튼 -->
+                    <div class="member-cell manage-cell">
+                        <button class="btn-small"
+                                th:onclick="'approveRequest(' + ${clan.id} + ',' + ${member.userId} + ')'">수락</button>
+                        <button class="btn-small danger"
+                                th:onclick="'rejectRequest(' + ${clan.id} + ',' + ${member.userId} + ')'">거절</button>
                     </div>
                 </div>
             </div>
+        </div>
 
 
         <!-- 고정 하단 버튼 -->
@@ -285,16 +327,17 @@
             <div class="action-buttons" id="editButtons">
 
                 <!-- 클랜 리더일 경우 -->
-                <th:block th:if="${role == 'LEADER'}">
+                <th:block th:if="${role == 'LEADER' and currentUserId == clan.leaderId}">
                     <button type="button" class="btn" onclick="openEditModal()">수정</button>
-                    <form method="post" th:action="@{/clan/delete/{id}(id=${clan.id})}" style="display:inline;">
+                    <form method="post" th:action="@{/clan/delete/{id}(id=${clan.id})}" id="deleteForm" style="display:inline;">
                         <button type="button" class="btn" onclick="confirmDelete()">삭제</button>
                     </form>
                 </th:block>
 
                 <!-- 클랜 멤버일 경우 -->
                 <th:block th:if="${role == 'MEMBER'}">
-                    <button class="btn">클랜 탈퇴</button>
+                    <button class="btn danger"
+                            th:onclick="'confirmLeaveClan(' + ${clan.id} + ')'">클랜 탈퇴</button>
                 </th:block>
 
                 <!-- 로그인, 비회원-->
@@ -329,14 +372,13 @@
         <div class="member-info">
             <div class="nickname">
                 <strong th:text="${editMember != null} ? ${editMember.nickname} : '소환사명'">소환사명</strong>
-                <!--                <span class="tag" th:text="${editMember != null} ? '#' + ${editMember.tag} : '#0000'">#0000</span>-->
             </div>
         </div>
 
         <label>주 포지션</label>
         <div class="position-select">
 
-            <!-- 올라운더 (ALL): 전체 강조 -->
+            <!-- 올라운더 -->
             <span class="edit-position-btn position-btn" data-position="ALL" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ALL">
@@ -345,7 +387,7 @@
     </div>
   </span>
 
-            <!-- 탑 (TOP): 내부 강조, 외부 회색 -->
+            <!-- 탑 -->
             <span class="edit-position-btn position-btn" data-position="TOP" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TOP">
@@ -355,7 +397,7 @@
     </div>
   </span>
 
-            <!-- 정글 (JUNGLE): 전체 강조 -->
+            <!-- 정글  -->
             <span class="edit-position-btn position-btn" data-position="JUNGLE" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="JUNGLE">
@@ -364,7 +406,7 @@
     </div>
   </span>
 
-            <!-- 미드 (MID): 선 강조, 배경 회색 -->
+            <!-- 미드 -->
             <span class="edit-position-btn position-btn" data-position="MID" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="MID">
@@ -374,7 +416,7 @@
     </div>
   </span>
 
-            <!-- 원딜 (ADC): 안쪽 강조, 테두리 회색 -->
+            <!-- 원딜 -->
             <span class="edit-position-btn position-btn" data-position="ADC" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ADC">
@@ -384,7 +426,7 @@
     </div>
   </span>
 
-            <!-- 서포터 (SUPPORT): 전체 강조 -->
+            <!-- 서포터 -->
             <span class="edit-position-btn position-btn" data-position="SUPPORT" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="SUPPORT">
@@ -400,11 +442,11 @@
         </div>
 
         <label>소개</label>
-        <!--        <textarea id="memberIntro" placeholder="나를 소개해주세요." th:text="${editMember != null} ? ${editMember.intro} : ''"></textarea>-->
+
         <textarea id="memberIntro"
                   name="intro"
-                  maxlength="14"
-                  placeholder="나를 소개해주세요. 최대 14자까지 가능합니다."
+                  maxlength="15"
+                  placeholder="나를 소개해주세요. 최대 15자까지 가능합니다."
                   th:if="${editMember != null}"
                   th:text="${#strings.isEmpty(editMember.intro) ? '' : editMember.intro}">
 </textarea>
@@ -492,7 +534,7 @@
         <label>주 포지션</label>
         <div class="position-select">
 
-            <!-- 올라운더 (ALL): 전체 강조 -->
+            <!-- 올라운더 -->
             <span class="edit-position-btn position-btn" data-position="ALL" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ALL">
@@ -501,7 +543,7 @@
     </div>
   </span>
 
-            <!-- 탑 (TOP): 내부 강조, 외부 회색 -->
+            <!-- 탑 -->
             <span class="edit-position-btn position-btn" data-position="TOP" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TOP">
@@ -511,7 +553,7 @@
     </div>
   </span>
 
-            <!-- 정글 (JUNGLE): 전체 강조 -->
+            <!-- 정글 -->
             <span class="edit-position-btn position-btn" data-position="JUNGLE" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="JUNGLE">
@@ -520,7 +562,7 @@
     </div>
   </span>
 
-            <!-- 미드 (MID): 선 강조, 배경 회색 -->
+            <!-- 미드 -->
             <span class="edit-position-btn position-btn" data-position="MID" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="MID">
@@ -530,7 +572,7 @@
     </div>
   </span>
 
-            <!-- 원딜 (ADC): 안쪽 강조, 테두리 회색 -->
+            <!-- 원딜 -->
             <span class="edit-position-btn position-btn" data-position="ADC" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ADC">
@@ -540,7 +582,7 @@
     </div>
   </span>
 
-            <!-- 서포터 (SUPPORT): 전체 강조 -->
+            <!-- 서포터 -->
             <span class="edit-position-btn position-btn" data-position="SUPPORT" onclick="selectPosition(this)">
     <div class="position-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="SUPPORT">
@@ -590,316 +632,7 @@
 <!--        </div>-->
 <!--    </div>-->
 <!--</footer>-->
-<script>
-    function toggleChatList() {
-        alert('채팅 리스트 열기 구현 필요');
-    }
 
-    function showTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-section').forEach(section => section.classList.add('hidden'));
-
-        const targetTabBtn = document.querySelector(`.tab-btn[onclick*='${tab}']`);
-        if (targetTabBtn) {
-            targetTabBtn.classList.add('active');
-        }
-
-        const targetSection = document.getElementById(tab);
-        if (targetSection) {
-            targetSection.classList.remove('hidden');
-        }
-
-        const actionButtons = document.getElementById('editButtons');
-        if (tab === 'intro') {
-            actionButtons.style.display = 'block';
-        } else {
-            actionButtons.style.display = 'none';
-        }
-
-        const memberLabel = document.getElementById('memberCountLabel');
-        if (memberLabel) {
-            memberLabel.style.display = (tab === 'members') ? 'flex' : 'none';
-        }
-
-        if (tab === 'members') {
-            if (typeof loadMemberList === 'function') {
-                loadMemberList();
-            }
-        }
-    }
-
-    function confirmDelete() {
-        const isSure = confirm("정말 삭제하시겠습니까?");
-        if (isSure) {
-            document.getElementById("deleteForm").submit();
-        }
-    }
-
-    function openEditModal() {
-        const modal = document.getElementById("editClanModal");
-        modal.style.display = "flex";
-        modal.style.justifyContent = "center";
-        modal.style.alignItems = "center";
-    }
-
-    function closeEditModal() {
-        const modal = document.getElementById("editClanModal");
-        modal.style.display = "none";
-    }
-
-    function validateImageRatio(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const img = new Image();
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            img.src = e.target.result;
-        };
-
-        img.onload = function () {
-            const width = img.width;
-            const height = img.height;
-            const ratio = width / height;
-
-            const minRatio = 0.5;
-            const maxRatio = 2.5;
-
-            if (ratio < minRatio || ratio > maxRatio) {
-                alert("업로드 전 이미지 비율을 확인해주세요.\n\n4:3 비율 이미지 (예: 800×600, 1200×900, 1600×1200)가 가장 예쁘게 보여요!");
-                event.target.value = "";
-                document.getElementById("imagePreview").src = "";
-            } else {
-                document.getElementById("imagePreview").src = img.src;
-            }
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-    function openEditMemberModal(position) {
-        const modal = document.getElementById("editMemberModal");
-
-        document.querySelectorAll(".position-btn").forEach(btn => btn.classList.remove("active"));
-
-        if (position) {
-            const btn = document.querySelector(`.position-btn[data-position="${position}"]`);
-            if (btn) btn.classList.add("active");
-        }
-
-        modal.style.display = "flex";
-        modal.style.justifyContent = "center";
-        modal.style.alignItems = "center";
-
-        selectedPosition = position;
-    }
-
-    function openEditMemberModalByAttr(button) {
-        const position = button.getAttribute('data-main-position');
-        openEditMemberModal(position);
-    }
-
-    function closeEditMemberModal() {
-        const modal = document.getElementById("editMemberModal");
-        modal.style.display = "none";
-    }
-
-    let selectedPosition = null;
-
-    function selectPosition(element) {
-        document.querySelectorAll(".position-btn").forEach(btn => btn.classList.remove("active"));
-        element.classList.add("active");
-        selectedPosition = element.getAttribute("data-position");
-    }
-
-    function submitMemberEdit() {
-        const intro = document.getElementById("memberIntro").value;
-        const position = selectedPosition;
-
-        if (!position) {
-            alert("주 포지션을 선택해주세요.");
-            return;
-        }
-
-        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute("content");
-
-        const data = {
-            clanId: parseInt(document.getElementById("clanId").value),
-            intro: intro,
-            mainPosition: position
-        };
-
-        fetch('/clan/member/update', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            },
-            body: JSON.stringify(data)
-        })
-            .then(async res => {
-                const text = await res.text();
-                if (res.ok) {
-                    alert("멤버 수정 완료!");
-                    closeEditMemberModal();
-                    sessionStorage.setItem("justEdited", "true");
-                    location.reload();
-                } else {
-                    alert("수정 실패: " + text);
-                }
-            })
-            .catch(err => {
-                alert("요청 실패: " + err);
-            });
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const justEdited = sessionStorage.getItem("justEdited");
-        const handledTab = sessionStorage.getItem("justHandledTab");
-
-        if (justEdited === "true") {
-            showTab("members");
-            sessionStorage.removeItem("justEdited");
-        } else if (handledTab) {
-            showTab(handledTab);
-            sessionStorage.removeItem("justHandledTab");
-        } else {
-            showTab("intro");
-        }
-    });
-
-    // 클랜 가입 신청
-
-    function openJoinClanModal() {
-        const modal = document.getElementById("joinClanModal");
-        modal.style.display = "flex";
-        modal.style.justifyContent = "center";
-        modal.style.alignItems = "center";
-    }
-
-    function closeJoinClanModal() {
-        const modal = document.getElementById("joinClanModal");
-        if (modal) {
-            modal.style.display = "none";
-        }
-    }
-
-    function submitJoinRequest() {
-        const position = selectedPosition;
-        const intro = document.querySelector("#joinClanModal textarea")?.value || "";
-        const clanId = parseInt(document.getElementById("joinClanId").value);
-        const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
-        const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
-
-        if (!position) {
-            alert("주 포지션을 선택해주세요!");
-            return;
-        }
-
-        const requestBody = {
-            clanId: clanId,
-            mainPosition: position,
-            intro: intro
-        };
-
-        fetch("/clan/join", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            },
-            body: JSON.stringify(requestBody)
-        })
-            .then(async (res) => {
-                if (res.ok) {
-                    alert("가입 신청 완료!");
-                    closeJoinClanModal();
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 100);
-                } else {
-                    const errorMsg = await res.text();
-                    alert("가입 신청 실패: " + errorMsg);
-                }
-            })
-            .catch((err) => {
-                alert("네트워크 오류: " + err);
-            });
-    }
-
-    function approveRequest(clanId, userId) {
-        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-        fetch(`/clan/${clanId}/approve/${userId}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            },
-            credentials: "include"
-        })
-            .then(res => {
-                if (!res.ok) {
-                    return res.text().then(msg => { throw new Error(msg); });
-                }
-                return res.text();
-            })
-            .then(message => {
-                alert(message);
-                sessionStorage.setItem("justHandledTab", "pending");
-                location.reload();
-            })
-            .catch(err => alert("에러: " + err.message));
-    }
-
-    function rejectRequest(clanId, userId) {
-        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-        fetch(`/clan/${clanId}/reject/${userId}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            },
-            credentials: "include"
-        })
-            .then(res => {
-                if (!res.ok) {
-                    return res.text().then(msg => { throw new Error(msg); });
-                }
-                return res.text();
-            })
-            .then(message => {
-                alert(message);
-                sessionStorage.setItem("justHandledTab", "pending");
-                location.reload();
-            })
-            .catch(err => alert("에러: " + err.message));
-    }
-</script>
-
-<script>
-    function handleJoinClick() {
-        const isAuthenticated = document.getElementById("isAuthenticated")?.value === 'true';
-        const userRole = document.getElementById("userRole")?.value;
-
-        if (!isAuthenticated) {
-            alert("로그인이 필요합니다!");
-            window.location.href = "/login";
-            return;
-        }
-
-        if (userRole === 'GUEST' || userRole === '') {
-            openJoinClanModal();
-        } else {
-            alert("이미 클랜에 가입된 사용자입니다!");
-        }
-    }
-</script>
-
+<script src="/js/clan.js"></script>
 </body>
 </html>

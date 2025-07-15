@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="/css/clan.css" />
   <link rel="stylesheet" href="/css/common/header.css" />
 </head>
-<body>
 
+<body class="clan-list">
 <th:block th:replace="~{fo/common/header :: header}"></th:block>
 
 <div class="container">
@@ -32,7 +32,11 @@
           <option value="그랜드마스터" th:selected="${tier == '그랜드마스터'}">그랜드마스터</option>
           <option value="챌린저" th:selected="${tier == '챌린저'}">챌린저</option>
         </select>
-        <input type="text" name="keyword" placeholder="클랜명 또는 소개 검색" />
+        <input
+                type="text"
+                name="keyword"
+                placeholder="클랜명 또는 소개 검색"
+                th:value="${keyword}" />
         <button type="submit" class="btn">검색</button>
       </div>
     </form>
@@ -175,118 +179,6 @@
 <!--  </div>-->
 <!--</footer>-->
 
-<script>
-  function openModal() {
-    document.getElementById("clanModal").style.display = "block";
-  }
-  function closeModal() {
-    document.getElementById("clanModal").style.display = "none";
-  }
-
-  function toggleChatList() {
-    alert('채팅 리스트 열기 구현 필요');
-  }
-
-  function validateImageRatio(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const img = new Image();
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-      img.src = e.target.result;
-    };
-
-    img.onload = function () {
-      const width = img.width;
-      const height = img.height;
-      const ratio = width / height;
-
-      const minRatio = 0.5;   // 4:3보다 약간 좁은 비율
-      const maxRatio = 2.5;   // 4:3보다 약간 넓은 비율
-
-      if (ratio < minRatio || ratio > maxRatio) {
-        alert("업로드 전 이미지 비율을 확인해주세요.\n4:3 비율 이미지 (예: 800×600, 1200x900, 1600×1200 등)가 가장 깔끔하게 표시됩니다.");
-        event.target.value = ""; // 업로드 취소
-        document.getElementById("imagePreview").src = ""; // 미리보기도 제거
-      } else {
-        document.getElementById("imagePreview").src = img.src;
-      }
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  function checkClanName(name) {
-    const msgDiv = document.getElementById("clanNameMessage");
-
-    if (!name || name.length < 2) {
-      msgDiv.textContent = "클랜 이름은 2자 이상 입력해주세요!";
-      msgDiv.style.color = "gray";
-      return;
-    }
-
-    fetch(`/clan/check-name?name=${encodeURIComponent(name)}`)
-            .then(res => res.json())
-            .then(data => {
-              if (data) {
-                msgDiv.textContent = "사용 가능한 클랜 이름이에요!";
-                msgDiv.style.color = "green";
-              } else {
-                msgDiv.textContent = "이미 존재하는 클랜 이름입니다.";
-                msgDiv.style.color = "red";
-              }
-            })
-            .catch(() => {
-              msgDiv.textContent = "서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.";
-              msgDiv.style.color = "orange";
-            });
-  }
-
-  async function validateForm() {
-    const nameInput = document.querySelector("input[name='name']");
-    const name = nameInput.value.trim();
-    const msgDiv = document.getElementById("clanNameMessage");
-
-    // 비어있거나 너무 짧으면 막기
-    if (name.length < 2) {
-      alert("클랜 이름은 2자 이상 입력해주세요!");
-      nameInput.focus();
-      return false;
-    }
-
-    // 중복 여부 확인
-    try {
-      const res = await fetch(`/clan/check-name?name=${encodeURIComponent(name)}`);
-      const isAvailable = await res.json();
-
-      if (!isAvailable) {
-        alert("이미 존재하는 클랜 이름입니다. 다른 이름을 입력해주세요!");
-        nameInput.focus();
-        return false; // 제출 막기
-      }
-
-      return true; // 제출 허용
-    } catch (e) {
-      alert("서버 오류가 발생했습니다. 다시 시도해주세요!");
-      return false;
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("clanForm");
-
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      const isValid = await validateForm();
-
-      if (isValid) {
-        form.submit();
-      }
-    });
-  });
-</script>
+<script src="/js/clan.js"></script>
 </body>
 </html>

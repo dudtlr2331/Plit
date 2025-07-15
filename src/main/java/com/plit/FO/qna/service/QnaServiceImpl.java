@@ -7,9 +7,17 @@ import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class QnaServiceImpl implements QnaService {
@@ -38,8 +46,25 @@ public class QnaServiceImpl implements QnaService {
         qna.setStatus("대기중");
         qna.setAskedAt(LocalDateTime.now());
 
-        if (dto.getFileName() != null) {
-            qna.setFileName(dto.getFileName());
+        MultipartFile file = dto.getFile();
+        if (file != null && !file.isEmpty()) {
+            try {
+                Path saveDir = Paths.get(uploadDir);
+                Files.createDirectories(saveDir);
+
+                String originalFilename = Paths.get(file.getOriginalFilename()).getFileName().toString();
+                String uniqueFileName = UUID.randomUUID() + "_" + originalFilename;
+
+                Path savePath = saveDir.resolve(uniqueFileName);
+                try (InputStream in = file.getInputStream()) {
+                    Files.copy(in, savePath, StandardCopyOption.REPLACE_EXISTING);
+                }
+
+                qna.setFileName(uniqueFileName);
+
+            } catch (IOException e) {
+                throw new RuntimeException("파일 업로드 중 오류 발생", e);
+            }
         }
 
         qnaRepository.save(qna);

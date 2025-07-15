@@ -45,32 +45,12 @@ public class ClanController {
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
 
-//    @GetMapping
-//    public String listClans(@RequestParam(required = false) String keyword,
-//                            @RequestParam(required = false) String tier,
-//                            Model model, Principal principal)  {
-//        List<ClanEntity> clans = clanService.searchClansByKeywordAndTier(keyword, tier);
-//        model.addAttribute("clans", clans);
-//        model.addAttribute("tier", tier);
-//
-//        if (principal != null) {
-//            String userId = principal.getName();
-//            Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
-//
-//            optionalUser.ifPresent(user -> model.addAttribute("nickname", user.getUserNickname()));
-//        }
-//
-//        return "fo/clan/clan-list";
-//    }
-
     @GetMapping
     public String listClans(@RequestParam(required = false) String keyword,
                             @RequestParam(required = false) String tier,
                             Model model, Principal principal) {
 
         List<ClanEntity> clanEntities = clanService.searchClansByKeywordAndTier(keyword, tier);
-
-        // ClanDTO에 memberCount 포함해서 변환
         List<ClanDTO> clanDTOs = clanEntities.stream()
                 .map(clan -> {
                     int memberCount = clanMemberService.countByClanId(clan.getId());
@@ -125,7 +105,7 @@ public class ClanController {
                 File dir = new File(uploadDir);
                 if (!dir.exists()) dir.mkdirs();
                 imageFile.transferTo(new File(dir, fileName));
-                clan.setImageUrl("/uploads/clan/" + fileName);
+                clan.setImageUrl("/upload/clan/" + fileName);
             } catch (IOException e) {
                 e.printStackTrace();
                 clan.setImageUrl("/images/clan/clan_default.png");
@@ -151,16 +131,26 @@ public class ClanController {
             clanMemberService.findByClanIdAndUserId(id, clan.getLeaderId()).ifPresent(leaderDto -> {
                 leaderDto.setRole("LEADER");
                 leaderDto.setIntro(leaderDto.getIntro() != null ? leaderDto.getIntro() : "리더입니다");
-                boolean leaderExists = members.stream()
-                        .anyMatch(m -> m.getMemberId().equals(leaderDto.getMemberId()));
-                if (!leaderExists) {
-                    members.add(0, leaderDto);
+
+                boolean alreadyInList = members.stream()
+                        .anyMatch(m -> m.getUserId() != null && m.getUserId().equals(leaderDto.getUserId()));
+
+                if (!alreadyInList) {
+                    members.add(leaderDto);
                 }
             });
         }
 
+        Long leaderId = clan.getLeaderId();
+        members.sort((m1, m2) -> {
+            return m1.getMemberId().equals(leaderId) ? -1
+                    : m2.getMemberId().equals(leaderId) ? 1
+                    : 0;
+        });
+
         model.addAttribute("members", members);
         model.addAttribute("pendingMembers", pendingMembers);
+        model.addAttribute("pendingCount", pendingMembers.size());
 
         // 로그인 유저일 경우
         if (principal != null) {
@@ -171,10 +161,13 @@ public class ClanController {
 
                 boolean isJoinPending = clanJoinRequestService.isJoinPending(id, userSeq);
 
+                model.addAttribute("currentUserId", userDTO.getUserSeq());
+
                 clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresentOrElse(
                         memberDto -> {
                             model.addAttribute("editMember", memberDto);
                             String role = memberDto.getRole();
+
                             if ("LEADER".equals(role) || "MEMBER".equals(role)) {
                                 model.addAttribute("role", role);
                             } else {
@@ -203,7 +196,16 @@ public class ClanController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteClan(@PathVariable Long id) {
+    public String deleteClan(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
+        String userId = principal.getName();
+        UserDTO user = userService.findByUserId(userId);
+        ClanDTO clan = clanService.findById(id);
+
+        if (!clan.getLeaderId().equals(user.getUserSeq().longValue())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "리더만 삭제할 수 있습니다.");
+            return "redirect:/clan/" + id;
+        }
+
         clanService.deleteClan(id);
         return "redirect:/clan";
     }
@@ -257,22 +259,18 @@ public class ClanController {
                         .body("자기소개는 30자 이하로 입력해주세요.");
             }
 
-            // 로그인한 사용자 ID 가져오기
             String userId = principal.getName();
 
-            // DB에서 실제 유저 정보 조회
             UserDTO userDTO = userService.findByUserId(userId);
             Long realUserId = userDTO.getUserSeq().longValue();
 
-            // 요청에서 클랜 ID 꺼내기
             Long clanId = dto.getClanId();
 
-            // 서비스 호출
             clanMemberService.updateMemberInfo(realUserId, clanId, dto);
 
             return ResponseEntity.ok("멤버 정보가 수정되었습니다");
         } catch (Exception e) {
-            e.printStackTrace(); // 콘솔 로그
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("멤버 정보 수정 실패");
         }
     }
@@ -334,5 +332,56 @@ public class ClanController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("거절 실패: " + e.getMessage());
         }
+    }
+
+    // 리더 위임
+    @PostMapping("/{clanId}/delegate/{toUserSeq}")
+    @ResponseBody
+    public ResponseEntity<String> delegateLeader(@PathVariable Long clanId,
+                                                 @PathVariable Long toUserSeq,
+                                                 Principal principal) {
+        try {
+            String loginId = principal.getName(); // 로그인한 사람의 userId
+            UserDTO loginUser = userService.findByUserId(loginId);
+            Long fromUserSeq = loginUser.getUserSeq().longValue();
+
+            clanMemberService.delegateLeader(clanId, fromUserSeq, toUserSeq);
+            return ResponseEntity.ok("리더 위임 완료!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("실패: " + e.getMessage());
+        }
+    }
+
+    // 클랜 추방
+    @PostMapping("/{clanId}/kick/{targetUserSeq}")
+    @ResponseBody
+    public ResponseEntity<String> kickMember(@PathVariable Long clanId,
+                                             @PathVariable Long targetUserSeq,
+                                             Principal principal) {
+        try {
+            String loginId = principal.getName();
+            UserDTO loginUser = userService.findByUserId(loginId);
+            Long loginUserSeq = loginUser.getUserSeq().longValue();
+
+            clanMemberService.kickMember(clanId, loginUserSeq, targetUserSeq);
+            return ResponseEntity.ok("멤버 추방 완료!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("추방 실패: " + e.getMessage());
+        }
+    }
+
+    // 클랜 탈퇴
+    @PostMapping("/{clanId}/leave")
+    @ResponseBody
+    public ResponseEntity<String> leaveClan(@PathVariable Long clanId, Principal principal) {
+        String userIdStr = principal.getName();
+
+        Long userSeq = userService.getUserByUserId(userIdStr)
+                .map(u -> u.getUserSeq().longValue())
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없음"));
+
+        clanMemberService.leaveClan(clanId, userSeq);
+
+        return ResponseEntity.ok("클랜 탈퇴 완료!");
     }
 }

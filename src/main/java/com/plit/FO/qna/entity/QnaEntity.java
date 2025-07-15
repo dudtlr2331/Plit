@@ -50,21 +50,17 @@ public class QnaEntity {
     @Column(name = "delete_yn", columnDefinition = "VARCHAR(1) DEFAULT 'N'")
     private String deleteYn = "N";
 
-    // 관리자 삭제 여부
     @Column(name = "admin_deleted", nullable = false)
     private boolean adminDeleted = false;
 
-    // 유저 로그인 아이디
     public String getUserId() {
         return user != null ? user.getUserId() : null;
     }
 
-    // 유저 시퀀스
     public Integer getUserSeq() {
         return user != null ? user.getUserSeq() : null;
     }
 
-    // 유저 닉네임 추가
     public String getUserNickname() {
         return user != null ? user.getUserNickname() : null;
     }

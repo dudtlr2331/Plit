@@ -13,13 +13,15 @@ import java.time.LocalDateTime;
 @ToString
 public class ClanMemberDTO {
     private Long memberId;
+    private String userId;
     private String nickname;
-    private String tier;           // 티어 정보
-    private String role;           // LEADER 또는 MEMBER
-    private String status;         // APPROVED, PENDING 등
-    private LocalDateTime joinedAt; // 가입 일시
-    private String mainPosition;   // 주 포지션 (TOP, MID 등)
-    private String intro;          // 소개글
+    private String tier;
+    private String role;
+    private String status;
+    private LocalDateTime joinedAt;
+    private String mainPosition;
+    private String intro;
     private String tag;
     private Long clanId;
+    private String joinedAgo;
 }

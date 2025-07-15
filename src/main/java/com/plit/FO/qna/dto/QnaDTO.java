@@ -17,14 +17,14 @@ public class QnaDTO {
     private String title;
     private String content;
 
-    private MultipartFile file;   // 사용자 작성 시 첨부
-    private String fileName;      // 저장된 실제 파일 이름
-    private String category;      // 카테고리
+    private MultipartFile file;
+    private String fileName;
+    private String category;
 
     // 조회용
     private Long userId;
     private String userNickname;
 
-    private String status;             // "대기중", "답변완료"
-    private LocalDateTime askedAt;     // 작성일
+    private String status;
+    private LocalDateTime askedAt;
 }

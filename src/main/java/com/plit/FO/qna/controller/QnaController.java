@@ -50,7 +50,12 @@ public class QnaController {
     }
 
     @PostMapping("/write")
-    public String writeQna(@ModelAttribute("loginUser") UserDTO loginUser, @ModelAttribute @Valid QnaDTO dto, BindingResult bindingResult, RedirectAttributes ra, Model model) {
+    public String writeQna(@ModelAttribute("loginUser") UserDTO loginUser,
+                           @ModelAttribute @Valid QnaDTO dto,
+                           BindingResult bindingResult,
+                           RedirectAttributes ra,
+                           Model model) {
+
         Long userId = loginUser.getUserSeq().longValue();
         if (userId == null) return "redirect:/login";
 
@@ -63,33 +68,18 @@ public class QnaController {
 
         MultipartFile file = dto.getFile();
         if (file != null && !file.isEmpty()) {
-            try {
-                List<String> allowedExtensions = List.of("jpg", "jpeg", "png", "pdf", "docx");
-                String originalFilename = file.getOriginalFilename();
-                String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+            List<String> allowedExtensions = List.of("jpg", "jpeg", "png", "pdf", "docx");
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
 
-                if (!allowedExtensions.contains(extension)) {
-                    ra.addFlashAttribute("error", "허용되지 않은 파일 형식입니다.");
-                    return "redirect:/mypage/qna/write";
-                }
-
-                File dir = new File(uploadDir);
-                if (!dir.exists()) dir.mkdirs();
-
-                String savedName = UUID.randomUUID() + "_" + originalFilename;
-                File saveFile = new File(uploadDir, savedName);
-                file.transferTo(saveFile);
-
-                dto.setFileName(savedName);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                ra.addFlashAttribute("error", "파일 업로드 중 오류가 발생했습니다.");
+            if (!allowedExtensions.contains(extension)) {
+                ra.addFlashAttribute("error", "허용되지 않은 파일 형식입니다.");
                 return "redirect:/mypage/qna/write";
             }
         }
 
         qnaService.saveQuestion(dto, userId);
+
         return "redirect:/mypage/qna/list";
     }
 

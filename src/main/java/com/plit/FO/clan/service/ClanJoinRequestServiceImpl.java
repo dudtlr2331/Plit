@@ -29,7 +29,6 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
 
     @Override
     public void requestJoin(ClanJoinRequestDTO dto) {
-        // 기존 신청 여부 확인 (REJECTED 상태 포함)
         Optional<ClanJoinRequestEntity> existingRequestOpt =
                 joinRequestRepository.findByClanIdAndUserIdAndStatus(dto.getClanId(), dto.getUserId(), JoinStatus.REJECTED);
 
@@ -37,7 +36,7 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
             ClanJoinRequestEntity existingRequest = existingRequestOpt.get();
 
             if (existingRequest.getStatus() == JoinStatus.REJECTED) {
-                // 거절됐던 신청자는 다시 PENDING 으로 바꿔줌 (재신청 허용)
+                // 거절됐던 신청자는 다시 PENDING 으로 바꿈(재신청 허용)
                 existingRequest.setStatus(JoinStatus.PENDING);
                 existingRequest.setIntro(dto.getIntro());
                 existingRequest.setTier(dto.getTier());

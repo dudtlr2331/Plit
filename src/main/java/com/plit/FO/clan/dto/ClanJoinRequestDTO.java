@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ClanJoinRequestDTO {
 
-    private Long clanId;         // 가입할 클랜 ID
-    private Long userId;         // 로그인한 유저 ID
-    private String nickname;     // 보여줄 닉네임
-    private String tier;         // 티어 표시용
-    private String mainPosition; // 선택한 주 포지션
-    private String intro;        // 자기소개
+    private Long clanId;
+    private Long userId;
+    private String nickname;
+    private String tier;
+    private String mainPosition;
+    private String intro;
     private LocalDateTime requestAt;
 }

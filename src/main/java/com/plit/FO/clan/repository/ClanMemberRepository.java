@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ClanMemberRepository extends JpaRepository<ClanMemberEntity, Long> {
-
-    // status 기반
     List<ClanMemberEntity> findByClanIdAndStatus(Long clanId, String status);  // "APPROVED", "PENDING"
 
     boolean existsByClanIdAndUserId(Long clanId, Long userId);
@@ -16,4 +14,7 @@ public interface ClanMemberRepository extends JpaRepository<ClanMemberEntity, Lo
     Optional<ClanMemberEntity> findByClanIdAndUserId(Long clanId, Long userId);
 
     int countByClanId(Long clanId);
+
+    int countByClanIdAndStatus(Long clanId, String status);
+
 }

@@ -18,4 +18,12 @@ public interface ClanMemberService {
 
     void addMember(Long clanId, Long userId, String position, String tier, String intro);
 
+    void delegateLeader(Long clanId, Long fromUserSeq, Long toUserSeq);
+
+    void kickMember(Long clanId, Long requesterUserSeq, Long targetUserSeq);
+
+    void leaveClan(Long clanId, Long userSeq);
+
+    int countPendingMembers(Long clanId);
+
 }

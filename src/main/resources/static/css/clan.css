@@ -1,4 +1,3 @@
-/* 기본 설정 및 전체 레이아웃 (Base & Layout) */
 html,
 /*body {*/
 /*    height: 100%;*/
@@ -137,7 +136,7 @@ main {
     align-items: center;
     justify-content: center;
     background-color: #6570b4;
-    color: white; /* 아이콘 색상 설정 */
+    color: white;
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -156,7 +155,7 @@ main {
     margin-top: 8px;
 }
 
-/* 폼 요소 (Form Elements) */
+/* 폼 요소 */
 select,
 input[type="text"] {
     padding: 8px 12px;
@@ -214,7 +213,7 @@ label {
     display: none;
 }
 
-/* 클랜 찾기 페이지 관련 (Clan Search Page) */
+/* 클랜 찾기 페이지 관련 */
 .search-bar {
     display: flex;
     align-items: center;
@@ -458,12 +457,6 @@ label {
     transition: background 0.2s;
 }
 
-/*.detail-category a:hover,*/
-/*.detail-category a.active {*/
-/*    background: #ffecec;*/
-/*    color: #ff5c5c;*/
-/*    font-weight: bold;*/
-/*}*/
 
 .detail-section {
     margin-bottom: 28px;
@@ -641,15 +634,18 @@ label {
     display: grid;
     /*
     칸 구성:
-    [소환사명 | 티어 | 주포지션 | 소개 | 신청일 | 관리]
+    멤버탭이랑 동일
     */
     grid-template-columns:
-        2.2fr  /* 소환사명 */
-        1fr    /* 티어 */
-        1fr    /* 주포지션 */
-        2.5fr  /* 소개글 */
-        1.2fr  /* 신청일 */
-        1.2fr; /* 관리 버튼 */
+        2.2fr   /* 소환사명: 닉네임 + #태그 + 왕관까지 보여야 하니 넉넉하게 */
+        1fr     /* 티어 */
+        1fr     /* 주포지션 */
+        2fr     /* 최근 챔피언 이미지 공간 */
+        1fr     /* 승률 */
+        1.6fr   /* KDA: 여백이 부족해서 오른쪽으로 밀리던 현상 방지 (기존 1.2fr → 넓힘) */
+        2.5fr   /* 소개글: 짧은 문장들 들어갈 공간 */
+        1fr     /* 가입일 */
+        1.2fr;  /* 관리 버튼 2개 (위임, 추방) 들어갈 공간 */
     padding: 12px;
     border-bottom: 1px solid #ddd;
     align-items: center;
@@ -697,7 +693,6 @@ label {
     max-width: 100%;
 }
 
-
 /* 포지션 아이콘 (Position Icons) */
 /* 기본 SVG 크기 및 정렬 */
 .member-cell .position-icon svg {
@@ -709,7 +704,7 @@ label {
 
 /* 기본 아이콘 색상 (연한 회색) */
 .position-icon .fill-area {
-    fill: #888888;
+    fill: #bbb;
 }
 
 /* 선택 상태 또는 강조할 경우 */
@@ -740,10 +735,10 @@ label {
 
 .modal-content {
     background-color: #ffffff;
-    margin: 100px auto; /* 기본값 */
+    margin: 100px auto;
     padding: 30px 24px;
     border-radius: 12px;
-    width: 460px; /* 기본값 */
+    width: 460px;
     color: #222;
     position: relative;
     box-sizing: border-box;
@@ -816,7 +811,7 @@ label {
 }
 
 
-/* 멤버 수정 모달 관련 (Member Edit Modal Specific) */
+/* 멤버 수정 모달 관련 */
 .member-info .nickname {
     font-size: 20px;
     font-weight: 700;
@@ -872,11 +867,11 @@ label {
 
 /* 기본 연한 회색 (모든 fill-area) */
 .edit-position-btn .fill-area {
-    fill: #888888 !important; /* 밝은 회색 - 기본 */
+    fill: #bbb !important;
 }
 
 .edit-position-btn .fill-area.emphasis {
-    fill: #333333 !important; /* 진한 회색 - 강조 */
+    fill: #333333 !important;
 }
 
 
@@ -897,6 +892,36 @@ textarea#memberIntro {
 textarea#memberIntro:focus {
     outline: none;
     border-color: #774298;
+}
+
+.manage-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* 로그인한 내 계정인 행을 연한 회색으로 강조 */
+.member-row.current-user {
+    background-color: #f5f5f5;
+}
+
+.member-row.current-user:hover {
+    background-color: #e0e0e0;
+}
+
+.badge {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    margin-left: 6px;
+    vertical-align: middle;
 }
 
 /* 푸터 (Footer) */
