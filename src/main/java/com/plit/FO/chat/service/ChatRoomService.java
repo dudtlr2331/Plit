@@ -81,4 +81,41 @@ public class ChatRoomService {
                 .toList();
     }
 
+    public ChatRoomEntity createPartyChatRoom(Long partyId, String partyName) {
+        ChatRoomEntity room = ChatRoomEntity.builder()
+                .chatRoomType("party")
+                .chatRoomName("party-" + partyId) // 필요하다면 이름도 지정
+                .partyId(partyId)                 // 파티ID 연결
+                .chatRoomMax(5)
+                .chatRoomHeadcount(0)
+                .chatRoomCreatedAt(LocalDateTime.now())
+                .build();
+        return chatRoomRepository.save(room);
+    }
+
+    public ChatRoomEntity getOrCreatePartyChatRoom(Long partyId, String partyName) {
+        // 기존 방 있는지 찾기
+        Optional<ChatRoomEntity> existingRoom = chatRoomRepository.findAll().stream()
+                .filter(room -> "party".equals(room.getChatRoomType()) &&
+                        room.getPartyId() != null &&
+                        room.getPartyId().equals(partyId))
+                .findFirst();
+
+        if (existingRoom.isPresent()) {
+            return existingRoom.get();
+        }
+
+        // 새로 만들기
+        ChatRoomEntity room = ChatRoomEntity.builder()
+                .chatRoomType("party")
+                .chatRoomName(partyName)
+                .chatRoomMax(5) // 파티 최대 인원
+                .chatRoomHeadcount(1) // 파티장은 기본 1명
+                .chatRoomCreatedAt(LocalDateTime.now())
+                .partyId(partyId) // 🔥 여기서 partyId 세팅
+                .build();
+
+        return chatRoomRepository.save(room);
+    }
+
 }

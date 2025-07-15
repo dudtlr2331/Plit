@@ -33,4 +33,7 @@ public class ChatRoomEntity {
 
     @Column(name = "chat_room_created_at")
     private LocalDateTime chatRoomCreatedAt;
+
+    @Column(name = "party_id")
+    private Long partyId;
 }
