@@ -203,7 +203,7 @@ function renderParties(data) {
             <span>${translateStatus(party.partyStatus)}</span>
             <span title="주 포지션">${mainIcon}</span>
             <span title="모집 포지션">${recruitIcons}</span>
-            <span class="chat-icon" onclick="toggleChatBox('partyId-${party.partySeq}')">💬</span>
+            <span class="chat-icon" onclick="openPartyChat(${party.partySeq})">💬</span>
         `;
 
         list.appendChild(item);
@@ -602,67 +602,74 @@ function handleEditFromDetail(partyJson) {
 function openPartyFormPopup(party = null) {
     const csrfParam = document.querySelector('meta[name="_csrf_parameter"]').getAttribute('content');
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const getIcon = window.getPositionIconHTML;
 
     const popup = document.getElementById('recruitPopup');
     const isEdit = party !== null;
 
     popup.innerHTML = `
-        <h3>${isEdit ? '파티 수정하기' : '새 파티 등록하기'}</h3>
-        <div class="party-form">
-            <input type="hidden" name="${csrfParam}" value="${csrfToken}" />
-            ${isEdit ? `<input type="hidden" name="partySeq" value="${party.partySeq}">` : ''}
+      <h3>${isEdit ? '파티 수정하기' : '새 파티 등록하기'}</h3>
+      <div class="party-form">
+        <input type="hidden" name="${csrfParam}" value="${csrfToken}" />
+        ${isEdit ? `<input type="hidden" name="partySeq" value="${party.partySeq}">` : ''}
 
-            <label>파티 이름: <input type="text" name="partyName" value="${party?.partyName ?? ''}" required></label><br>
+        <label>파티 이름: <input type="text" name="partyName" value="${party?.partyName ?? ''}" required></label><br>
 
-            <label>타입:
-                <select name="partyType" required>
-                    <option value="solo" ${party?.partyType === 'solo' ? 'selected' : ''}>솔로랭크</option>
-                    <option value="team" ${party?.partyType === 'team' ? 'selected' : ''}>자유랭크</option>
-                </select>
-            </label><br>
+        <label>타입:
+          <select name="partyType" required>
+            <option value="solo" ${party?.partyType === 'solo' ? 'selected' : ''}>솔로랭크</option>
+            <option value="team" ${party?.partyType === 'team' ? 'selected' : ''}>자유랭크</option>
+          </select>
+        </label><br>
 
-            ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
+        ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
 
-            <label>종료일자: <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
+        <label>종료일자: <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
 
-            ${isEdit
+        ${isEdit
         ? `<label>상태:
-                      <select name="partyStatus" required>
-                          ${[
+                <select name="partyStatus" required>
+                  ${[
             { value: 'WAITING', label: '모집 중' },
             { value: 'FULL', label: '인원 꽉참' },
             { value: 'CLOSED', label: '모집 마감' }
         ].map(opt => `
-                            <option value="${opt.value}" ${party?.partyStatus === opt.value ? 'selected' : ''}>${opt.label}</option>
-                          `).join('')}
-                      </select>
-                  </label><br>`
+                    <option value="${opt.value}" ${party?.partyStatus === opt.value ? 'selected' : ''}>${opt.label}</option>
+                  `).join('')}
+                </select>
+              </label><br>`
         : `<input type="hidden" name="partyStatus" value="WAITING">`
     }
 
-            <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
+        <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
 
-            <label>주 포지션:
-                <select name="mainPosition" required>
-                    ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].map(pos => `
-                        <option value="${pos}" ${party?.mainPosition === pos ? 'selected' : ''}>${pos}</option>
-                    `).join('')}
-                </select>
-            </label><br>
+        <label>주 포지션:<br/>
+          <div class="main-position-selector" id="mainPositionGroup">
+            ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].map(pos => {
+        const selected = party?.mainPosition === pos ? 'selected' : '';
+        return `
+                <label class="${selected}" data-value="${pos}">
+                  ${getIcon(pos, true)}
+                  <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} />
+                </label>
+              `;
+    }).join('')}
+          </div>
+        </label><br/>
 
-            <label>모집 포지션:<br/>
-                <div class="position-group" id="recruitPositionGroup"></div>
-            </label><br>
+        <label>모집 포지션:<br/>
+          <div class="position-group" id="recruitPositionGroup"></div>
+        </label><br>
 
-            <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
-            <button type="button" onclick="closePartyPopup()">닫기</button>
-        </div>
+        <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
+        <button type="button" onclick="closePartyPopup()">닫기</button>
+      </div>
     `;
 
     popup.style.display = 'block';
 
-    const getIcon = window.getPositionIconHTML;
     const container = popup.querySelector('#recruitPositionGroup');
+    const mainGroup = popup.querySelector('#mainPositionGroup');
 
     ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].forEach(pos => {
         const label = document.createElement('label');
@@ -684,7 +691,6 @@ function openPartyFormPopup(party = null) {
 
         label.addEventListener('click', (e) => {
             e.preventDefault();
-
             const isSelected = label.classList.contains('selected');
             const isAll = checkbox.value === 'ALL';
 
@@ -692,16 +698,10 @@ function openPartyFormPopup(party = null) {
             const allCheckboxes = container.querySelectorAll('input[type="checkbox"]');
 
             if (isAll) {
-                if (isSelected) {
-                    checkbox.checked = false;
-                    label.classList.remove('selected');
-                } else {
-                    allLabels.forEach(l => l.classList.remove('selected'));
-                    allCheckboxes.forEach(c => c.checked = false);
-
-                    checkbox.checked = true;
-                    label.classList.add('selected');
-                }
+                allLabels.forEach(l => l.classList.remove('selected'));
+                allCheckboxes.forEach(c => c.checked = false);
+                checkbox.checked = true;
+                label.classList.add('selected');
             } else {
                 const allCheckbox = container.querySelector('input[value="ALL"]');
                 const allLabel = allCheckbox?.closest('label');
@@ -715,13 +715,11 @@ function openPartyFormPopup(party = null) {
                 label.classList.toggle('selected', checkbox.checked);
 
                 const selected = Array.from(container.querySelectorAll('label.selected input'))
-                    .map(cb => cb.value)
-                    .filter(v => v !== 'ALL');
+                    .map(cb => cb.value).filter(v => v !== 'ALL');
 
                 if (selected.length === 5) {
                     allLabels.forEach(l => l.classList.remove('selected'));
                     allCheckboxes.forEach(cb => cb.checked = false);
-
                     const allCb = container.querySelector('input[value="ALL"]');
                     const allLb = allCb.closest('label');
                     allCb.checked = true;
@@ -730,6 +728,14 @@ function openPartyFormPopup(party = null) {
             }
 
             updatePartyHeadcountFromSelection(popup);
+        });
+    });
+
+    mainGroup.querySelectorAll('label').forEach(label => {
+        label.addEventListener('click', () => {
+            mainGroup.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+            label.classList.add('selected');
+            label.querySelector('input').checked = true;
         });
     });
 
@@ -765,11 +771,16 @@ function submitPartyForm() {
     const partyName = popup.querySelector('input[name="partyName"]').value;
     const partyType = popup.querySelector('select[name="partyType"]').value;
     const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
-    const partyStatus = popup.querySelector('[name="partyStatus"]').value;
+    const partyStatus = popup.querySelector('[name="partyStatus"]')?.value;
     const memo = popup.querySelector('textarea[name="memo"]').value;
-    const mainPosition = popup.querySelector('select[name="mainPosition"]').value;
 
-    // .selected된 label 안의 input value만 추출
+    const mainPosition = popup.querySelector('.main-position-selector label.selected input')?.value;
+
+    if (!mainPosition) {
+        alert("주 포지션을 선택해주세요.");
+        return;
+    }
+
     const positions = Array.from(popup.querySelectorAll('.position-group label.selected input'))
         .map(input => input.value);
 

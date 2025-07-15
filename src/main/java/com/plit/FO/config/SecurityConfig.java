@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/party/delete/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/parties/*/join").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/parties/*/members/*/kick").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/chat/room/party/**").permitAll()
 
                         /* 클랜 */
                         .requestMatchers(HttpMethod.POST, "/clan/register").authenticated()
