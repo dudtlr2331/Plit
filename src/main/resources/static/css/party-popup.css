@@ -215,7 +215,7 @@ select {
 .recruit-popup h3,
 #partyDetailPopup h3 {
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 35px;
     font-size: 20px;
     color: #333;
     text-align: center;
@@ -380,4 +380,63 @@ select {
 .position-icon.always-fill .bottom-fill,
 .position-icon.always-fill .all-fill {
     fill: #444;
+}
+
+/* 주 포지션 */
+.main-position-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    justify-content: flex-start; /* 왼쪽 정렬 (center로 바꾸면 중앙 정렬 가능) */
+}
+
+.main-position-selector label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    position: relative;
+}
+
+.main-position-selector input[type="radio"] {
+    display: none;
+}
+
+.main-position-selector svg {
+    width: 22px;
+    height: 22px;
+}
+
+.main-position-selector .position-icon path {
+    fill: #bbb;
+}
+
+.main-position-selector .position-icon .top-fill,
+.main-position-selector .position-icon .mid-fill,
+.main-position-selector .position-icon .bottom-fill,
+.main-position-selector .position-icon .all-fill {
+    fill: #bbb;
+}
+
+.main-position-selector label.selected {
+    background-color: #6570b4;
+}
+
+.main-position-selector label.selected .position-icon .top-fill,
+.main-position-selector label.selected .position-icon .mid-fill,
+.main-position-selector label.selected .position-icon .bottom-fill,
+.main-position-selector label.selected .position-icon .all-fill {
+    fill: white;
+}
+
+.main-position-selector label:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
