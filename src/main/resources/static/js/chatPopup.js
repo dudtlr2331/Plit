@@ -86,10 +86,18 @@
                 data.forEach(room => {
                     const div = document.createElement('div');
                     div.className = 'chat-list-item';
-                    div.textContent = room.otherNickname + (room.unreadCount > 0 ? ` (${room.unreadCount})` : '');
-                    div.onclick = () => openChatWithFriend(room.roomId, room.otherUserId, room.otherNickname);
+
+                    if (room.type === 'friend') {
+                        div.textContent = room.otherNickname + (room.unreadCount > 0 ? ` (${room.unreadCount})` : '');
+                        div.onclick = () => openChatWithFriend(room.roomId, room.otherUserId, room.otherNickname);
+                    } else if (room.type === 'party') {
+                        div.textContent = `[파티] ${room.partyName || '이름없음'}` + (room.unreadCount > 0 ? ` (${room.unreadCount})` : '');
+                        div.onclick = () => openPartyChat(room.partyId, room.partyName);
+                    }
+
                     container.appendChild(div);
                 });
+
             });
     }
 
@@ -170,6 +178,37 @@
             }
         });
     }
+
+    window.openPartyChat = function(partyId, partyName) {
+        if (!chatUserId) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        // partyId로 chatRoomId만 가져오기
+        fetch(`/api/chat/room/party/${partyId}`, {
+            method: 'GET',
+            headers: getCsrfHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('채팅방 조회 실패');
+                return res.json();
+            })
+            .then(roomId => {
+                currentRoomId = roomId;
+                document.getElementById('chatTarget').textContent = partyName ? `[파티] ${partyName}` : `파티 #${partyId}`;
+                document.getElementById('chatPopup').style.display = 'flex';
+                document.getElementById('chatInput').focus();
+
+                loadPreviousMessages(roomId);
+                connectToChatRoom(roomId);
+            })
+            .catch(err => {
+                console.error(err);
+                alert('채팅방을 불러오지 못했습니다.');
+            });
+    };
+
 
     // 전역 등록 단 하나만
     window.initChatFeature = function (userSeq) {
