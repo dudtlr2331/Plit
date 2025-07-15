@@ -85,6 +85,19 @@
                         <label class="password-label">새 비밀번호 입력</label>
                         <input type="password" name="newPwd" required class="password-input" />
                     </div>
+                    <div class="info-row">
+                        <label class="password-label">새 비밀번호 확인</label>
+                        <input type="password" name="confirmNewPwd" required class="password-input" />
+                    </div>
+
+                    <div class="password-guidelines">
+                        <strong>비밀번호 요구사항</strong>
+                        <ul>
+                            <li>8자 이상</li>
+                            <li>영문, 숫자, 특수문자 중 2가지 이상 조합</li>
+                            <li>이메일 주소 포함 금지</li>
+                        </ul>
+                    </div>
                 </form>
             </div>
             <!-- 회원 탈퇴 섹션 -->
@@ -138,6 +151,18 @@
     function confirmWithdrawal() {
         return confirm("정말 탈퇴하시겠습니까?\n탈퇴 후에는 복구가 불가능합니다.");
     }
+
+    document.getElementById("passwordForm").addEventListener("submit", function (e) {
+        const form = e.target;
+        const newPwd = form.querySelector('input[name="newPwd"]').value.trim();
+        const confirmPwd = form.querySelector('input[name="confirmNewPwd"]').value.trim();
+
+        if (newPwd !== confirmPwd) {
+            e.preventDefault();
+            alert("새 비밀번호가 서로 일치하지 않습니다.");
+        }
+    });
+
 </script>
 
 </body>

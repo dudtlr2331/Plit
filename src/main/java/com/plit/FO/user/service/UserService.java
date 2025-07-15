@@ -31,6 +31,9 @@ public interface UserService {
     void    updateNickname(String userId, String newNickname);
     void    updateUserStatus(Integer userSeq, String action);
     void    updateUserInfo(Integer userSeq, String nickname, String auth);
+    boolean isValidPassword(String password, String userId);
+    boolean checkPassword(String userId, String rawPassword);
+    void resetPassword(String email, String newPwd);
 
 
     /* ---------- 검색 ---------- */

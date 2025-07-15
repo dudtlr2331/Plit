@@ -62,6 +62,8 @@
                 <form action="/signup" method="post">
                     <input type="email" id="emailFinal" name="userId" class="form-control mb-3" readonly autocomplete="username" />
                     <input type="password" id="passwordInput" name="userPwd" class="form-control mb-2" placeholder="비밀번호" required autocomplete="new-password" />
+                    <input type="password" id="confirmPasswordInput" class="form-control mb-3" placeholder="비밀번호 확인" required autocomplete="new-password" />
+
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                     <div class="mb-3">
@@ -254,10 +256,16 @@
 
     function validateFinal() {
         const password = document.getElementById('passwordInput').value.trim();
+        const confirm = document.getElementById('confirmPasswordInput').value.trim();
         const email = document.getElementById('emailFinal').value.trim();
 
         if (!isValidPassword(password, email)) {
             alert("비밀번호는 8자 이상이며, 영문/숫자/기호 중 2가지 이상 조합이어야 하고 이메일을 포함할 수 없습니다.");
+            return false;
+        }
+
+        if (password !== confirm) {
+            alert("비밀번호가 서로 일치하지 않습니다.");
             return false;
         }
 
@@ -268,6 +276,7 @@
 
         return true;
     }
+
 </script>
 </body>
 </html>

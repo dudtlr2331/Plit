@@ -127,6 +127,27 @@ h2 {
     margin-bottom: 10px;
 }
 
+.password-guidelines {
+    background-color: #f9f2ff; /* 연한 보라 배경 */
+    border: 1px solid #c8aee6; /* 보라색 테두리 */
+    padding: 10px;
+    border-radius: 5px;
+    color: #4b2c6f; /* 진한 보라 텍스트 */
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.password-guidelines ul {
+    padding-left: 20px;
+    margin: 5px 0 0 0;
+}
+
+.password-guidelines li {
+    list-style-type: disc;
+    margin-bottom: 4px;
+}
+
+
 .profile-circle {
     width: 40px;
     height: 40px;

@@ -230,6 +230,43 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         userRepository.save(user);
     }
 
+    @Override
+    public boolean isValidPassword(String password, String userId) {
+        if (password == null || password.length() < 8) return false;
+
+        boolean hasLetter = password.matches(".*[a-zA-Z].*");
+        boolean hasNumber = password.matches(".*\\d.*");
+        boolean hasSpecial = password.matches(".*[^a-zA-Z0-9].*");
+        int typeCount = (hasLetter ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecial ? 1 : 0);
+
+        String emailPrefix = userId.contains("@") ? userId.split("@")[0] : userId;
+        boolean includesEmail = password.contains(emailPrefix);
+
+        return typeCount >= 2 && !includesEmail;
+    }
+
+    @Override
+    public boolean checkPassword(String userId, String rawPassword) {
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        return passwordEncoder.matches(rawPassword, user.getUserPwd());
+    }
+
+    @Override
+    public void resetPassword(String email, String newPwd) {
+        Optional<UserEntity> userOpt = userRepository.findByUserId(email);
+
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("해당 이메일의 사용자를 찾을 수 없습니다.");
+        }
+
+        UserEntity user = userOpt.get();
+        String encoded = passwordEncoder.encode(newPwd);
+        user.setUserPwd(encoded);
+        userRepository.save(user); // JPA가 update 처리
+    }
+
+
     /* ---------- 검색 ---------- */
 
     @Override
@@ -283,36 +320,40 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     /// 카카오 로그인
     @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest)
-            throws OAuth2AuthenticationException {
-
-        // 1. 카카오 API 호출 → 사용자 정보 가져오기
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String provider = userRequest.getClientRegistration().getRegistrationId(); // "kakao"
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        /* 2. 카카오 계정 정보 파싱 */
         if ("kakao".equals(provider)) {
-            Map<String, Object> kakaoAccount =
-                    (Map<String, Object>) attributes.get("kakao_account");
-            Map<String, Object> profile =
-                    (Map<String, Object>) kakaoAccount.get("profile");
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
 
-            String email    = (String) kakaoAccount.get("email");      // ← userId 로 사용
+            String email = (String) kakaoAccount.get("email"); // ← 여기서 email 추출
             String nickname = (String) profile.get("nickname");
 
-            /* 3. DB 에 사용자 저장(없으면) */
+            if (email == null) {
+                throw new OAuth2AuthenticationException("카카오 계정에 이메일이 존재하지 않습니다.");
+            }
+
+            // DB 저장 (신규 유저인 경우만)
             processOAuthPostLogin(email, nickname);
+
+            // attributes에 email을 명시적으로 추가
+            Map<String, Object> enrichedAttributes = new HashMap<>(attributes);
+            enrichedAttributes.put("email", email);
+
+            return new DefaultOAuth2User(
+                    Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+                    enrichedAttributes,
+                    "email" // 이제 여기서 email key가 확실히 존재
+            );
         }
 
-        /* 4. Spring Security 인증 객체 반환 */
-        return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                attributes,
-                "id"   // Kakao user-id attribute
-        );
+        throw new OAuth2AuthenticationException("지원하지 않는 OAuth2 공급자입니다: " + provider);
     }
+
 
     /** OAuth2 로그인 후 신규 사용자 처리 */
     private void processOAuthPostLogin(String email, String unusedNicknameFromKakao) {

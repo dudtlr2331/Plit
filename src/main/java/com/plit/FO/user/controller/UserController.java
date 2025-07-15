@@ -27,13 +27,18 @@ public class UserController {
     @GetMapping("/login")
     public String showLoginForm(HttpServletRequest request, Model model) {
         model.addAttribute("userDTO", new UserDTO());
+
+        // 기존 로그인 에러 메시지 처리
         String loginError = (String) request.getSession().getAttribute("loginError");
         if (loginError != null) {
             model.addAttribute("error", loginError);
             request.getSession().removeAttribute("loginError");
         }
-        return "fo/user/login";
+
+        // ✅ 재설정 성공 메시지 표시
+        return "fo/user/login"; // Thymeleaf에서 th:if="${message}" 처리
     }
+
 
     // 회원가입 폼
     @GetMapping("/signup")
@@ -74,6 +79,20 @@ public class UserController {
                                  @RequestParam String newPwd,
                                  RedirectAttributes redirectAttributes) {
         UserDTO loginUser = userDetails.getUserDTO();
+
+        // 1. 새 비밀번호 형식 유효성 검증
+        if (!userService.isValidPassword(newPwd, loginUser.getUserId())) {
+            redirectAttributes.addFlashAttribute("error", "비밀번호는 8자 이상이며, 영문/숫자/기호 중 2가지 이상 조합이어야 하며 이메일을 포함할 수 없습니다.");
+            return "redirect:/mypage";
+        }
+
+        // 2. 기존 비밀번호와 같은지 확인
+        if (userService.checkPassword(loginUser.getUserId(), newPwd)) {
+            redirectAttributes.addFlashAttribute("error", "기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다.");
+            return "redirect:/mypage";
+        }
+
+        // 3. 비밀번호 변경 시도
         boolean isChanged = userService.changePassword(loginUser.getUserId(), currentPwd, newPwd);
 
         if (isChanged) {
@@ -84,6 +103,36 @@ public class UserController {
 
         return "redirect:/mypage";
     }
+
+    // 비밀번호 찾기
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "fo/user/forgot_password";
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPasswordPage() {
+        return "fo/mypage/reset_password";
+    }
+
+    @PostMapping("/reset-password")
+    public String processResetPassword(@RequestParam String email,
+                                       @RequestParam String newPwd,
+                                       RedirectAttributes redirectAttributes,
+                                       Model model) {
+        if (!userService.isValidPassword(newPwd, email)) {
+            model.addAttribute("email", email);
+            model.addAttribute("error", "비밀번호 규칙에 맞지 않습니다.");
+            return "fo/mypage/reset_password";
+        }
+
+        userService.resetPassword(email, newPwd);
+        redirectAttributes.addFlashAttribute("message", "비밀번호가 재설정되었습니다.");
+        return "redirect:/login";
+    }
+
+
+
 
     // 닉네임 변경
     @PostMapping("/mypage/change-nickname")
@@ -164,6 +213,7 @@ public class UserController {
             userService.sendEmailCode(email);
             return ResponseEntity.ok("인증번호가 전송되었습니다.");
         } catch (IllegalStateException e) {
+            System.out.println("이메일 인증 실패 사유: " + e.getMessage()); // 로그 찍기
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

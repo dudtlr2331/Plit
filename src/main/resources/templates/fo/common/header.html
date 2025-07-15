@@ -2,27 +2,27 @@
      xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-    <header>
-        <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}" />
-
-        <a th:href="@{/main}" class="logo">
+    <header style="display: flex; align-items: center; justify-content: space-between; position: relative; padding: 10px 20px;">
+        <!-- 좌측 로고 -->
+        <a th:href="@{/main}" class="logo" style="z-index: 1;">
             <img th:src="@{/images/logo/plit_logo_w.png}" alt="Logo" style="height: 30px;">
         </a>
 
-        <nav>
+        <!-- 중앙 메뉴 -->
+        <nav style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; gap: 30px;">
             <a th:href="@{/party}">파티찾기</a>
             <a th:href="@{/clan}">클랜찾기</a>
             <a th:href="@{/report}">트롤신고</a>
         </nav>
 
-        <div class="header-user-area">
+        <!-- 우측 사용자 -->
+        <div class="header-user-area" style="display: flex; align-items: center; gap: 10px; z-index: 1;">
             <div class="chat-icon">💬</div>
 
             <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" class="auth-area">
                 <span th:if="${loginUser != null}" th:text="${loginUser.userNickname}">닉네임</span>
                 <span th:if="${loginUser == null}">비회원</span>
-
 
                 <button class="btn btn-mypage" onclick="location.href='/mypage'">마이페이지</button>
 
@@ -37,20 +37,6 @@
                 <button class="btn btn-login" onclick="location.href='/login'">로그인</button>
             </div>
         </div>
-
-
-
-        <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-        <script src="/js/chatPopup.js"></script>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const loginUserId = document.querySelector('meta[name="login-user-seq"]')?.getAttribute('content');
-                if (loginUserId) {
-                    initChatFeature(loginUserId);
-                }
-            });
-        </script>
     </header>
+
 </div>
