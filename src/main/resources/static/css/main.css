@@ -65,29 +65,118 @@
     border-radius: 5px;
     cursor: pointer;
 }
+
 .clan-section {
     max-width: 100%;
-    margin: 0 auto 50px;
+    margin: 40px auto 50px;
     justify-content: center;
 }
 
-.main-container .clan-grid {
+.main-clan-title {
+    margin-left: 12px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.main-clan-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 300px);
-    justify-content: center;
-    gap: 20px 30px;
-    padding: 20px 0;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 1200px;
+    margin: 0 auto;
+    justify-items: center;
 }
 
-.main-container .clan-card small {
+.main-clan-card {
+    max-width: 320px;
+    width: 100%;
+    padding: 24px;
+    height: 380px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ccc;
+    transition: all 0.3s ease;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: space-between;
 }
 
-.clan-title {
-    margin-left: 120px;
-    cursor: pointer;
+.main-clan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.main-clan-card .clan-image-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #f2f2f2;
+}
+
+.main-clan-card .clan-image-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.main-clan-card .clan-title-box {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 6px;
+}
+
+.main-clan-card .clan-title-box h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 18px;
+    margin: 0;
+    max-width: 180px;
+}
+
+.main-clan-card .clan-member-count {
+    font-size: 13px;
+    background: #eee;
+    padding: 4px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.main-clan-card p {
+    margin: 0;
+    font-size: 14px;
+    color: #444;
+    background: #f3f3f3;
+    padding: 10px 10px 12px;
+    border-radius: 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 20px;
+}
+
+.main-clan-card small {
+    color: gray;
+    font-size: 14px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+}
+
+.main-clan-card small img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
 

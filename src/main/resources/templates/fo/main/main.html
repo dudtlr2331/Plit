@@ -3,7 +3,7 @@
 <head>
     <link rel="stylesheet" href="/css/common/header.css">
     <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/clan.css">
+<!--    <link rel="stylesheet" href="/css/clan.css">-->
     <meta charset="UTF-8">
     <title>플레이어 매칭 UI</title>
 
@@ -52,9 +52,9 @@
 </div>
 
     <div class="clan-section">
-        <div class="clan-title" onclick="location.href='/clan'">클랜찾기 ></div>
+        <div class="main-clan-title" onclick="location.href='/clan'">클랜찾기 ></div>
 
-        <div class="clan-grid">
+        <div class="main-clan-grid">
             <div class="clan-card main-clan-card"
                  th:each="clan : ${topClans}"
                  th:onclick="|location.href='/clan/${clan.id}'|"
@@ -79,32 +79,30 @@
                             th:if="${clan.minTier != 'NONE'}"
                             th:src="@{/images/tier/{t}.png(t=${clan.minTier})}"
                             th:alt="${clan.minTier} + ' 아이콘'"
-                            width="30" height="30"
-                    />
+                            width="30" height="30" />
 
                     <span style="flex-shrink:0;" th:switch="${clan.minTier}">
-          <span th:case="'CHALLENGER'">CHALLENGER</span>
-          <span th:case="'NONE'">티어 상관 없음</span>
-          <span th:case="*" th:text="${clan.minTier} + ' 이상'"></span>
-        </span>
+        <span th:case="'CHALLENGER'">CHALLENGER</span>
+        <span th:case="'NONE'">티어 제한 없음</span>
+        <span th:case="*" th:text="${clan.minTier} + ' 이상'"></span>
+      </span>
 
                     <div style="flex-grow:1;"></div>
 
-                    <span class="clan-links" style="padding-right: 0.75rem; display: flex; gap: 4px;">
-          <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
-             th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
-            <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
-          </a>
-          <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
-             th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
-            <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
-          </a>
-        </span>
+                    <span class="clan-links" style="padding-right: -0.25rem; display: flex; gap: 4px;">
+        <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+           th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+          <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
+        </a>
+        <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+           th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+          <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+        </a>
+      </span>
                 </small>
+
             </div>
         </div>
-    </div>
-</div>
 
 
 

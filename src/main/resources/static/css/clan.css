@@ -3,11 +3,12 @@
     max-width: 1200px;
     margin: 30px auto 0;
     flex: 1;
+    /*!*outline: 1px dashed red; 테스트 가이드라인*/
 }
 
 .social-icon {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     vertical-align: middle;
 }
 
@@ -149,8 +150,9 @@ label {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 0px;
     justify-content: space-between;
+    max-width: 1200px;
 }
 
 .search-left {
@@ -159,15 +161,12 @@ label {
     gap: 10px;
 }
 
-
 .clan-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(235px, auto));
-    gap: 20px 20px;
-    padding: 20px 0;
-    max-width: 1200px;
-    margin: 0 auto;
-    justify-items: start;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 0;
+    margin-top: 30px;
 }
 
 .clan-card {
@@ -182,11 +181,9 @@ label {
     position: relative;
     text-decoration: none;
     color: inherit;
-    width: 235px;
     height: 340px;
     overflow: hidden;
     word-break: break-word;
-    min-width: 235px;
 }
 
 .clan-image-placeholder {
@@ -265,7 +262,7 @@ label {
 
 .clan-card small {
     color: gray;
-    font-size: 13px;
+    font-size: 14px;
     display: block;
     margin-top: 8px;
     align-self: flex-start;
@@ -273,6 +270,12 @@ label {
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
+}
+
+.clan-card small img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
 }
 
 .clan-links {
