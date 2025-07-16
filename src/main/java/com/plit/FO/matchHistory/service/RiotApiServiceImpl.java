@@ -1,9 +1,14 @@
 package com.plit.FO.matchHistory.service;
 
 import com.plit.FO.matchHistory.dto.RankDTO;
-import com.plit.FO.matchHistory.dto.SummonerDTO;
+import com.plit.FO.matchHistory.dto.SummonerSimpleDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotMatchInfoDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -12,9 +17,11 @@ import org.springframework.web.util.UriUtils;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.plit.FO.matchHistory.service.MatchHelper.toInt;
 
@@ -22,15 +29,22 @@ import static com.plit.FO.matchHistory.service.MatchHelper.toInt;
 @RequiredArgsConstructor
 public class RiotApiServiceImpl implements RiotApiService{
 
+    private final ImageService imageService;
     private final RestTemplate restTemplate;
 
     @Value("${riot.api.key}")
     private String riotApiKey;
 
+    @Override
+    public List<String> getRecentMatchIds(String puuid, int count) {
+        return List.of();
+    }
+
+
     // riot api 기본정보 가져오기
 
     // (*) riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
-    public SummonerDTO getAccountByRiotId(String gameName, String tagLine) {
+    public SummonerSimpleDTO getAccountByRiotId(String gameName, String tagLine) {
         try {
 //            // Riot ID -> puuid, gameName, tagLine // uri( 자원 식별 방식 ) 만들기
 //            URI riotIdUri = UriComponentsBuilder // URI 생성도구
@@ -93,11 +107,12 @@ public class RiotApiServiceImpl implements RiotApiService{
 
 
             // DTO로 리턴
-            return SummonerDTO.builder()
+            return SummonerSimpleDTO.builder()
                     .puuid(puuid)
                     .gameName(actualGameName)
                     .tagLine(actualTagLine)
                     .profileIconId(profileIconId)
+                    .profileIconUrl(imageService.getProfileIconUrl(profileIconId))
                     .summonerLevel(summonerLevel)
                     .build();
 
@@ -164,5 +179,76 @@ public class RiotApiServiceImpl implements RiotApiService{
 
         return rankMap;
     }
+
+    private RiotParticipantDTO convertToParticipantDTO(Map<String, Object> p) {
+        RiotParticipantDTO dto = new RiotParticipantDTO();
+        dto.setPuuid((String) p.get("puuid"));
+        dto.setSummonerName((String) p.get("summonerName"));
+        dto.setChampionName((String) p.get("championName"));
+        dto.setTier((String) p.get("tier"));
+        dto.setKills(((Number) p.getOrDefault("kills", 0)).intValue());
+        dto.setDeaths(((Number) p.getOrDefault("deaths", 0)).intValue());
+        dto.setAssists(((Number) p.getOrDefault("assists", 0)).intValue());
+        dto.setGoldEarned(((Number) p.getOrDefault("goldEarned", 0)).intValue());
+        dto.setTotalDamageDealtToChampions(((Number) p.getOrDefault("totalDamageDealtToChampions", 0)).intValue());
+        dto.setTotalDamageTaken(((Number) p.getOrDefault("totalDamageTaken", 0)).intValue());
+        dto.setTeamPosition((String) p.get("teamPosition"));
+        dto.setWin((Boolean) p.getOrDefault("win", false));
+        dto.setTeamId(((Number) p.getOrDefault("teamId", 0)).intValue());
+        dto.setChampLevel(((Number) p.getOrDefault("champLevel", 0)).intValue());
+        dto.setSummoner1Id(((Number) p.getOrDefault("summoner1Id", 0)).intValue());
+        dto.setSummoner2Id(((Number) p.getOrDefault("summoner2Id", 0)).intValue());
+        dto.setProfileIcon(((Number) p.getOrDefault("profileIcon", 0)).intValue());
+        dto.setTotalMinionsKilled(((Number) p.getOrDefault("totalMinionsKilled", 0)).intValue());
+        dto.setNeutralMinionsKilled(((Number) p.getOrDefault("neutralMinionsKilled", 0)).intValue());
+        dto.setPerkPrimaryStyle(((Number) p.getOrDefault("perks.styles.0.style", 0)).intValue()); // 주 룬
+        dto.setPerkSubStyle(((Number) p.getOrDefault("perks.styles.1.style", 0)).intValue());    // 보조 룬
+        dto.setIndividualPosition((String) p.get("individualPosition"));
+
+        // 아이템 ID 모으기
+        List<Integer> itemIds = new ArrayList<>();
+        for (int i = 0; i <= 6; i++) {
+            String key = "item" + i;
+            itemIds.add(((Number) p.getOrDefault(key, 0)).intValue());
+        }
+        dto.setItemIds(itemIds);
+
+        return dto;
+    }
+
+
+    public RiotMatchInfoDTO getMatchInfo(String matchId) {
+        String url = "https://asia.api.riotgames.com/lol/match/v5/matches/" + matchId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Riot-Token", riotApiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Map.class
+        );
+
+        Map<String, Object> body = response.getBody();
+        Map<String, Object> infoMap = (Map<String, Object>) body.get("info");
+
+        RiotMatchInfoDTO dto = new RiotMatchInfoDTO();
+
+        dto.setGameEndTimestamp(((Number) infoMap.get("gameEndTimestamp")).longValue());
+        dto.setGameDurationSeconds(((Number) infoMap.get("gameDuration")).intValue());
+        dto.setGameMode((String) infoMap.get("gameMode"));
+        dto.setQueueId(String.valueOf(infoMap.get("queueId")));
+
+        List<Map<String, Object>> participantsMap = (List<Map<String, Object>>) infoMap.get("participants");
+        List<RiotParticipantDTO> participants = participantsMap.stream()
+                .map(p -> convertToParticipantDTO(p))
+                .collect(Collectors.toList());
+        dto.setParticipants(participants);
+
+        return dto;
+    }
+
 
 }

@@ -1,4 +1,4 @@
-package com.plit.FO.matchHistory.dto;
+package com.plit.FO.matchHistory.dto.db;
 
 import lombok.*;
 
@@ -27,12 +27,10 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private String championImageUrl;
     private String profileIconUrl;
     private String gameMode;
-    private LocalDateTime gameEndTimestamp;
+    private LocalDateTime gameEndTimestamp; // 사용자에게 보여주는 용도라
     private List<String> itemImageUrls;
     private String queueType; // 큐타입
 
-    private int gameDurationMinutes;
-    private int gameDurationSeconds;
     private String timeAgo;
 
     private int championLevel;
@@ -51,4 +49,15 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private List<String> otherSummonerNames;
 
     private List<String> otherProfileIconUrls;
+
+    private int gameDurationSeconds;
+
+    public int getGameDurationMinutes() {
+        return gameDurationSeconds / 60;
+    }
+
+    public int getGameDurationRemainSeconds() {
+        return gameDurationSeconds % 60;
+    }
+
 }

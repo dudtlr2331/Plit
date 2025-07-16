@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>전적 테스트 페이지</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f5f5f5;
+            padding: 40px;
+        }
+        .match-card {
+            display: flex;
+            align-items: center;
+            background-color: #e0f2ff; /* 승리 */
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .champion-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            margin-right: 20px;
+            background-size: cover;
+            background-position: center;
+        }
+        .match-info {
+            flex-grow: 1;
+        }
+        .match-info p {
+            margin: 4px 0;
+            font-size: 16px;
+        }
+        .win {
+            background-color: #e0f2ff;
+        }
+        .lose {
+            background-color: #ffe0e0;
+        }
+    </style>
+</head>
+<body>
+
+<h2>전적 테스트 카드</h2>
+
+<div class="match-card win">
+    <div class="champion-icon" th:style="'background-image: url(' + ${match.championImageUrl} + ')'"></div>
+    <div class="match-info">
+        <p><strong>챔피언:</strong> <span th:text="${match.championName}"></span></p>
+        <p><strong>KDA:</strong> <span th:text="${match.kills}"></span> /
+            <span th:text="${match.deaths}"></span> /
+            <span th:text="${match.assists}"></span></p>
+        <p><strong>티어:</strong> <span th:text="${match.tier}"></span></p>
+        <p><strong>게임 모드:</strong> <span th:text="${match.gameMode}"></span></p>
+        <p><strong>게임 시간:</strong> <span th:text="${#temporals.format(match.gameEndTimestamp, 'yyyy-MM-dd HH:mm')}"></span></p>
+    </div>
+</div>
+
+
+</body>
+</html>

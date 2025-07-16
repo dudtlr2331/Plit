@@ -1,13 +1,14 @@
 package com.plit.FO.matchHistory.service;
 
 import com.plit.FO.matchHistory.dto.FavoriteChampionDTO;
-import com.plit.FO.matchHistory.dto.MatchDetailDTO;
-import com.plit.FO.matchHistory.dto.MatchHistoryDTO;
+import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
+import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.dto.MatchSummaryDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotMatchInfoDTO;
 import com.plit.FO.matchHistory.entity.ImageEntity;
+import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
+import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
-import com.plit.FO.matchHistory.repository.MatchPlayerRepository;
-import com.plit.FO.matchHistory.repository.MatchSummaryRepository;
 import com.plit.FO.matchHistory.repository.RiotIdCacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriUtils;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -33,6 +35,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
     private final MatchDbService matchDbService;
     private final RiotIdCacheRepository riotIdCacheRepository;
     private final ImageService imageService;
+    private final RiotApiService riotApiService;
 
     private final RestTemplate restTemplate;
 
@@ -48,6 +51,71 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
     public MatchDetailDTO getMatchDetail(String matchId) {
         return null;
     }
+
+
+    // Riot id -> puuid ( DB 캐시 활용, riot api 호출 )
+    public String getPuuidOrRequest(String gameName, String tagLine) {
+        // 소문자화 + 띄어쓰기 제거
+        String normalizedGameName = normalizeGameName(gameName);
+        String normalizedTagLine = normalizeTagLine(tagLine);
+
+        // 정규화된 값으로 캐시 DB 먼저 조회
+        Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
+                .findByNormalizedGameNameAndNormalizedTagLine(normalizedGameName, normalizedTagLine);
+
+        System.out.println("[DB 직접 확인용] normalized = " + normalizedGameName + "#" + normalizedTagLine);
+        System.out.println("[DB 쿼리 결과] = " + (cache.isPresent() ? "존재함" : "없음"));
+
+        if (cache.isPresent()) {
+            System.out.println("[캐시 HIT] " + gameName + "#" + tagLine + " -> " + cache.get().getPuuid());
+            return cache.get().getPuuid();
+        }
+
+        // 캐시에 없으면 Riot API에 정확한 원본 값으로 요청
+        try { // UriUtils.encodePathsegment() : URL에 넣을 수 있도록 문자열을 안전하게 변환(인코딩)해주는 메서드
+            String encodedGameName = gameName.trim();
+            String encodedTagLine = tagLine.trim();
+
+            System.out.println("encodedGameName = " + encodedGameName);
+
+            URI uri = new URI("https", "asia.api.riotgames.com",
+                    "/riot/account/v1/accounts/by-riot-id/" + encodedGameName + "/" + encodedTagLine,
+                    null);
+
+            System.out.println("uri = " + uri);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Riot-Token", riotApiKey);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(uri, HttpMethod.GET, entity, Map.class);
+
+            Map<String, Object> body = response.getBody();
+
+            if (body != null && body.get("puuid") != null) {
+                String puuid = (String) body.get("puuid");
+
+                // DB 저장 (원본 + 정규화된 값 모두 저장)
+                RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
+                        .gameName(gameName.trim())
+                        .tagLine(tagLine.trim())
+                        .normalizedGameName(normalizedGameName)
+                        .normalizedTagLine(normalizedTagLine)
+                        .puuid(puuid)
+                        .build();
+
+                riotIdCacheRepository.save(saved);
+
+                return puuid;
+            }
+
+        } catch (Exception e) {
+            System.err.println("[Riot API 오류] " + e.getMessage());
+        }
+
+        return null;
+    }
+
 
     // 왼쪽 패널
 
@@ -367,63 +435,26 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
     }
 
+    @Override
+    public void saveMatchHistory(String puuid) {
+        List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
 
+        for (String matchId : matchIds) {
 
+            // Riot API에서 match 상세 정보 가져오기
+            RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
 
-    // Riot id -> puuid ( DB 캐시 활용, riot api 호출 )
-    public String getPuuidOrRequest(String gameName, String tagLine) {
-        // 소문자화 + 띄어쓰기 제거
-        String normalizedGameName = normalizeGameName(gameName);
-        String normalizedTagLine = normalizeTagLine(tagLine);
+            MatchDetailDTO detailDTO = new MatchDetailDTO(matchInfo, matchId);
 
-        // 정규화된 값으로 캐시 DB 먼저 조회
-        Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
-                .findByNormalizedGameNameAndNormalizedTagLine(normalizedGameName, normalizedTagLine);
+            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detailDTO, puuid);
+            List<MatchPlayerEntity> players = detailDTO.toPlayerEntities();
 
-        if (cache.isPresent()) {
-            System.out.println("[캐시 HIT] " + gameName + "#" + tagLine + " -> " + cache.get().getPuuid());
-            return cache.get().getPuuid();
+            // DB 저장
+            matchDbService.saveMatchHistory(summary, players);
         }
-
-        // 캐시에 없으면 Riot API에 정확한 원본 값으로 요청
-        try { // UriUtils.encodePathsegment() : URL에 넣을 수 있도록 문자열을 안전하게 변환(인코딩)해주는 메서드
-            String encodedGameName = UriUtils.encodePathSegment(gameName.trim(), StandardCharsets.UTF_8);
-            String encodedTagLine = UriUtils.encodePathSegment(tagLine.trim(), StandardCharsets.UTF_8);
-
-            String url = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/" +
-                    encodedGameName + "/" + encodedTagLine;
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-Riot-Token", riotApiKey);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-
-            Map<String, Object> body = response.getBody();
-
-            if (body != null && body.get("puuid") != null) {
-                String puuid = (String) body.get("puuid");
-
-                // DB 저장 (원본 + 정규화된 값 모두 저장)
-                RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
-                        .gameName(gameName.trim())
-                        .tagLine(tagLine.trim())
-                        .normalizedGameName(normalizedGameName)
-                        .normalizedTagLine(normalizedTagLine)
-                        .puuid(puuid)
-                        .build();
-
-                riotIdCacheRepository.save(saved);
-
-                return puuid;
-            }
-
-        } catch (Exception e) {
-            System.err.println("[Riot API 오류] " + e.getMessage());
-        }
-
-        return null;
     }
+
+
 
 
 

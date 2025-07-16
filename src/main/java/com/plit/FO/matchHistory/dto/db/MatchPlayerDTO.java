@@ -1,4 +1,4 @@
-package com.plit.FO.matchHistory.dto;
+package com.plit.FO.matchHistory.dto.db;
 
 import lombok.*;
 
@@ -12,8 +12,10 @@ import java.util.List;
 @Builder
 public class MatchPlayerDTO { // 매치 각각 상세정보
 
-    private String matchId;
+    private String puuid;
+    private String matchId; // 하나의 게임 고유 ID
     private boolean win;
+    private int teamId;
     private String teamPosition;
 
     // 기본 정보
@@ -41,6 +43,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
     private double kdaRatio;
 
     private String badge;
+
+    private int goldEarned;
 
     // 시간
     private LocalDateTime gameEndTimestamp;

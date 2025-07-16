@@ -1,5 +1,38 @@
+// post 방식 예비용
+//
+// document.addEventListener('DOMContentLoaded', () => {
+//     const updateBtn = document.getElementById('update-btn');
+//     const puuid = /*[[${summoner.puuid}]]*/ '';
+//
+//     updateBtn.addEventListener('click', () => {
+//         if (!puuid) {
+//             alert('소환사 정보가 없습니다.');
+//             return;
+//         }
+//
+//         if (!confirm('전적을 최신 상태로 갱신하시겠습니까?')) return;
+//
+//         fetch(`/match/update?puuid=${puuid}`, {
+//             method: 'POST'
+//         })
+//         .then(res => {
+//             if (!res.ok) throw new Error('서버 오류');
+//             return res.text(); // 서버에서 텍스트 응답 반환한다고 가정
+//         })
+//         .then(msg => {
+//             alert(msg || '전적 갱신 완료!');
+//             location.reload();
+//         })
+//         .catch(err => {
+//             alert('갱신 중 오류가 발생했습니다.');
+//             console.error(err);
+//         });
+//     });
+// });
+
 // 왼쪽 파넬 - 랭크 모드별 선호챔피언 정보
 document.addEventListener("DOMContentLoaded", function () {
+    const updateBtn = document.getElementById('update-btn');
     const buttons = document.querySelectorAll(".tab-button");
     const tabContents = document.querySelectorAll(".champion-tab-content");
 
@@ -34,8 +67,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
-    // 더보기 버튼
-    function showMoreChampions(button) {
+// 더보기 버튼
+function showMoreChampions(button) {
     const parent = button.closest('.champion-tab-content');
     const hiddenRows = parent.querySelectorAll('.hidden-champ');
 
@@ -183,3 +216,33 @@ document.addEventListener("DOMContentLoaded", function () {
     updateVisibleMatches();
 });
 
+function initMatch() {
+    const puuid = document.getElementById("puuid").value;
+
+    fetch(`/match/init?puuid=${puuid}`)
+        .then(res => res.text())
+        .then(msg => alert(msg))
+        .catch(err => alert("초기화 실패: " + err));
+}
+
+function updateMatch() {
+    const puuid = document.getElementById("puuid").value;
+
+    if (!puuid) {
+        alert("소환사 정보가 없습니다.");
+        return;
+    }
+
+    if (!confirm("전적을 최신 상태로 갱신하시겠습니까?")) return;
+
+    fetch(`/match/update?puuid=${puuid}`)
+        .then(res => res.text())
+        .then(msg => {
+            alert(msg || "전적 갱신 완료!");
+            location.reload();
+        })
+        .catch(err => {
+            alert("갱신 중 오류가 발생했습니다.");
+            console.error(err);
+        });
+}

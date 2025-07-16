@@ -1,9 +1,11 @@
 package com.plit.FO.matchHistory.service;
 
-import com.plit.FO.matchHistory.dto.MatchDetailDTO;
-import com.plit.FO.matchHistory.dto.MatchHistoryDTO;
-import com.plit.FO.matchHistory.dto.MatchObjectiveDTO;
-import com.plit.FO.matchHistory.dto.MatchPlayerDTO;
+import com.plit.FO.matchHistory.dto.*;
+import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
+import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
+import com.plit.FO.matchHistory.dto.db.MatchPlayerDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotMatchInfoDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import com.plit.FO.matchHistory.entity.ImageEntity;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
@@ -15,13 +17,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.plit.FO.matchHistory.service.MatchHelper.getTimeAgo;
-import static com.plit.FO.matchHistory.service.MatchHelper.normalizePosition;
+import static com.plit.FO.matchHistory.service.MatchHelper.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,15 +41,12 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     private String riotApiKey;
 
 
-    @Override
-    public void updateMatches(String puuid) {}
 
-
-    // puuid -> 최근 match ID 20개 조회 [ match/v5 ]
-    public List<String> getMatchIdsByPuuid(String puuid) {
+    // puuid -> 최근 match ID 조회 [ match/v5 ]
+    public List<String> getRecentMatchIds(String puuid, int count) {
         try {
             String url = "https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/"
-                    + puuid + "/ids?start=0&count=20&api_key=" + riotApiKey;
+                    + puuid + "/ids?start=0&count=" + count + "&api_key=" + riotApiKey;
 
             String[] matchIds = restTemplate.getForObject(url, String[].class);
             return Arrays.asList(matchIds);
@@ -54,6 +54,104 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
             System.err.println("매치 ID 조회 실패: " + e.getMessage());
             return List.of();
         }
+    }
+
+    private LocalDateTime toLocalDateTime(long epochMillis) {
+        return Instant.ofEpochMilli(epochMillis)
+                .atZone(ZoneId.of("Asia/Seoul"))
+                .toLocalDateTime();
+    }
+
+    public void initMatchHistory(String puuid) {
+        // 최근 match ID 20개 가져오기
+        List<String> matchIds = getRecentMatchIds(puuid, 20);
+
+        for (String matchId : matchIds) {
+            // 이미 저장된 matchId는 건너뛰기
+            if (matchSummaryRepository.existsByMatchId(matchId)) {
+                continue;
+            }
+
+            // Riot API로 match 상세 정보 가져오기
+            RiotMatchInfoDTO info = riotApiService.getMatchInfo(matchId);
+            List<RiotParticipantDTO> participants = info.getParticipants();
+
+            // 본인 participant만 추출
+            RiotParticipantDTO me = participants.stream()
+                    .filter(p -> puuid.equals(p.getPuuid()))
+                    .findFirst()
+                    .orElse(null);
+            if (me == null) continue;
+
+            LocalDateTime endTime = LocalDateTime.ofEpochSecond(info.getGameEndTimestamp() / 1000, 0, ZoneOffset.UTC);
+
+            // 요약 정보 생성
+            MatchSummaryEntity summary = MatchSummaryEntity.builder()
+                    .matchId(matchId)
+                    .puuid(puuid)
+                    .win(me.isWin())
+                    .teamPosition(me.getTeamPosition())
+                    .championName(me.getChampionName())
+                    .kills(me.getKills())
+                    .deaths(me.getDeaths())
+                    .assists(me.getAssists())
+                    .kdaRatio(calculateKda(me.getKills(), me.getDeaths(), me.getAssists()))
+                    .tier(riotApiService.getTierByPuuid(puuid))
+                    .gameEndTimestamp(endTime)
+                    .gameMode(info.getGameMode())
+                    .champLevel(me.getChampLevel())
+                    .cs(me.getTotalMinionsKilled())
+                    .itemIds("")
+                    .createdAt(null)
+                    .build();
+
+            String queueType = info.getQueueId();
+
+
+
+            // 상세 정보 리스트 생성
+            List<MatchPlayerEntity> players = participants.stream()
+                    .map(p -> MatchPlayerEntity.builder()
+                            .matchId(matchId)
+                            .puuid(p.getPuuid())
+                            .summonerName(p.getSummonerName())
+                            .championName(p.getChampionName())
+                            .kills(p.getKills())
+                            .deaths(p.getDeaths())
+                            .assists(p.getAssists())
+                            .kdaRatio(calculateKda(p.getKills(), p.getDeaths(), p.getAssists()))
+                            .cs(0) // CS는 없는 경우 0으로
+                            .csPerMin(0)
+                            .totalDamageDealtToChampions(p.getTotalDamageDealtToChampions())
+                            .totalDamageTaken(p.getTotalDamageTaken())
+                            .teamPosition(p.getTeamPosition())
+                            .tier(riotApiService.getTierByPuuid(p.getPuuid()))
+                            .mainRune1(0) // 추후 룬 파싱 가능하면 반영
+                            .mainRune2(0)
+                            .statRune1(0)
+                            .statRune2(0)
+                            .wardsPlaced(0)
+                            .wardsKilled(0)
+                            .gameEndTimestamp(toLocalDateTime(info.getGameEndTimestamp()))
+                            .gameMode(info.getGameMode())
+                            .queueType(queueType)
+                            .teamId(p.getTeamId())
+                            .win(p.isWin())
+                            .itemIds("")
+                            .goldEarned(p.getGoldEarned())
+                            .build()
+                    )
+                    .collect(Collectors.toList());
+
+            // 저장
+            saveMatchHistory(summary, players);
+        }
+    }
+
+
+    @Override
+    public List<String> getMatchIdsByPuuid(String puuid) {
+        return List.of();
     }
 
     // (*) puuid -> matchid <최근 매치 정보 - 전적 요약 리스트> [ match/v5 ]
@@ -84,8 +182,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     if (puuid.equals(p.get("puuid"))) {
                         int teamId = (int) p.get("teamId");
                         int durationSeconds = ((Number) info.get("gameDuration")).intValue();
-                        int durationMinutes = durationSeconds / 60;
-                        int durationRemainSeconds = durationSeconds % 60;
+                        int minutes = durationSeconds / 60;
+                        int remainSeconds = durationSeconds % 60;
+
 
                         int teamTotalKills = participants.stream()
                                 .filter(pp -> ((Number) pp.get("teamId")).intValue() == teamId)
@@ -95,13 +194,14 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                         int kills = ((Number) p.get("kills")).intValue();
                         int assists = ((Number) p.get("assists")).intValue();
                         int deaths = ((Number) p.get("deaths")).intValue();
-                        double kdaRatio = deaths != 0 ? (double) (kills + assists) / deaths : kills + assists;
+                        double kdaRatio = MatchHelper.calculateKda(kills, deaths, assists);
 
                         int totalMinions = ((Number) p.get("totalMinionsKilled")).intValue()
                                 + ((Number) p.get("neutralMinionsKilled")).intValue();
                         double csPerMin = totalMinions / (durationSeconds / 60.0);
 
-                        double kp = teamTotalKills > 0 ? ((double)(kills + assists) / teamTotalKills) * 100 : 0;
+                        // 킬 관여율
+                        double kp = MatchHelper.calculateKillParticipation(kills, assists, teamTotalKills);
 
                         List<String> itemImageUrls = new ArrayList<>();
                         List<String> itemIds = new ArrayList<>();
@@ -193,8 +293,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                                 .gameMode((String) info.get("gameMode"))
                                 .queueType(String.valueOf(info.get("queueId")))
                                 .gameEndTimestamp(endTime)
-                                .gameDurationMinutes(durationMinutes)
-                                .gameDurationSeconds(durationRemainSeconds)
+                                .gameDurationSeconds(durationSeconds)
                                 .timeAgo(timeAgo)
                                 .championImageUrl(championImageUrl)
                                 .profileIconUrl(profileIconUrl)
@@ -426,6 +525,24 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         }
     }
 
+    public void saveMatchHistory(String puuid) {
+        List<String> matchIds = getMatchIdsByPuuid(puuid); // 20개
+
+        for (String matchId : matchIds) {
+            if (matchSummaryRepository.existsByMatchId(matchId)) continue;
+
+            // Riot API로부터 MatchDetailDTO 받아오기
+            MatchDetailDTO detail = getMatchDetailFromRiot(matchId, puuid);
+
+            // DTO → Entity 변환
+            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detail, puuid);
+            List<MatchPlayerEntity> players = detail.toPlayerEntities();
+
+            saveMatchHistory(summary, players);
+        }
+    }
+
+
     // 최신순으로 사용자의 요약 전적 20개 불러오기
     public List<MatchHistoryDTO> getMatchSummaryFromDB(String puuid) {
         List<MatchSummaryEntity> entities = matchSummaryRepository.findTop20ByPuuidOrderByGameEndTimestampDesc(puuid);
@@ -446,8 +563,6 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                         .build())
                 .collect(Collectors.toList());
     }
-
-
 
     // matchId 기준으로 모든 플레이어 정보 가져오기
     public MatchDetailDTO getMatchDetailFromDB(String matchId) {
@@ -522,18 +637,39 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .build();
     }
 
-//    // 전적 갱신 시 호출
-//    public void updateMatches(String puuid) {
-//        List<String> matchIds = riotApiService.getNewMatchIds(puuid);
-//        for (String matchId : matchIds) {
-//            if (!matchSummaryRepository.existsByMatchId(matchId)) {
-//                MatchDto matchDto = riotApiService.getMatchById(matchId);
-//                MatchSummaryEntity summary = matchHelper.createSummary(puuid, matchDto);
-//                List<MatchPlayerEntity> players = matchHelper.createPlayerEntities(matchDto);
-//                saveMatchHistory(summary, players);
-//            }
-//        }
-//    }
+
+    @Override
+    public void updateMatchHistory(String puuid) {
+        List<String> matchIds = getMatchIdsByPuuid(puuid);
+
+        for (String matchId : matchIds) {
+            if (matchSummaryRepository.existsByMatchId(matchId)) continue;
+
+            // matchId 기반으로 Riot API로부터 상세 전적 받아오기
+            MatchDetailDTO detail = getMatchDetailFromRiot(matchId, puuid);
+
+            // 요약 정보로 변환하여 저장
+            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detail, puuid);
+            matchSummaryRepository.save(summary);
+
+            // 참가자 정보 저장 // 내부 DTO( MatchPlayerDTO ) -> Entity 로 저장
+            for (MatchPlayerDTO player : detail.getBlueTeam()) {
+                matchPlayerRepository.save(MatchPlayerEntity.fromDTO(player));
+            }
+            for (MatchPlayerDTO player : detail.getRedTeam()) {
+                matchPlayerRepository.save(MatchPlayerEntity.fromDTO(player));
+            }
+        }
+    }
+
+    @Override
+    public List<MatchHistoryDTO> getRecentMatchHistories(String puuid) {
+        return matchSummaryRepository.findTop20ByPuuidOrderByGameEndTimestampDesc(puuid)
+                .stream()
+                .map(MatchSummaryEntity::toDTO)
+                .collect(Collectors.toList());
+    }
+
 
 
 

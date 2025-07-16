@@ -106,8 +106,15 @@ public class MatchHelper { // 서브 메서드
         }
     }
 
+    public static double calculateKda(int kills, int deaths, int assists) {
+        if (deaths == 0) return kills + assists;
+        return (kills + assists) / (double) deaths;
+    }
 
-
+    public static double calculateKillParticipation(int kills, int assists, int teamTotalKills) {
+        if (teamTotalKills == 0) return 0.0;
+        return ((double)(kills + assists) / teamTotalKills) * 100;
+    }
 
 
 }

@@ -30,7 +30,9 @@
                 <span th:text="${summoner.gameName}">닉네임</span>
                 <span th:text="'#' + ${summoner.tagLine}">#</span>
             </h2>
-            <button class="btn-red">전적 갱신</button>
+<!--            <button class="btn-red" id="update-btn">전적 갱신</button>-->
+            <button onclick="updateMatch()">전적 갱신</button>
+            <button onclick="initMatch()">전적 초기화</button>
         </div>
     </div>
 
@@ -43,20 +45,25 @@
             <div class="rank-box">
                 <h3>개인/2인 랭크 게임</h3>
                 <!-- 개인/2인 랭크 게임 null 이 아니면 RankDTO 사용, 연결 -->
-                <div class="tier-summary" th:if="${rankMap['RANKED_SOLO_5x5'] != null and rankMap['RANKED_SOLO_5x5'].tier != null}">
-                    <img th:src="@{'/images/tier/' + ${rankMap['RANKED_SOLO_5x5'].tier.toUpperCase()} + '.png'}" alt="티어 이미지" class="tier-icon" />
+                <div class="tier-summary"
+                     th:if="${rankMap != null and rankMap['RANKED_SOLO_5x5'] != null and rankMap['RANKED_SOLO_5x5'].tier != null}">
+                    <img th:src="@{'/images/tier/' + ${rankMap['RANKED_SOLO_5x5'].tier.toUpperCase()} + '.png'}"
+                         alt="티어 이미지" class="tier-icon" />
                     <div class="tier-info">
-                        <div class="tier-name" th:text="${rankMap['RANKED_SOLO_5x5'].tier + ' ' + rankMap['RANKED_SOLO_5x5'].rank}">티어</div>
-                        <div class="lp" th:text="${rankMap['RANKED_SOLO_5x5'].leaguePoints + ' LP'}">0 LP</div>
-                        <!-- #numbers.formatDecimal(a, x, y) : a 를 소수점 이하 최소 x, 최대 y 자릿수로 포맷 -->
+                        <div class="tier-name"
+                             th:text="${rankMap['RANKED_SOLO_5x5'].tier + ' ' + rankMap['RANKED_SOLO_5x5'].rank}">티어</div>
+                        <div class="lp"
+                             th:text="${rankMap['RANKED_SOLO_5x5'].leaguePoints + ' LP'}">0 LP</div>
                         <div class="win-rate"
                              th:text="${rankMap['RANKED_SOLO_5x5'].wins + '승 ' + rankMap['RANKED_SOLO_5x5'].losses + '패 · 승률 ' + #numbers.formatDecimal(rankMap['RANKED_SOLO_5x5'].winRate, 0, 0) + '%'}">
                             승률
                         </div>
                     </div>
                 </div>
-                <!-- null 이면 -->
-                <div class="no-rank-info" th:if="${rankMap['RANKED_SOLO_5x5'] == null}">
+
+                <!-- 개인/2인 랭크 정보가 없을 때 -->
+                <div class="no-rank-info"
+                     th:if="${rankMap == null or rankMap['RANKED_SOLO_5x5'] == null or rankMap['RANKED_SOLO_5x5'].tier == null}">
                     <p style="color: gray;">개인 랭크 정보가 없습니다.</p>
                 </div>
             </div>

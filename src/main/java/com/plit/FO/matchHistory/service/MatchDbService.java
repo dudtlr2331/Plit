@@ -1,7 +1,8 @@
 package com.plit.FO.matchHistory.service;
 
-import com.plit.FO.matchHistory.dto.MatchDetailDTO;
-import com.plit.FO.matchHistory.dto.MatchHistoryDTO;
+import com.plit.FO.matchHistory.dto.MatchSummaryDTO;
+import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
+import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 
@@ -22,5 +23,8 @@ public interface MatchDbService {
 
     List<MatchHistoryDTO> getMatchSummaryFromDB(String puuid);
 
-    void updateMatches(String puuid);
+    void updateMatchHistory(String puuid);
+
+    List<MatchHistoryDTO> getRecentMatchHistories(String puuid);
+
 }
