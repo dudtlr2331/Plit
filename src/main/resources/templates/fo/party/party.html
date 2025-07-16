@@ -7,6 +7,8 @@
   <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
   <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <meta name="user-id" th:content="${#authentication.name}">
+  <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}">
+  <meta name="login-user-nickname" th:if="${loginUser != null}" th:content="${loginUser.userNickname}">
   <link rel="stylesheet" href="/css/party-popup.css">
   <link rel="stylesheet" href="/css/common/header.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -108,7 +110,22 @@
 </div>
 
 <!-- JS 분리 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/chatPopup.js"></script>
 <script src="/js/common/position-icon.js"></script>
 <script src="/js/party.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const userSeqMeta = document.querySelector('meta[name="login-user-seq"]');
+    if (userSeqMeta) {
+      const userSeq = userSeqMeta.getAttribute("content");
+      if (userSeq) {
+        // 여기서 initChatFeature 호출
+        initChatFeature(userSeq);
+      }
+    }
+  });
+</script>
 </body>
 </html>
