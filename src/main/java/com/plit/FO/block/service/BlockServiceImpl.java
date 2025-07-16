@@ -56,5 +56,9 @@ public class BlockServiceImpl implements BlockService {
 
         blockRepository.save(block);
     }
+    // 다른 게시판에서 차단 기능을 사용하기 위한 이미 차단된 유저 판단
+    public boolean isBlocked(Integer mySeq, Integer targetSeq) {
+        return blockRepository.existsByBlockerIdAndBlockedUserIdAndIsReleased(mySeq, targetSeq, false);
+    }
 
 }

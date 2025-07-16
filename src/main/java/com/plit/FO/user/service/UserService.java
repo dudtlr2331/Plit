@@ -24,6 +24,7 @@ public interface UserService {
     Optional<UserDTO> getUserBySeq(Integer userSeq);
     UserDTO findByUserId(String userId);
     Optional<UserEntity> findByUserNickname(String nickname);
+    UserDTO findByUserSeq(Integer userSeq);
 
     /* ---------- 수정 / 삭제 ---------- */
     UserDTO updateUser(Integer userSeq, UserDTO userDTO);

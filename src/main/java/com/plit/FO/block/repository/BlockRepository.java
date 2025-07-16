@@ -13,4 +13,8 @@ public interface BlockRepository extends JpaRepository<BlockEntity, Integer> {
     Optional<BlockEntity> findById(Integer blockerId);
     List<BlockEntity> findAllByBlockerIdAndIsReleasedFalse(Integer blockerId);
     boolean existsByBlockerIdAndBlockedUserIdAndIsReleasedFalse(Integer blockerId, Integer blockedUserId);
+
+    boolean existsByBlockerIdAndBlockedUserIdAndIsReleased(Integer blockerId,
+                                                           Integer blockedUserId,
+                                                           Boolean isReleased);
 }

@@ -15,4 +15,5 @@ public interface FriendService {
     void updateMemo(Integer friendNo, String memo);
     void blockFriend(Integer friendNo, Integer currentUserSeq);
     void deleteFriend(Integer friendNo, Integer currentUserSeq);
+    boolean isFriend(Integer mySeq, Integer targetSeq);
 }

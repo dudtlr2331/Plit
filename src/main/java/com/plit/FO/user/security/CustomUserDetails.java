@@ -20,4 +20,8 @@ public class CustomUserDetails extends User {
     public String getUserNickname() {
         return userDTO.getUserNickname();
     }
+
+    public Integer getUserSeq() {
+        return userDTO.getUserSeq();
+    }
 }

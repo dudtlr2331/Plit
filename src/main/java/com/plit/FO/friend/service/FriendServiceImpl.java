@@ -209,4 +209,9 @@ public class FriendServiceImpl implements FriendService {
         friend.setStatus("DECLINED");
         friendRepository.save(friend);
     }
+    // 친구 신청 기능에 사용될 이미 친구인지 확인하는 기능
+    public boolean isFriend(Integer mySeq, Integer targetSeq) {
+        // fromUserId / toUserId 둘 중 하나가 나, 다른 하나가 상대방
+        return friendRepository.existsByUsersAndStatus(mySeq, targetSeq, "ACCEPTED");
+    }
 }

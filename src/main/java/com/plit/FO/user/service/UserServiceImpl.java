@@ -151,6 +151,12 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                 .orElse(null);
     }
 
+    public UserDTO findByUserSeq(Integer userSeq) {
+        return userRepository.findByUserSeq(userSeq)
+                .map(UserEntity::toDTO)  // UserEntity에 toDTO 메서드가 있다면 바로 변환
+                .orElse(null);
+    }
+
     /* ---------- 수정 / 삭제 ---------- */
 
     @Override
