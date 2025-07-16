@@ -1,7 +1,7 @@
 package com.plit.FO.clan.entity;
 
 import com.plit.FO.clan.enums.JoinStatus;
-import com.plit.FO.party.enums.PositionEnum;
+import com.plit.FO.clan.enums.Position;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public class ClanJoinRequestEntity {
     private Long userId;
 
     @Enumerated(EnumType.STRING)
-    private PositionEnum mainPosition;
+    private Position position;
 
     private String intro;
 

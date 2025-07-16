@@ -143,7 +143,7 @@ public class QnaController {
 
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public String handleMaxSizeException(RedirectAttributes ra) {
-        ra.addFlashAttribute("error", "파일 크기가 너무 큽니다! 최대 300MB까지 업로드 가능합니다.");
+        ra.addFlashAttribute("error", "파일 크기가 너무 큽니다! 최대 10MB까지 업로드 가능합니다.");
         return "redirect:/mypage/qna/write";
     }
 }

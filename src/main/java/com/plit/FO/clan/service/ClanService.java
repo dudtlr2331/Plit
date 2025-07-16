@@ -30,5 +30,7 @@ public interface ClanService {
 
     ClanDTO findById(Long id);
 
+    List<ClanDTO> getTop3ClansByMemberCount();
+
 
 }

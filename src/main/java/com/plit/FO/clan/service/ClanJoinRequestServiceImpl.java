@@ -4,10 +4,10 @@ import com.plit.FO.clan.dto.ClanJoinRequestDTO;
 import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.entity.ClanJoinRequestEntity;
 import com.plit.FO.clan.enums.JoinStatus;
+import com.plit.FO.clan.enums.Position;
 import com.plit.FO.clan.repository.ClanJoinRequestRepository;
 import com.plit.FO.clan.repository.ClanRepository;
 import com.plit.FO.party.enums.PositionEnum;
-import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
                 existingRequest.setStatus(JoinStatus.PENDING);
                 existingRequest.setIntro(dto.getIntro());
                 existingRequest.setTier(dto.getTier());
-                existingRequest.setMainPosition(PositionEnum.valueOf(dto.getMainPosition()));
+                existingRequest.setPosition(dto.getPosition());
                 existingRequest.setRequestAt(LocalDateTime.now());
 
                 joinRequestRepository.save(existingRequest);
@@ -58,7 +58,7 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
         ClanJoinRequestEntity entity = ClanJoinRequestEntity.builder()
                 .clan(clan)
                 .userId(dto.getUserId())
-                .mainPosition(PositionEnum.valueOf(dto.getMainPosition()))
+                .position(dto.getPosition())
                 .intro(dto.getIntro())
                 .tier(dto.getTier())
                 .requestAt(LocalDateTime.now())
@@ -76,7 +76,7 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
                     ClanJoinRequestDTO dto = new ClanJoinRequestDTO();
                     dto.setClanId(clanId);
                     dto.setUserId(req.getUserId());
-                    dto.setMainPosition(req.getMainPosition().name());
+                    dto.setPosition(req.getPosition());
                     dto.setIntro(req.getIntro());
                     dto.setRequestAt(req.getRequestAt());
 
@@ -106,7 +106,7 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
         request.setStatus(JoinStatus.APPROVED);
         joinRequestRepository.save(request);
 
-        String position = request.getMainPosition().name();
+        String position = request.getPosition().name();
         String tier = request.getTier();
         String intro = request.getIntro();
 

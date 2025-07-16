@@ -3,8 +3,10 @@ package com.plit.FO.clan.service;
 import com.plit.FO.clan.dto.ClanDTO;
 import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.entity.ClanMemberEntity;
+import com.plit.FO.clan.enums.JoinStatus;
 import com.plit.FO.clan.repository.ClanMemberRepository;
 import com.plit.FO.clan.repository.ClanRepository;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 //import lombok.Value;
@@ -40,7 +42,7 @@ public class ClanServiceImpl implements ClanService {
                     .userId(saved.getLeaderId())
                     .clanId(saved.getId())
                     .role("LEADER")
-                    .status("승인")
+                    .status(JoinStatus.APPROVED.name())
                     .intro("리더입니다 👑")
                     .build();
             clanMemberRepository.save(leader);
@@ -157,5 +159,28 @@ public class ClanServiceImpl implements ClanService {
                 .leaderId(entity.getLeaderId())
                 .memberCount(count)
                 .build();
+    }
+
+    @Override
+    public List<ClanDTO> getTop3ClansByMemberCount() {
+        return clanRepository.findAll().stream()
+                .filter(clan -> "Y".equals(clan.getUseYn()))
+                .map(clan -> {
+                    int memberCount = clanMemberRepository.countByClanId(clan.getId());
+                    return new ClanDTO(
+                            clan.getId(),
+                            clan.getName(),
+                            clan.getIntro(),
+                            clan.getKakaoLink(),
+                            clan.getDiscordLink(),
+                            clan.getMinTier(),
+                            clan.getImageUrl(),
+                            clan.getLeaderId(),
+                            memberCount
+                    );
+                })
+                .sorted((a, b) -> Integer.compare(b.getMemberCount(), a.getMemberCount()))
+                .limit(3)
+                .toList();
     }
 }

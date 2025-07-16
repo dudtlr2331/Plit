@@ -5,6 +5,7 @@ import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.entity.ClanMemberEntity;
 import com.plit.FO.clan.repository.ClanMemberRepository;
 import com.plit.FO.clan.repository.ClanRepository;
+import com.plit.FO.clan.enums.Position;
 import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import com.plit.FO.user.service.UserService;
@@ -54,7 +55,7 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         dto.setRole(entity.getRole());
         dto.setStatus(entity.getStatus());
         dto.setJoinedAt(entity.getJoinedAt());
-        dto.setMainPosition(entity.getMainPosition());
+        dto.setPosition(entity.getPosition() != null ? entity.getPosition() : Position.ALL);
         dto.setJoinedAgo(formatJoinedAgo(entity.getJoinedAt()));
 
         userService.getUserBySeq(entity.getUserId().intValue()).ifPresent(user -> {
@@ -79,7 +80,7 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         ClanMemberEntity entity = clanMemberRepository.findByClanIdAndUserId(clanId, userId)
                 .orElseThrow(() -> new RuntimeException("해당 멤버를 찾을 수 없습니다."));
 
-        entity.setMainPosition(dto.getMainPosition());
+        entity.setPosition(dto.getPosition());
         entity.setIntro(dto.getIntro());
     }
 
@@ -89,7 +90,7 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         ClanMemberEntity entity = ClanMemberEntity.builder()
                 .clanId(clanId)
                 .userId(userId)
-                .mainPosition(position)
+                .position(Position.valueOf(position))
                 .tier(tier)
                 .intro(intro)
                 .status("APPROVED")

@@ -16,36 +16,39 @@
 
 <div class="container">
   <div class="search-bar">
-    <form method="get" action="/clan" id="searchForm">
-      <div class="search-left">
+    <form id="searchForm" th:action="@{/clan}" method="get" class="search-bar">
+      <div class="search-left" style="display:flex; align-items:center; gap:8px;">
         <select name="tier" onchange="document.getElementById('searchForm').submit()">
-          <option value="" th:selected="${tier == null or tier == ''}">티어 전체</option>
-          <option value="상관없음" th:selected="${tier == '상관없음'}">티어 상관 없음</option>
-          <option value="아이언" th:selected="${tier == '아이언'}">아이언</option>
-          <option value="브론즈" th:selected="${tier == '브론즈'}">브론즈</option>
-          <option value="실버" th:selected="${tier == '실버'}">실버</option>
-          <option value="골드" th:selected="${tier == '골드'}">골드</option>
-          <option value="플레티넘" th:selected="${tier == '플레티넘'}">플레티넘</option>
-          <option value="에메랄드" th:selected="${tier == '에메랄드'}">에메랄드</option>
-          <option value="다이아" th:selected="${tier == '다이아'}">다이아</option>
-          <option value="마스터" th:selected="${tier == '마스터'}">마스터</option>
-          <option value="그랜드마스터" th:selected="${tier == '그랜드마스터'}">그랜드마스터</option>
-          <option value="챌린저" th:selected="${tier == '챌린저'}">챌린저</option>
+          <option value=""       th:selected="${tier == null or tier == ''}">티어 전체</option>
+          <option value="NONE"   th:selected="${tier == 'NONE'}">티어 상관 없음</option>
+          <option value="IRON"   th:selected="${tier == 'IRON'}">아이언</option>
+          <option value="BRONZE" th:selected="${tier == 'BRONZE'}">브론즈</option>
+          <option value="SILVER" th:selected="${tier == 'SILVER'}">실버</option>
+          <option value="GOLD"   th:selected="${tier == 'GOLD'}">골드</option>
+          <option value="PLATINUM" th:selected="${tier == 'PLATINUM'}">플레티넘</option>
+          <option value="EMERALD"  th:selected="${tier == 'EMERALD'}">에메랄드</option>
+          <option value="DIAMOND"  th:selected="${tier == 'DIAMOND'}">다이아</option>
+          <option value="MASTER"   th:selected="${tier == 'MASTER'}">마스터</option>
+          <option value="GRANDMASTER" th:selected="${tier == 'GRANDMASTER'}">그랜드마스터</option>
+          <option value="CHALLENGER"   th:selected="${tier == 'CHALLENGER'}">챌린저</option>
         </select>
+
         <input
                 type="text"
                 name="keyword"
                 placeholder="클랜명 또는 소개 검색"
-                th:value="${keyword}" />
-        <button type="submit" class="btn">검색</button>
+                th:value="${keyword}"
+        />
+
+        <button type="submit" class="clan-btn">검색</button>
       </div>
     </form>
 
     <div sec:authorize="isAuthenticated()">
-      <a href="javascript:void(0);" class="btn" onclick="openModal()">클랜등록</a>
+      <a href="javascript:void(0);" class="clan-btn" onclick="openModal()">클랜등록</a>
     </div>
     <div sec:authorize="isAnonymous()">
-      <a href="/login" class="btn">클랜등록</a>
+      <a href="/login" class="clan-btn">클랜등록</a>
     </div>
 
     <div id="clanModal" class="modal">
@@ -59,7 +62,6 @@
             <p th:text="${error}"></p>
           </div>
 
-          <!-- 클랜 이름 입력 -->
           <input
                   type="text"
                   name="name"
@@ -115,8 +117,8 @@
           <input type="url" name="kakaoLink" placeholder="카카오톡 오픈채팅 주소" />
 
           <div style="text-align: right;">
-            <button type="submit" class="btn">등록하기</button>
-            <button type="button" class="btn" onclick="closeModal()">취소</button>
+            <button type="submit" class="clan-btn">등록하기</button>
+            <button type="button" class="clan-btn" onclick="closeModal()">취소</button>
           </div>
         </form>
       </div>
@@ -144,19 +146,33 @@
       <p th:text="${clan.intro}">소개글</p>
 
       <small style="display: flex; align-items: center; width: 100%;">
-        <span style="padding-left: 0.75rem; flex-shrink: 0;"
-              th:text="${clan.minTier == '챌린저' ? '챌린저' :
-                       (clan.minTier == '상관없음' ? '티어 상관 없음' :
-                       clan.minTier + ' 이상')}"></span>
-        <div style="flex-grow: 1;"></div>
+        <img
+                th:if="${clan.minTier != 'NONE'}"
+                th:src="@{/images/tier/{t}.png(t=${clan.minTier})}"
+                th:alt="${clan.minTier} + ' 아이콘'"
+                width="30" height="30"
+        />
+
+        <span style="flex-shrink:0;"
+              th:switch="${clan.minTier}">
+
+  <span th:case="'CHALLENGER'">CHALLENGER</span>
+
+  <span th:case="'NONE'">티어 상관 없음</span>
+
+  <span th:case="*"
+        th:text="${clan.minTier} + ' 이상'"></span>
+</span>
+        <div style="flex-grow:1;"></div>
+
         <span class="clan-links" style="padding-right: 0.75rem; display: flex; gap: 4px;">
-          <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}" th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
-            <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
-          </a>
-          <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}" th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
-            <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
-          </a>
-        </span>
+        <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}" th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+          <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
+        </a>
+        <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}" th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+          <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+        </a>
+      </span>
       </small>
     </div>
   </div>

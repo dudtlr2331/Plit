@@ -1,78 +1,9 @@
-html,
-/*body {*/
-/*    height: 100%;*/
-/*    margin: 0;*/
-/*    padding: 0;*/
-/*}*/
-
-/*body {*/
-/*    font-family: 'Noto Sans KR', sans-serif;*/
-/*    display: flex;*/
-/*    flex-direction: column;*/
-/*    min-height: 100vh;*/
-/*    background: #fff;*/
-/*}*/
-
-main {
-    flex: 1;
-}
-
 .container {
     width: 90%;
     max-width: 1200px;
     margin: 30px auto 0;
-    padding: 0 20px;
     flex: 1;
 }
-
-/* 헤더 (Header) */
-/*header {*/
-/*    background: linear-gradient(to right, #7c4798, #6570b4);*/
-/*    padding: 15px;*/
-/*    display: flex;*/
-/*    justify-content: space-between;*/
-/*    align-items: center;*/
-/*    color: white;*/
-/*    width: 100%;*/
-/*    box-sizing: border-box;*/
-/*}*/
-
-/*header .logo {*/
-/*    font-weight: bold;*/
-/*    font-size: 18px;*/
-/*    cursor: pointer;*/
-/*    text-decoration: none;*/
-/*    color: inherit;*/
-/*}*/
-
-/*header nav {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*}*/
-
-/*header nav a {*/
-/*    margin: 0 10px;*/
-/*    color: white;*/
-/*    text-decoration: none;*/
-/*    font-weight: bold;*/
-/*    cursor: pointer;*/
-/*    transition: color 0.2s;*/
-/*}*/
-
-/*!* 현재 메뉴 강조 *!*/
-/*header nav a.active,*/
-/*header nav a[style*="color: yellow"] {*/
-/*    color: yellow;*/
-/*}*/
-
-/*.top-right {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    gap: 15px;*/
-/*    color: white;*/
-/*    font-weight: bold;*/
-/*    font-size: 14px;*/
-/*}*/
 
 .social-icon {
     width: 24px;
@@ -101,7 +32,7 @@ main {
 }
 
 /* 버튼 스타일 통합 */
-.btn {
+.clan-btn {
     background: #6570b4;
     color: white;
     border: none;
@@ -114,16 +45,16 @@ main {
     transition: background 0.2s ease-in-out;
 }
 
-.btn:hover {
+.clan-btn:hover {
     background: #7c4798;
 }
 
 /* 취소 버튼 */
-.btn.cancel {
+.clan-btn.cancel {
     background-color: #8a8a8a;
 }
 
-.btn.cancel:hover {
+.clan-btn.cancel:hover {
     background-color: #6e6e6e;
 }
 
@@ -147,7 +78,7 @@ main {
 }
 
 .submit-btn {
-    composes: btn;
+    composes: clan-btn;
 }
 
 .back-btn-right {
@@ -228,11 +159,15 @@ label {
     gap: 10px;
 }
 
+
 .clan-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(235px, auto));
+    gap: 20px 20px;
+    padding: 20px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    justify-items: start;
 }
 
 .clan-card {
@@ -247,9 +182,11 @@ label {
     position: relative;
     text-decoration: none;
     color: inherit;
+    width: 235px;
     height: 340px;
     overflow: hidden;
     word-break: break-word;
+    min-width: 235px;
 }
 
 .clan-image-placeholder {
@@ -517,7 +454,7 @@ label {
 
 .link-buttons a,
 .detail-links a {
-    composes: btn;
+    composes: clan-btn;
 }
 
 .detail-content {
@@ -542,7 +479,7 @@ label {
 
 .action-buttons a,
 .action-buttons button {
-    composes: btn;
+    composes: clan-btn;
 }
 
 .action-buttons a:hover,
@@ -615,6 +552,7 @@ label {
 }
 
 .member-cell.intro {
+    /*justify-content: flex-start;*/
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -798,7 +736,6 @@ label {
 .modal-btn-group {
     display: flex;
     justify-content: flex-end;
-    justify-content: flex-end;
     gap: 8px;
     margin-top: 8px;
 }
@@ -901,7 +838,6 @@ textarea#memberIntro:focus {
     gap: 8px;
 }
 
-/* 로그인한 내 계정인 행을 연한 회색으로 강조 */
 .member-row.current-user {
     background-color: #f5f5f5;
 }
@@ -924,21 +860,18 @@ textarea#memberIntro:focus {
     vertical-align: middle;
 }
 
-/* 푸터 (Footer) */
-/*footer {*/
-/*    background: #333;*/
-/*    color: white;*/
-/*    padding: 30px 20px;*/
-/*    font-size: 13px;*/
-/*    line-height: 1.5;*/
-/*}*/
+.crown-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 4px;
+    position: relative;
+    top: -3px;
+}
 
-/*footer a {*/
-/*    color: white;*/
-/*    margin-right: 10px;*/
-/*    text-decoration: none;*/
-/*}*/
-
-/*footer .footer-nav {*/
-/*    margin-bottom: 10px;*/
-/*}*/
+.tier-icon {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}

@@ -103,7 +103,12 @@
                     <!-- 소환사명 + 리더 왕관 -->
                     <div class="member-cell name">
                         <strong th:text="${member.nickname}">닉네임</strong>
-                        <span th:if="${member.role == 'LEADER'}">👑</span>
+                        <span th:if="${member.role == 'LEADER'}" class="leader-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 64 64" class="crown-icon" aria-label="리더 왕관">
+                                <path fill="#f1c40f" d="M2 20l10 10 10-20 10 20 10-20 10 20 10-10v34H2z"/>
+                                <rect x="2" y="48" width="60" height="10" fill="#f39c12" />
+                            </svg>
+                        </span>
                     </div>
 
                     <!-- 티어 -->
@@ -111,7 +116,7 @@
 
                     <!-- 주 포지션 -->
                     <div class="member-cell">
-                        <div class="position-icon" th:switch="${member.mainPosition}">
+                        <div class="position-icon" th:switch="${member.position.name()}">
 
                             <!-- TOP -->
                             <svg th:case="'TOP'" width="24" height="24" viewBox="0 0 24 24"
@@ -193,7 +198,7 @@
                     <div class="member-cell manage-cell"
                          th:if="${member != null and currentUserId != null and member.memberId == currentUserId}">
                         <button class="btn-icon edit-btn"
-                                th:attr="data-main-position=${member.mainPosition}"
+                                th:attr="data-main-position=${member.position}"
                                 onclick="openEditMemberModalByAttr(this)"
                                 title="수정">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -239,7 +244,7 @@
 
                     <!-- 주포지션 -->
                     <div class="member-cell">
-                        <div class="position-icon" th:switch="${member.mainPosition}">
+                        <div class="position-icon" th:switch="${member.position}">
                             <svg th:case="'TOP'" width="24" height="24" viewBox="0 0 24 24"
                                  xmlns="http://www.w3.org/2000/svg" aria-label="탑">
                                 <path d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
@@ -327,16 +332,16 @@
             <div class="action-buttons" id="editButtons">
 
                 <!-- 클랜 리더일 경우 -->
-                <th:block th:if="${role == 'LEADER' and currentUserId == clan.leaderId}">
-                    <button type="button" class="btn" onclick="openEditModal()">수정</button>
+                <th:block th:if="${role=='LEADER' and currentUserId==clan.leaderId}">
+                    <button type="button" class="clan-btn" onclick="openEditModal(this)" th:data-min-tier="${clan.minTier}">수정</button>
                     <form method="post" th:action="@{/clan/delete/{id}(id=${clan.id})}" id="deleteForm" style="display:inline;">
-                        <button type="button" class="btn" onclick="confirmDelete()">삭제</button>
+                        <button type="button" class="clan-btn" onclick="confirmDelete()">삭제</button>
                     </form>
                 </th:block>
 
                 <!-- 클랜 멤버일 경우 -->
                 <th:block th:if="${role == 'MEMBER'}">
-                    <button class="btn danger"
+                    <button class="clan-btn"
                             th:onclick="'confirmLeaveClan(' + ${clan.id} + ')'">클랜 탈퇴</button>
                 </th:block>
 
@@ -347,15 +352,15 @@
                     <input type="hidden" id="userRole" value="GUEST" />
 
                     <button th:if="${not joinPending}"
-                            class="btn joinClanBtn"
+                            class="clan-btn"
                             onclick="handleJoinClick()">가입 신청</button>
 
                     <button th:if="${joinPending ?: false}"
-                            class="btn"
+                            class="clan-btn"
                             disabled style="opacity: 0.5; cursor: not-allowed;">수락 대기 중</button>
                 </th:block>
 
-                <button class="btn" onclick="history.back()">목록으로</button>
+                <button class="clan-btn" onclick="window.location.href='/clan'">목록으로</button>
             </div>
         </div>
     </div>
@@ -457,8 +462,8 @@
         <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}" />
 
         <div class="modal-actions">
-            <button class="btn" onclick="submitMemberEdit()">수정</button>
-            <button class="btn cancel" onclick="closeEditMemberModal()">취소</button>
+            <button class="clan-btn" onclick="submitMemberEdit()">수정</button>
+            <button class="clan-btn cancel" onclick="closeEditMemberModal()">취소</button>
         </div>
     </div>
 </div>
@@ -468,7 +473,10 @@
     <div class="modal-content">
         <span class="close" onclick="closeEditModal()">&times;</span>
         <h2>클랜 정보 수정</h2>
-        <form method="post" th:action="@{/clan/edit/{id}(id=${clan.id})}" enctype="multipart/form-data">
+        <form method="post"
+              th:object="${clan}"
+              th:action="@{/clan/edit/{id}(id=${clan.id})}"
+              enctype="multipart/form-data">
             <div style="margin-bottom: 10px;">
                 <label>클랜 이름</label>
                 <div style="padding: 10px; background-color: #eee; border-radius: 4px;">
@@ -488,18 +496,19 @@
             <textarea name="intro" placeholder="클랜 소개" required th:text="${clan.intro}"></textarea>
 
             <label>최소 티어</label>
+
             <select name="minTier" required>
-                <option value="상관없음" th:selected="${clan.minTier == '상관없음'}">티어 제한 없음</option>
-                <option value="아이언" th:selected="${clan.minTier == '아이언'}">아이언+</option>
-                <option value="브론즈" th:selected="${clan.minTier == '브론즈'}">브론즈+</option>
-                <option value="실버" th:selected="${clan.minTier == '실버'}">실버+</option>
-                <option value="골드" th:selected="${clan.minTier == '골드'}">골드+</option>
-                <option value="플레티넘" th:selected="${clan.minTier == '플레티넘'}">플레티넘+</option>
-                <option value="에메랄드" th:selected="${clan.minTier == '에메랄드'}">에메랄드+</option>
-                <option value="다이아" th:selected="${clan.minTier == '다이아'}">다이아+</option>
-                <option value="마스터" th:selected="${clan.minTier == '마스터'}">마스터+</option>
-                <option value="그랜드마스터" th:selected="${clan.minTier == '그랜드마스터'}">그랜드마스터+</option>
-                <option value="챌린저" th:selected="${clan.minTier == '챌린저'}">챌린저</option>
+                <option value="NONE" th:selected="${clan.minTier == 'NONE'}">티어 제한 없음</option>
+                <option value="IRON" th:selected="${clan.minTier == 'IRON'}">아이언+</option>
+                <option value="BRONZE" th:selected="${clan.minTier == 'BRONZE'}">브론즈+</option>
+                <option value="SILVER" th:selected="${clan.minTier == 'SILVER'}">실버+</option>
+                <option value="GOLD" th:selected="${clan.minTier == 'GOLD'}">골드+</option>
+                <option value="PLATINUM" th:selected="${clan.minTier == 'PLATINUM'}">플레티넘+</option>
+                <option value="EMERALD" th:selected="${clan.minTier == 'EMERALD'}">에메랄드+</option>
+                <option value="DIAMOND" th:selected="${clan.minTier == 'DIAMOND'}">다이아+</option>
+                <option value="MASTER" th:selected="${clan.minTier == 'MASTER'}">마스터+</option>
+                <option value="GRANDMASTER" th:selected="${clan.minTier == 'GRANDMASTER'}">그랜드마스터+</option>
+                <option value="CHALLENGER" th:selected="${clan.minTier == 'CHALLENGER'}">챌린저</option>
             </select>
 
             <label>디스코드 링크</label>
@@ -509,8 +518,8 @@
             <input type="url" name="kakaoLink" th:value="${clan.kakaoLink}" />
 
             <div class="modal-actions">
-                <button type="submit" class="btn">수정완료</button>
-                <button type="button" class="btn cancel" onclick="closeEditModal()">취소</button>
+                <button type="submit" class="clan-btn">수정완료</button>
+                <button type="button" class="clan-btn cancel" onclick="closeEditModal()">취소</button>
             </div>
         </form>
     </div>
@@ -609,8 +618,8 @@
 
         <!-- 버튼 -->
         <div class="modal-actions">
-            <button class="btn" onclick="submitJoinRequest()">가입 신청</button>
-            <button class="btn cancel" onclick="closeJoinClanModal()">취소</button>
+            <button class="clan-btn" onclick="submitJoinRequest()">가입 신청</button>
+            <button class="clan-btn cancel" onclick="closeJoinClanModal()">취소</button>
         </div>
     </div>
 </div>

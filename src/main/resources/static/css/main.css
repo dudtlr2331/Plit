@@ -1,12 +1,19 @@
+.main-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 0;
+}
+
 .search-box {
-    width: 280px;
+    width: 500px;
     position: relative;
     margin: 30px auto;
 }
 
 #searchInput {
     width: 100%;
-    padding: 10px;
+    padding: 13px;
     padding-right: 34px;
     border-radius: 20px;
     border: 1px solid #ccc;
@@ -35,12 +42,9 @@
     height: 14px;
 }
 
-
-
-
 .player-list {
-    max-width: 600px;
-    margin: 0 auto;
+    max-width: 800px;
+    margin: 20px auto 0 auto;
 }
 .player-item {
     display: flex;
@@ -62,26 +66,31 @@
     cursor: pointer;
 }
 .clan-section {
-    max-width: 600px;
+    max-width: 100%;
     margin: 0 auto 50px;
+    justify-content: center;
 }
-.clan-title {
-    font-weight: bold;
-    margin: 20px 0 10px;
-    cursor: pointer;
+
+.main-container .clan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 300px);
+    justify-content: center;
+    gap: 20px 30px;
+    padding: 20px 0;
 }
-.clan-cards {
+
+.main-container .clan-card small {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
 }
-.clan-card {
-    flex: 1;
-    background: #f5f5f5;
-    border-radius: 10px;
-    padding: 30px;
-    text-align: center;
+
+.clan-title {
+    margin-left: 120px;
     cursor: pointer;
 }
+
+
 .chat-list, .chat-popup {
     position: fixed;
     background: white;
@@ -130,3 +139,5 @@
 .autocomplete-item:hover {
     background-color: #eee;
 }
+
+

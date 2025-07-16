@@ -1,5 +1,6 @@
 package com.plit.FO.clan.dto;
 
+import com.plit.FO.clan.enums.Position;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public class ClanJoinRequestDTO {
     private Long userId;
     private String nickname;
     private String tier;
-    private String mainPosition;
+    private Position position;
     private String intro;
     private LocalDateTime requestAt;
 }

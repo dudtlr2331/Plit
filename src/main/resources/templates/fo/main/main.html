@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="/css/common/header.css">
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/clan.css">
     <meta charset="UTF-8">
     <title>플레이어 매칭 UI</title>
 
@@ -18,6 +19,8 @@
 <body>
 
 <div th:replace="~{fo/common/header :: header}"></div>
+
+<div class="main-container">
 
 <div class="search-box">
     <input type="text" id="searchInput" placeholder="플레이어 이름 (플레이어#KR1)">
@@ -50,11 +53,44 @@
 
 <div class="clan-section">
     <div class="clan-title" onclick="location.href='/clan'">클랜찾기 ></div>
-    <div class="clan-cards">
-        <div class="clan-card" onclick="toggleChatPopup()">플이좋아</div>
-        <div class="clan-card" onclick="toggleChatPopup()">플이좋아</div>
-        <div class="clan-card" onclick="toggleChatPopup()">플이좋아</div>
+
+    <div class="clan-grid">
+        <div class="clan-card main-clan-card"
+             th:each="clan : ${topClans}"
+             th:onclick="|location.href='/clan/${clan.id}'|">
+
+        <div class="clan-image-placeholder">
+                <img th:src="${#strings.isEmpty(clan.imageUrl)} ? '/images/clan/clan_default.png' : ${clan.imageUrl}"
+                     alt="클랜 이미지"
+                     class="clan-image uploaded-image"
+                     onerror="this.onerror=null; this.src='/images/clan/clan_default.png';" />
+            </div>
+
+            <div class="clan-title-box">
+                <h3 th:text="${clan.name}">클랜이름</h3>
+                <span class="clan-member-count" th:text="${clan.memberCount + '명'}"></span>
+            </div>
+
+            <p th:text="${clan.intro}">소개글</p>
+
+            <small>
+        <span th:text="${clan.minTier == '챌린저' ? '챌린저' :
+                       (clan.minTier == '상관없음' ? '티어 상관 없음' :
+                       clan.minTier + ' 이상')}">골드 이상</span>
+                <div class="clan-links">
+                    <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+                       th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+                        <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
+                    </a>
+                    <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+                       th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+                        <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+                    </a>
+                </div>
+            </small>
+        </div>
     </div>
+</div>
 </div>
 
 

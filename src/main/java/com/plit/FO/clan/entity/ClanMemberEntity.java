@@ -1,5 +1,6 @@
 package com.plit.FO.clan.entity;
 
+import com.plit.FO.clan.enums.Position;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,8 +32,9 @@ public class ClanMemberEntity {
     @Column(name = "status", length = 20)
     private String status;
 
-    @Column(name = "main_position", length = 20)
-    private String mainPosition;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "position")
+    private Position position;
 
     @Column(name = "role", length = 20, nullable = false)
     private String role;
@@ -53,6 +55,9 @@ public class ClanMemberEntity {
         }
         if (this.role == null) {
             this.role = "MEMBER";
+        }
+        if (this.position == null) {
+            this.position = Position.ALL;
         }
     }
 }

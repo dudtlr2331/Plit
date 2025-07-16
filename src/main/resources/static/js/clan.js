@@ -194,7 +194,7 @@ function submitMemberEdit() {
     const data = {
         clanId: parseInt(document.getElementById("clanId").value),
         intro,
-        mainPosition: position
+        position: position
     };
 
     fetch('/clan/member/update', {
@@ -219,8 +219,12 @@ function submitMemberEdit() {
         .catch(err => alert("요청 실패: " + err));
 }
 
-function openJoinClanModal() {
-    const modal = document.getElementById("joinClanModal");
+function openEditModal(button) {
+    const modal = document.getElementById("editClanModal");
+    const minTierSelect = modal.querySelector("select[name='minTier']");
+    const tierValue     = button.dataset.minTier;
+
+    minTierSelect.value = tierValue;
     modal.style.display = "flex";
     modal.style.justifyContent = "center";
     modal.style.alignItems = "center";
@@ -242,7 +246,7 @@ function submitJoinRequest() {
         return;
     }
 
-    const requestBody = { clanId, mainPosition: position, intro };
+    const requestBody = { clanId, position: position, intro };
 
     fetch("/clan/join", {
         method: "POST",
@@ -396,4 +400,26 @@ function handleJoinClick() {
     } else {
         alert("이미 클랜에 가입된 사용자입니다!");
     }
+
+    window.addEventListener('pageshow', e => {
+        if (e.persisted || performance.getEntriesByType('navigation')[0].type === 'back_forward') {
+            location.reload();
+        }
+    });
+
+    function updateSearchTier(tier) {
+        const icon = document.getElementById('searchTierIcon');
+        if (!icon) return;
+
+        if (!tier || tier === 'NONE') {
+            icon.style.display = 'none';
+        } else {
+            icon.style.display = 'inline-block';
+            icon.src = `/images/tier/${tier}.png`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateSearchTier(document.querySelector("select[name='tier']").value);
+    });
 }

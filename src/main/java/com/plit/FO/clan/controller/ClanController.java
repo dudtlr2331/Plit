@@ -142,10 +142,34 @@ public class ClanController {
         }
 
         Long leaderId = clan.getLeaderId();
+        AtomicReference<Long> currentUserMemberId = new AtomicReference<>(null);
+
+// 로그인한 사용자가 멤버일 경우 memberId 추출
+        if (principal != null) {
+            String userIdStr = principal.getName();
+            userService.getUserByUserId(userIdStr).ifPresent(userDTO -> {
+                Long userSeq = userDTO.getUserSeq().longValue();
+                clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresent(currentMemberDto -> {
+                    currentUserMemberId.set(currentMemberDto.getMemberId()); // 🔥 이 한 줄!
+                });
+            });
+        }
+
+// 리더 → 로그인한 사용자 → 그 외 순으로 정렬
         members.sort((m1, m2) -> {
-            return m1.getMemberId().equals(leaderId) ? -1
-                    : m2.getMemberId().equals(leaderId) ? 1
-                    : 0;
+            Long m1Id = m1.getMemberId();
+            Long m2Id = m2.getMemberId();
+            Long currentId = currentUserMemberId.get();
+
+            if (m1Id.equals(leaderId)) return -1;
+            if (m2Id.equals(leaderId)) return 1;
+
+            if (currentId != null) {
+                if (m1Id.equals(currentId)) return -1;
+                if (m2Id.equals(currentId)) return 1;
+            }
+
+            return 0;
         });
 
         model.addAttribute("members", members);
@@ -244,7 +268,7 @@ public class ClanController {
                                                    @RequestBody ClanMemberDTO dto) {
         try {
             // 주 포지션 선택 확인
-            String mainPosition = dto.getMainPosition();
+            String mainPosition = dto.getPosition().getLabel();
             if (mainPosition == null || mainPosition.trim().isEmpty()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
