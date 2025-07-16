@@ -230,6 +230,17 @@ function openEditModal(button) {
     modal.style.alignItems = "center";
 }
 
+function openJoinClanModal() {
+    const modal = document.getElementById("joinClanModal");
+    if (!modal) {
+        console.error("joinClanModal 요소를 찾을 수 없습니다!");
+        return;
+    }
+    modal.style.display        = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems     = "center";
+}
+
 function closeJoinClanModal() {
     document.getElementById("joinClanModal").style.display = "none";
 }
