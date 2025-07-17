@@ -1,9 +1,11 @@
 package com.plit.FO.user.service;
 
+import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,7 +17,12 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +33,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl extends DefaultOAuth2UserService implements UserService {
 
+    @Value("${riot.api.key}")
+    private String riotApiKey;
+
+    private final RestTemplate restTemplate;
     private final JavaMailSender   mailSender;
     private final UserRepository   userRepository;
     private final PasswordEncoder  passwordEncoder;
@@ -360,6 +371,34 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         throw new OAuth2AuthenticationException("지원하지 않는 OAuth2 공급자입니다: " + provider);
     }
 
+    @Override
+    public RiotAccountResponse getAccountByRiotId(String gameName, String tagLine) {
+        try {
+            String encodedGameName = URLEncoder.encode(gameName.trim(), StandardCharsets.UTF_8);
+            String encodedTagLine = URLEncoder.encode(tagLine.trim(), StandardCharsets.UTF_8);
+
+            String riotIdUrl = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
+                    + encodedGameName + "/" + encodedTagLine + "?api_key=" + riotApiKey;
+
+            URI riotIdUri = URI.create(riotIdUrl);
+
+            ResponseEntity<Map> response = restTemplate.getForEntity(riotIdUri, Map.class);
+            Map<String, Object> body = response.getBody();
+
+            if (body == null || body.get("puuid") == null) return null;
+
+            return RiotAccountResponse.builder()
+                    .puuid((String) body.get("puuid"))
+                    .gameName((String) body.get("gameName"))
+                    .tagLine((String) body.get("tagLine"))
+                    .build();
+
+        } catch (Exception e) {
+            System.err.println("[Riot API 오류] " + e.getMessage());
+            return null;
+        }
+    }
+
 
     /** OAuth2 로그인 후 신규 사용자 처리 */
     private void processOAuthPostLogin(String email, String unusedNicknameFromKakao) {
@@ -383,5 +422,36 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                     );
                 });
     }
+
+    @Override
+    @Transactional
+    public boolean verifyAndSaveSummoner(String userId, String summonerName, String tagLine) {
+        RiotAccountResponse response = getAccountByRiotId(summonerName, tagLine);
+        if (response == null) return false;
+
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        user.setRiotGameName(response.getGameName());
+        user.setRiotTagLine(response.getTagLine());
+        user.setPuuid(response.getPuuid());
+        user.setUserModiDate(LocalDate.now());
+
+        userRepository.save(user);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public void deleteSummonerInfo(String userId) {
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        user.setRiotGameName(null);
+        user.setRiotTagLine(null);
+        user.setPuuid(null);
+        user.setUserModiDate(LocalDate.now());
+        userRepository.save(user);
+    }
+
 
 }

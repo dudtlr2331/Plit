@@ -47,6 +47,15 @@ public class UserEntity {
     @Column(name = "user_auth", nullable = false, length = 6)
     private String userAuth;
 
+    @Column(name = "riot_game_name")
+    private String riotGameName;
+
+    @Column(name = "riot_tag_line")
+    private String riotTagLine;
+
+    @Column(name = "puuid")
+    private String puuid;
+
     public UserDTO toDTO() {
         return UserDTO.builder()
                 .userSeq(this.userSeq)
@@ -59,6 +68,8 @@ public class UserEntity {
                 .userModiDate(this.userModiDate)
                 .userCreateDate(this.userCreateDate)
                 .userAuth(this.userAuth)
+                .riotGameName(this.getRiotGameName())
+                .riotTagLine(this.getRiotTagLine())
                 .build();
     }
 }

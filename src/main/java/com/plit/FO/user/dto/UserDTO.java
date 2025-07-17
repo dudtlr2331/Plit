@@ -23,4 +23,8 @@ public class UserDTO {
 
     private Boolean isFriend;
     private Boolean isBlocked;
+
+    private String riotGameName;
+    private String riotTagLine;
+    private String puuid;
 }

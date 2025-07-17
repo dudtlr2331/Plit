@@ -1,5 +1,6 @@
 package com.plit.FO.user.service;
 
+import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.entity.UserEntity;
 
@@ -39,6 +40,12 @@ public interface UserService {
 
     /* ---------- 검색 ---------- */
     List<UserDTO> searchByNickname(String keyword);
+
+    /* ---------- API ---------- */
+    void deleteSummonerInfo(String userId);
+    RiotAccountResponse getAccountByRiotId(String gameName, String tagLine);
+    boolean verifyAndSaveSummoner(String userId, String summonerName, String tagLine);
+
 
 
 }
