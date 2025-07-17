@@ -141,14 +141,22 @@ function setActiveTab(id) {
     document.getElementById(id).classList.add('active');
 }
 
+/* 솔로랭크 탭 선택 */
 document.getElementById('soloTab').onclick = () => {
     setActiveTab('soloTab');
     loadParties('solo');
 };
 
+/* 자유랭크 탭 선택*/
 document.getElementById('freeTab').onclick = () => {
     setActiveTab('freeTab');
-    loadParties('team');;
+    loadParties('team');
+};
+
+/* 내전 찾기 탭 선택 */
+document.getElementById('scrimTab').onclick = () => {
+    setActiveTab('scrimTab');
+    loadParties('scrim');
 };
 
 function loadParties(partyType) {
@@ -781,14 +789,22 @@ function submitPartyForm() {
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
     const partySeq = popup.querySelector('input[name="partySeq"]')?.value;
-    const partyName = popup.querySelector('input[name="partyName"]').value;
+    const partyName = popup.querySelector('input[name="partyName"]').value.trim();
     const partyType = popup.querySelector('select[name="partyType"]').value;
     const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
-    const partyStatus = popup.querySelector('[name="partyStatus"]')?.value;
-    const memo = popup.querySelector('textarea[name="memo"]').value;
-
+    const partyStatus = popup.querySelector('[name="partyStatus"]')?.value ?? 'WAITING';
+    const memo = popup.querySelector('textarea[name="memo"]').value.trim();
     const mainPosition = popup.querySelector('.main-position-selector label.selected input')?.value;
 
+    // === 유효성 검사 ===
+    if (!partyName) {
+        alert("파티 이름을 입력해주세요.");
+        return;
+    }
+    if (!partyEndTime) {
+        alert("종료일자를 입력해주세요.");
+        return;
+    }
     if (!mainPosition) {
         alert("주 포지션을 선택해주세요.");
         return;
