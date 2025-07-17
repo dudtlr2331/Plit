@@ -359,10 +359,14 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                         ? `<button onclick="leaveParty(${seq})">나가기</button>` : '';
 
                     // 친구신청 버튼 (이미 친구면 출력 안함)
-                    const friendBtn = relation.isFriend ? '' : `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>`;
+                    const friendBtn = (!isCurrentUser && !relation.isFriend)
+                        ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>`
+                        : '';
 
                     // 차단 버튼 (이미 차단이면 출력 안함)
-                    const blockBtn = relation.isBlocked ? '' : `<button onclick="blockMember('${m.userId}')">차단</button>`;
+                    const blockBtn = (!isCurrentUser && !relation.isBlocked)
+                        ? `<button onclick="blockMember('${m.userId}')">차단</button>`
+                        : '';
 
                     return `<li>${m.userId} - ${m.message || ''} ${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</li>`;
                 })).then(listItems => {

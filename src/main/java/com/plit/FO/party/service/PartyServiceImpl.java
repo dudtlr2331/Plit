@@ -327,7 +327,7 @@ public class PartyServiceImpl implements PartyService {
 
         // 파티 참여 시 채팅방 참가
         ChatRoomEntity room = chatRoomRepository.findAll().stream()
-                .filter(r -> "party".equals(r.getChatRoomType()) && r.getChatRoomName().equals("party-" + partyId))
+                .filter(r -> "party".equals(r.getChatRoomType()) && r.getChatRoomName().equals(party.getPartyName()))
                 .findFirst()
                 .orElseThrow();
 
