@@ -1,19 +1,32 @@
 package com.plit.FO.mypage.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plit.FO.qna.service.QnaService;
 import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
+import java.net.URLEncoder;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.util.Map;
 
 @Controller
@@ -29,26 +42,24 @@ public class MyPageController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
 
-        // 로그인 여부 확인
+        System.out.println("📦 summonerMessage in model: " + model.asMap().get("summonerMessage"));
+        System.out.println("📦 summonerError in model: " + model.asMap().get("summonerError"));
+
+
         if (principal == null) {
             redirectAttributes.addFlashAttribute("popup", "로그인이 필요합니다.");
             return "redirect:/login";
         }
 
-        // 사용자 ID 추출
         String userId = null;
         if (principal instanceof User user) {
             userId = user.getUsername();
         } else if (principal instanceof DefaultOAuth2User oAuth) {
-            Map<String, Object> kakaoAccount =
-                    (Map<String, Object>) oAuth.getAttributes().get("kakao_account");
+            Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth.getAttributes().get("kakao_account");
             userId = (String) kakaoAccount.get("email");
-            if (userId == null) {
-                userId = "kakao_" + oAuth.getName(); // fallback
-            }
+            if (userId == null) userId = "kakao_" + oAuth.getName();
         }
 
-        // 사용자 정보 조회
         UserDTO loginUser = userService.findByUserId(userId);
         if (loginUser == null) {
             redirectAttributes.addFlashAttribute("popup", "사용자 정보를 찾을 수 없습니다.");
@@ -57,8 +68,12 @@ public class MyPageController {
 
         model.addAttribute("loginUser", loginUser);
         model.addAttribute("viewSection", "account");
+
+        // 🔥 FlashAttribute는 이미 Model에 복원되어 있으므로 별도 처리 불필요
         return "fo/mypage/mypage";
     }
+
+
 
     @GetMapping("/qna")
     public String showQnaTab(Model model, HttpSession session) {

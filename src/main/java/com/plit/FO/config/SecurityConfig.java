@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
 import java.util.Map;
 
@@ -28,6 +30,16 @@ public class SecurityConfig {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
     private final UserServiceImpl userServiceImpl;
+
+    @Bean
+    public CommonsRequestLoggingFilter requestLoggingFilter() {
+        CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
+        loggingFilter.setIncludeClientInfo(true);
+        loggingFilter.setIncludeQueryString(true);
+        loggingFilter.setIncludePayload(true);
+        loggingFilter.setMaxPayloadLength(64000);
+        return loggingFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -83,7 +95,7 @@ public class SecurityConfig {
                 )
                 // csrf 가 web socket 에 영향을 줄 수 있어 예외 등록
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/ws/**", "/chat/**", "/sub/**", "/pub/**")
+                        .ignoringRequestMatchers("/ws/**", "/chat/**", "/sub/**", "/pub/**", "/mypage/verify-summoner")
                 )
 
                 // 비로그인 사용자가 마이페이지 접속시, 로그인 페이지 이동

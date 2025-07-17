@@ -9,7 +9,6 @@
     <meta name="login-user-seq" th:content="${loginUser.userSeq}" />
     <meta name="login-user-nickname" th:content="${loginUser.userNickname}" />
 
-
     <title>마이페이지</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/qna.css}">
@@ -24,7 +23,6 @@
                 <img th:src="@{/images/logo/plit_logo.png}" alt="로고" style="height: 40px;" />
             </a>
         </div>
-
         <ul>
             <li><a th:href="@{/mypage}" th:classappend="${viewSection=='account'}?'active'">계정 관리</a></li>
             <li><a th:href="@{/mypage/qna/list}" th:classappend="${viewSection=='qna'}?'active'">문의하기</a></li>
@@ -35,11 +33,11 @@
 
     <!-- 컨텐츠 -->
     <div class="content">
-        <!-- 1) 계정 정보 화면 -->
+        <!-- 계정 관리 -->
         <div th:if="${viewSection == 'account'}">
             <h2>기본 정보</h2>
 
-            <!-- 닉네임 표시 줄 -->
+            <!-- 닉네임 표시 -->
             <div class="info-row" id="nicknameRow" style="justify-content: space-between;">
                 <label>닉네임</label>
                 <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
@@ -49,8 +47,7 @@
                 </div>
             </div>
 
-            <!-- 닉네임 수정 줄 -->
-
+            <!-- 닉네임 수정 -->
             <div class="info-row" id="nicknameEditRow" style="display: none; justify-content: space-between;">
                 <label>닉네임</label>
                 <form th:action="@{/mypage/change-nickname}" method="post"
@@ -67,15 +64,53 @@
             <div th:if="${error}" class="flash-message error" th:text="${error}"></div>
             <div th:if="${message}" class="flash-message success" th:text="${message}"></div>
 
-            <!-- 비밀번호 변경 섹션 -->
-            <div class="info-group" style="margin-top: 40px;"
-                 th:if="${not #strings.contains(loginUser.userId, '@kakao.com')}">
+            <!-- ✅ 소환사 인증 -->
+            <div class="info-row" style="margin-top: 30px; justify-content: space-between;">
+                <label>소환사</label>
+
+                <!-- 인증된 경우: 이름 표시 + 변경 버튼 -->
+                <div th:if="${loginUser != null and loginUser.riotGameName != null}"
+                     id="summonerDisplay"
+                     style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
+                    <span th:text="${loginUser.riotGameName + ' #' + loginUser.riotTagLine}">소환사명</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" onclick="showSummonerForm()">변경</button>
+                        <form th:action="@{/mypage/delete-summoner}" method="post"
+                              onsubmit="return confirm('소환사 인증을 취소하시겠습니까?');"
+                              style="display: inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" style="background-color: #ccc; color: black;">취소</button>
+                        </form>
+                    </div>
+                </div>
+
+
+                <!-- ✅ 항상 렌더링하고 인증 상태에 따라 숨김 -->
+                <form th:action="@{/mypage/verify-summoner}" method="post" id="summonerForm"
+                      th:style="${loginUser != null and loginUser.riotGameName != null} ? 'display:none;' : 'display:flex;'"
+                      style="flex: 1; justify-content: space-between; align-items: center; gap: 10px;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="text" name="summonerName" placeholder="소환사명 입력" required style="flex: 1;" />
+                    <input type="text" name="tagLine" placeholder="태그 (#KR1)" required style="width: 120px;" />
+                    <button type="submit">인증</button>
+                </form>
+            </div>
+
+            <!-- ✅ 메시지 -->
+            <div>
+                <p style="color: green;">[[${summonerMessage}]]</p>
+                <p style="color: red;">[[${summonerError}]]</p>
+            </div>
+
+
+
+            <!-- 비밀번호 변경 -->
+            <div class="info-group" style="margin-top: 40px;" th:if="${not #strings.contains(loginUser.userId, '@kakao.com')}">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="font-size: 18px; font-weight: bold; margin: 0;">비밀번호 변경</h3>
                     <button type="submit" form="passwordForm" class="password-change-btn">비밀번호 변경</button>
                 </div>
                 <hr style="margin: 10px 0;" />
-
                 <form th:action="@{/mypage/change-password}" method="post" id="passwordForm">
                     <div class="info-row">
                         <label class="password-label">현재 비밀번호 입력</label>
@@ -89,7 +124,6 @@
                         <label class="password-label">새 비밀번호 확인</label>
                         <input type="password" name="confirmNewPwd" required class="password-input" />
                     </div>
-
                     <div class="password-guidelines">
                         <strong>비밀번호 요구사항</strong>
                         <ul>
@@ -100,24 +134,21 @@
                     </div>
                 </form>
             </div>
-            <!-- 회원 탈퇴 섹션 -->
+
+            <!-- 회원 탈퇴 -->
             <div class="info-group" style="margin-top: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="font-size: 18px; font-weight: bold; margin: 0;">회원 탈퇴</h3>
-                    <button type="submit" form="withdrawForm" class="password-change-btn" style="background-color: #7c4798;">
-                        회원 탈퇴
-                    </button>
+                    <button type="submit" form="withdrawForm" class="password-change-btn" style="background-color: #7c4798;">회원 탈퇴</button>
                 </div>
                 <hr style="margin: 10px 0;" />
-
                 <form th:action="@{/user/delete}" method="post" id="withdrawForm" onsubmit="return confirmWithdrawal()">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 </form>
             </div>
-</div>
+        </div>
 
-
-            <!-- QnA -->
+        <!-- QnA -->
         <div th:if="${viewSection == 'qna'}">
             <div th:if="${viewMode == 'list'}" th:insert="~{fo/mypage/qna/list :: listFragment}"></div>
             <div th:if="${viewMode == 'write'}" th:insert="~{fo/mypage/qna/write :: writeFragment}"></div>
@@ -137,31 +168,62 @@
 </div>
 
 <script>
-    function showNicknameInput() {
-        document.getElementById("nicknameRow").style.display = "none";
-        document.getElementById("nicknameEditRow").style.display = "flex";
-    }
+    document.addEventListener("DOMContentLoaded", function () {
+        const nicknameRow = document.getElementById("nicknameRow");
+        const nicknameEditRow = document.getElementById("nicknameEditRow");
+        const passwordForm = document.getElementById("passwordForm");
+        const summonerForm = document.getElementById("summonerForm");
 
-    function cancelNicknameEdit() {
-        document.getElementById("nicknameRow").style.display = "flex";
-        document.getElementById("nicknameEditRow").style.display = "none";
-    }
+        // 닉네임 입력 보이기
+        window.showNicknameInput = function () {
+            if (nicknameRow && nicknameEditRow) {
+                nicknameRow.style.display = "none";
+                nicknameEditRow.style.display = "flex";
+            }
+        };
 
-    // 회원 탈퇴 재확인 팝업
-    function confirmWithdrawal() {
-        return confirm("정말 탈퇴하시겠습니까?\n탈퇴 후에는 복구가 불가능합니다.");
-    }
+        window.cancelNicknameEdit = function () {
+            if (nicknameRow && nicknameEditRow) {
+                nicknameRow.style.display = "flex";
+                nicknameEditRow.style.display = "none";
+            }
+        };
 
-    document.getElementById("passwordForm").addEventListener("submit", function (e) {
-        const form = e.target;
-        const newPwd = form.querySelector('input[name="newPwd"]').value.trim();
-        const confirmPwd = form.querySelector('input[name="confirmNewPwd"]').value.trim();
+        // 비밀번호 검증
+        if (passwordForm) {
+            passwordForm.addEventListener("submit", function (e) {
+                const form = e.target;
+                const newPwd = form.querySelector('input[name="newPwd"]').value.trim();
+                const confirmPwd = form.querySelector('input[name="confirmNewPwd"]').value.trim();
+                if (newPwd !== confirmPwd) {
+                    e.preventDefault();
+                    alert("새 비밀번호가 서로 일치하지 않습니다.");
+                }
+            });
+        }
 
-        if (newPwd !== confirmPwd) {
-            e.preventDefault();
-            alert("새 비밀번호가 서로 일치하지 않습니다.");
+        // 소환사 인증: tagLine에서 '#' 제거만 수행
+        if (summonerForm) {
+            console.log("🧪 summonerForm DOM 연결됨");
+            summonerForm.addEventListener("submit", function () {
+                const tagInput = this.querySelector("input[name='tagLine']");
+                tagInput.value = tagInput.value.replace("#", "").trim(); // '#' 제거
+                console.log("🔧 정리된 tagLine:", tagInput.value);
+                // 기본 제출 동작 사용 (e.preventDefault, this.submit 제거)
+            });
+        } else {
+            console.log("❌ summonerForm DOM 연결 안 됨");
         }
     });
+
+    function showSummonerForm() {
+        const form = document.getElementById("summonerForm");
+        const displayDiv = document.getElementById("summonerDisplay");
+        if (form && displayDiv) {
+            form.style.display = "flex";
+            displayDiv.style.display = "none";
+        }
+    }
 
 </script>
 
