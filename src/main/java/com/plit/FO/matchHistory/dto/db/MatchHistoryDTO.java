@@ -13,9 +13,15 @@ import java.util.List;
 public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
 
     private String matchId;
-    private boolean win;
-    private String teamPosition;
     private String championName;
+    private int championLevel;
+    private String tier;
+    private String teamPosition;
+
+    private String queueType; // 큐타입
+    private String gameMode;
+    private boolean win;
+
     private int kills;
     private double killParticipation; // 킬관여
     private int deaths;
@@ -23,17 +29,14 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private int cs;
     private double csPerMin;
     private double kdaRatio;
-    private String tier;
-    private String championImageUrl;
-    private String profileIconUrl;
-    private String gameMode;
-    private LocalDateTime gameEndTimestamp; // 사용자에게 보여주는 용도라
-    private List<String> itemImageUrls;
-    private String queueType; // 큐타입
 
+    private int gameDurationSeconds;
+    private LocalDateTime gameEndTimestamp; // 사용자에게 보여주는 용도라
     private String timeAgo;
 
-    private int championLevel;
+    private String championImageUrl;
+    private String profileIconUrl;
+    private List<String> itemImageUrls;
 
     private String mainRune1Url;
     private String mainRune2Url;
@@ -50,12 +53,13 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
 
     private List<String> otherProfileIconUrls;
 
-    private int gameDurationSeconds;
 
+    // 걸린 시간 (분)
     public int getGameDurationMinutes() {
         return gameDurationSeconds / 60;
     }
 
+    // 남은 시간 (초)
     public int getGameDurationRemainSeconds() {
         return gameDurationSeconds % 60;
     }

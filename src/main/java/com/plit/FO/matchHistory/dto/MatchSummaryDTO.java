@@ -10,7 +10,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MatchSummaryDTO { //  매치 전체( 20게임 ) 요악 정보
+public class MatchSummaryDTO { //  매치 전체( 20게임 ) 요악 정보 - DB 저장 x
 
     // 전체 전적 요약
     private int winCount;

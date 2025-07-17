@@ -16,8 +16,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,61 +37,57 @@ public class MatchHistoryController {
                                @RequestParam String tagLine,
                                Model model) {
 
-        // 소환사 기본 정보
-        SummonerSimpleDTO summoner = riotApiService.getAccountByRiotId(gameName, tagLine);
-        model.addAttribute("summoner", summoner);
-        model.addAttribute("gameName", gameName);
-        model.addAttribute("tagLine", tagLine);
-
         // PUUID 조회
         String puuid = matchHistoryService.getPuuidOrRequest(gameName, tagLine);
         String message = null;
         if (puuid == null) {
-            message = "해당 소환사의 정보를 찾을 수 없습니다.";
+            model.addAttribute("message", "해당 소환사의 정보를 찾을 수 없습니다.");
+            return "fo/matchHistory/matchHistory";
         }
+
+        // 소환사 기본 정보
+        SummonerSimpleDTO summoner = matchHistoryService.getAccountByRiotId(gameName, tagLine);
+        model.addAttribute("summoner", summoner);
+        model.addAttribute("gameName", gameName);
+        model.addAttribute("tagLine", tagLine);
 
         // 랭크 정보
-        Map<String, RankDTO> rankMap = (puuid != null) ? riotApiService.getRankInfoByPuuid(puuid) : new HashMap<>();
-        if (rankMap == null) rankMap = new HashMap<>();
+        Map<String, RankDTO> rankMap = riotApiService.getRankInfoByPuuid(puuid);
+        RankDTO soloRank = (rankMap != null) ? rankMap.get("RANKED_SOLO_5x5") : null;
         model.addAttribute("rankMap", rankMap);
 
-        RankDTO rankDTO = rankMap.get("RANKED_SOLO_5x5");
-        String profileIconUrl = null;
-        String tierImageUrl = null;
-        String tier = null;
-        int summonerLevel = 0;
-
-        if (rankDTO != null) {
-            profileIconUrl = imageService.getImageUrl(String.valueOf(rankDTO.getProfileIconId()), "profile");
-            tierImageUrl = imageService.getImageUrl(rankDTO.getTier() + ".png", "tier");
-            tier = rankDTO.getTier();
-            summonerLevel = rankDTO.getSummonerLevel();
-        } else {
-            message = (message == null) ? "랭크 정보를 불러올 수 없습니다." : message;
+        if (soloRank != null) {
+            model.addAttribute("tier", soloRank.getTier());
+            model.addAttribute("tierImageUrl", imageService.getImageUrl(soloRank.getTier() + ".png", "tier"));
+            model.addAttribute("profileIconUrl", imageService.getImageUrl(String.valueOf(soloRank.getProfileIconId()), "profile"));
+            model.addAttribute("summonerLevel", soloRank.getSummonerLevel());
         }
 
-        model.addAttribute("profileIconUrl", profileIconUrl);
-        model.addAttribute("tierImageUrl", tierImageUrl);
-        model.addAttribute("summonerLevel", summonerLevel);
-        model.addAttribute("tier", tier);
 
-        // 전적 요약
-        List<MatchHistoryDTO> matchList = (puuid != null) ? matchDbService.getRecentMatchHistories(puuid) : new ArrayList<>();
-        if (matchList == null || matchList.isEmpty()) {
-            message = (message == null) ? "저장된 전적이 없습니다. '전적 갱신' 버튼을 눌러주세요." : message;
-        }
-        model.addAttribute("matchList", matchList);
+        // 선호 챔피언
+        MatchSummaryWithListDTO dto = matchHistoryService.getSummaryAndListFromApi(puuid);
 
-        // 요약 통계
-        MatchSummaryDTO summary = matchHistoryService.getMatchSummary(matchList);
-        if (summary == null) summary = new MatchSummaryDTO();
-        model.addAttribute("summary", summary);
-        model.addAttribute("winCount", summary.getWinCount());
-        model.addAttribute("totalCount", summary.getTotalCount());
+        model.addAttribute("summary", dto.getSummary());
+        model.addAttribute("matchList", dto.getMatchList());
+        model.addAttribute("favoriteChampions", dto.getFavoriteChampions());
+
+        model.addAttribute("winCount", dto.getSummary().getWinCount());
+        model.addAttribute("totalCount", dto.getSummary().getTotalCount());
+
+        Map<String, List<FavoriteChampionDTO>> favoriteChampionsMap =
+                matchHistoryService.getFavoriteChampionsAll(puuid);
+
+        // 탭별 챔피언 리스트
+        model.addAttribute("favoriteChampionsByMode", favoriteChampionsMap);
+
+        model.addAttribute("overallChampions", favoriteChampionsMap.get("overall"));
+        model.addAttribute("soloChampions", favoriteChampionsMap.get("solo"));
+        model.addAttribute("flexChampions", favoriteChampionsMap.get("flex"));
+
 
         // 스타일 계산
-        int total = summary.getTotalCount();
-        Map<String, String> championHeightStyles = summary.getChampionTotalGames().entrySet().stream()
+        int total = dto.getSummary().getTotalCount();
+        Map<String, String> championHeightStyles = dto.getSummary().getChampionTotalGames().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> {
@@ -102,7 +96,7 @@ public class MatchHistoryController {
                             return "height:" + height + "%";
                         }
                 ));
-        Map<String, String> positionHeightStyles = summary.getFavoritePositions().entrySet().stream()
+        Map<String, String> positionHeightStyles = dto.getSummary().getFavoritePositions().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> {
@@ -160,27 +154,12 @@ public class MatchHistoryController {
         }
     }
 
-
-
-    @GetMapping("/favorite-champions/all")
-    public Map<String, List<FavoriteChampionDTO>> getAllFavoriteChampions(@RequestParam String puuid) {
-        Map<String, List<FavoriteChampionDTO>> result = new HashMap<>();
-
-
-        // overall : ui 에서 쓸 key 이름  /  all : 실제 모드명
-        result.put("overall", matchHistoryService.getFavoriteChampionsBySeason(puuid, "all"));
-        result.put("solo", matchHistoryService.getFavoriteChampionsBySeason(puuid, "solo"));
-        result.put("flex", matchHistoryService.getFavoriteChampionsBySeason(puuid, "flex"));
-
-        return result;
-    }
-
     // match 상세 페이지 요청
     @GetMapping("/detail")
     @ResponseBody
     public MatchDetailDTO getMatchDetail(@RequestParam String matchId,
                                          @RequestParam String puuid) {
-        return matchDbService.getMatchDetailFromRiot(matchId, puuid);
+        return riotApiService.getMatchDetailFromRiot(matchId, puuid);
     }
 
     @GetMapping("/autocomplete")

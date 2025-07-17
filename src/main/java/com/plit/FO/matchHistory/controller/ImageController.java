@@ -15,7 +15,7 @@ public class ImageController {
     // 전체 동기화 - 수동 트리거 [ localhost:8080/admin/image/sync ]
     @PostMapping("/sync")
     public ResponseEntity<String> syncAllImages() {
-        imageService.updateAllImages(); // 매주 수요일 자동 실행하는 그거
+        imageService.updateAllImages(); // 매주 수요일 자동 실행
         return ResponseEntity.ok("모든 이미지 동기화 완료");
     }
 
@@ -28,7 +28,7 @@ public class ImageController {
 
         String version = imageService.fetchLatestVersion();
         imageService.updateImagesByType(type, version);
-        return ResponseEntity.ok("✔ " + type + " 이미지 동기화 완료");
+        return ResponseEntity.ok( type + " 이미지 동기화 완료");
     }
 
     private boolean isValidType(String type) {

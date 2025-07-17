@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.dto.db;
 
+import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MatchPlayerDTO { // 매치 각각 상세정보
+public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의 정보
 
     private String puuid;
     private String matchId; // 하나의 게임 고유 ID
@@ -84,5 +85,30 @@ public class MatchPlayerDTO { // 매치 각각 상세정보
 
     // 티어 이미지 경로
     private String tierImageUrl;
+
+    public static MatchPlayerDTO fromRiotParticipant(RiotParticipantDTO p) {
+        return MatchPlayerDTO.builder()
+                .puuid(p.getPuuid())
+                .summonerName(p.getSummonerName())
+                .championName(p.getChampionName())
+                .tier(p.getTier())
+                .kills(p.getKills())
+                .deaths(p.getDeaths())
+                .assists(p.getAssists())
+                .goldEarned(p.getGoldEarned())
+                .totalDamageDealtToChampions(p.getTotalDamageDealtToChampions())
+                .totalDamageTaken(p.getTotalDamageTaken())
+                .teamPosition(p.getTeamPosition())
+                .win(p.isWin())
+                .teamId(p.getTeamId())
+                .championLevel(p.getChampLevel())
+                .itemIds(p.getItemIds().stream().map(String::valueOf).toList())
+                .profileIconId(p.getProfileIcon())
+                .cs(p.getTotalMinionsKilled() + p.getNeutralMinionsKilled())
+                .mainRune1(p.getPerkPrimaryStyle())
+                .mainRune2(p.getPerkSubStyle())
+                .build();
+    }
+
 
 }

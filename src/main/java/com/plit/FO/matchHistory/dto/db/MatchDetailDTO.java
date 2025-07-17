@@ -18,23 +18,26 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MatchDetailDTO { // 최근 매치 상세 정보 전체 유저
+public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
 
     private List<RiotParticipantDTO> participants;
 
     private String gameMode;
     private LocalDateTime gameEndTimestamp;
-
     private String matchId;
+
     private int totalMaxDamage;
 
     private List<MatchPlayerDTO> blueTeam;
     private List<MatchPlayerDTO> redTeam;
 
+    // 바로 출력 가능하게 가공
     private MatchObjectiveDTO blueObjectives;
     private MatchObjectiveDTO redObjectives;
+
     private boolean blueWin;
 
+    // 매치 참여자들 중 입힌 데미지 딜량 최대값
     private int calculateMaxDamage() {
         if (participants == null || participants.isEmpty()) return 0;
 
@@ -44,6 +47,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 전체 유저
                 .orElse(0);
     }
 
+    // DB 저장용 entity 목록
     public List<MatchPlayerEntity> toPlayerEntities() {
         if (participants == null || participants.isEmpty()) return new ArrayList<>();
 
@@ -70,6 +74,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 전체 유저
                 .collect(Collectors.toList());
     }
 
+    // 아이템 아이디 콤마 구분하여 String 으로
     private String convertItemIds(List<Integer> itemIds) {
         if (itemIds == null) return "";
         return itemIds.stream()
@@ -77,6 +82,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 전체 유저
                 .collect(Collectors.joining(","));
     }
 
+    // 주요 필드
     public MatchDetailDTO(RiotMatchInfoDTO matchInfo, String matchId) {
         this.matchId = matchId;
         this.gameMode = matchInfo.getGameMode();
@@ -92,7 +98,8 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 전체 유저
         this.blueObjectives = new MatchObjectiveDTO();
         this.redObjectives = new MatchObjectiveDTO();
 
-        // 승리 여부: 팀 ID 100이 승리한 경우 기준
+        // riot api 기준 팀ID : 100 - 블루팀 / 200 - 레드팀
+        // 승리 여부: 팀 ID 100( 블루팀 )이 승리한 경우 기준
         this.blueWin = participants.stream()
                 .filter(p -> p.getTeamId() == 100)
                 .findFirst()

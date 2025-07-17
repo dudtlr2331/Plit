@@ -24,33 +24,33 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
 
     @Id
     private String matchId;
-
     private String puuid;
 
-    private LocalDateTime gameEndTimestamp;
+    private String championName;
+    private String teamPosition;
+    private int champLevel;
 
     private String gameMode;
+    private String queueType;
 
     private boolean win;
-
-    private String championName;
-
-    private String teamPosition;
 
     private int kills;
     private int deaths;
     private int assists;
-
-    private int champLevel;
-    private int cs;
-
     private double kda;
     @Column(name = "kda_ratio")
     private Double kdaRatio;
+    private int cs;
+    private double csPerMin;
+
+    private LocalDateTime gameEndTimestamp;
+    private String timeAgo;
+    private int gameDurationSeconds;
 
     private String tier;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT") // 내용이 길어질 수 있는 경우를 위해 ( 콤마로 구분된 긴 문자열을 저장 )
     private String itemIds;
 
     @Column(columnDefinition = "TEXT")
@@ -71,22 +71,18 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private java.sql.Timestamp createdAt;
 
-    private double csPerMin;
+    private String tierImageUrl;
+
     private String championImageUrl;
     private String profileIconUrl;
-
-    private String queueType;
-    private String timeAgo;
 
     private String mainRune1Url;
     private String mainRune2Url;
     private String spell1ImageUrl;
     private String spell2ImageUrl;
-    private String tierImageUrl;
-
-    private int gameDurationSeconds;
 
 
+    // 상세 전적에서 나의 정보만 추출 -> 요약 엔티티로 변환
     public static MatchSummaryEntity fromDetailDTO(MatchDetailDTO detail, String puuid) {
         RiotParticipantDTO me = detail.getParticipants().stream()
                 .filter(p -> puuid.equals(p.getPuuid()))
@@ -113,6 +109,7 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
                 .build();
     }
 
+    // DB 에 저장된 요약정보 -> DTO 변환
     public MatchHistoryDTO toDTO() {
         return MatchHistoryDTO.builder()
                 .matchId(this.matchId)

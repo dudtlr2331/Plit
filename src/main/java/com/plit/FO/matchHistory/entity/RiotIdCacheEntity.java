@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RiotIdCacheEntity {
+public class RiotIdCacheEntity { // gameName + tagLine -> puuid 변환 결과 테이블
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +34,7 @@ public class RiotIdCacheEntity {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
+    @PrePersist // 저장 시점 기록
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }

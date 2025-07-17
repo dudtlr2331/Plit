@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MatchPlayerEntity { // 매치 상세페이지 테이블
+public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,7 +33,7 @@ public class MatchPlayerEntity { // 매치 상세페이지 테이블
     private int damageDealt;
     private int damageTaken;
 
-    private int cs;
+    private int cs; // 미니언 처치수
     private double csPerMin;
     private int totalDamageDealtToChampions;
     private int totalDamageTaken;
@@ -65,6 +65,7 @@ public class MatchPlayerEntity { // 매치 상세페이지 테이블
     // 문자열로 콤마(,) 구분하여 저장
     private String itemIds;
 
+    // dto -> entity ( db 저장 전에 가공 )
     public static MatchPlayerEntity fromDTO(MatchPlayerDTO dto) {
         return MatchPlayerEntity.builder()
                 .summonerName(dto.getSummonerName())

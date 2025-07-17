@@ -9,8 +9,8 @@ public class RiotWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/img/**")
-                .addResourceLocations("classpath:/static/img/");
+        registry.addResourceHandler("/images/**") // URL 경로와 실제 파일 경로 연결
+                .addResourceLocations("classpath:/static/images/"); // /images/로 시작하는 요청은 static/images/ 폴더에서 찾아 응답
     }
 }
 

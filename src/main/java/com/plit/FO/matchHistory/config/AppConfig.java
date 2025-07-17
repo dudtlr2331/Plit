@@ -9,6 +9,7 @@ public class AppConfig {
 
     @Bean
     public RestTemplate restTemplate() {
+        // HTTP 요청도구( riot api 로 get 조회 요청 / post 생성, 전송 요청 )
         return new RestTemplate();
     }
 }

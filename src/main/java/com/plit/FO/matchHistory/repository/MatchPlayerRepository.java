@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface MatchPlayerRepository extends JpaRepository<MatchPlayerEntity, Long> {
 
+    // 매치 ( 하나의 matchId ) 안의 플레이어 정보 전부
     List<MatchPlayerEntity> findByMatchId(String matchId);
 }

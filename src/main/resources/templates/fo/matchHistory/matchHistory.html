@@ -106,27 +106,29 @@
 
                     <!-- 전체 (현재 시즌) -->
                     <div class="champion-tab-content" data-mode="overall">
-                        <div class="champion-row"
-                             th:each="champ, iterStat : ${favoriteChampions.overall}"
-                             th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
+                        <div th:if="${overallChampions != null}">
+                            <div class="champion-row"
+                                 th:each="champ, iterStat : ${overallChampions}"
+                                 th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
-                            <div class="champion-icon">
-                                <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
-                            </div>
-                            <div class="champion-info">
-                                <div class="champ-name" th:text="${champ.korName}"></div>
-                                <div class="cs-info" th:text="|CS ${champ.averageCs} (${champ.csPerMin})|">CS</div>
-                            </div>
-                            <div class="kda-info">
-                                <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2)} + ':1 평점'">평점</div>
-                                <div class="kda" th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}"></div>
-                            </div>
-                            <div class="usage-info">
-                                <div class="usage-percent"
-                                     th:text="|승률 ${champ.winRate}%|"
-                                     style="color:#5b8ef4;"></div>
-                                <div class="game-count"
-                                     th:text="|${champ.gameCount}게임|">게임</div>
+                                <div class="champion-icon">
+                                    <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
+                                </div>
+                                <div class="champion-info">
+                                    <div class="champ-name" th:text="${champ.korName}"></div>
+                                    <div class="cs-info" th:text="|CS ${champ.averageCs} (${champ.csPerMin})|">CS</div>
+                                </div>
+                                <div class="kda-info">
+                                    <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2)} + ':1 평점'">평점</div>
+                                    <div class="kda" th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}"></div>
+                                </div>
+                                <div class="usage-info">
+                                    <div class="usage-percent"
+                                         th:text="|승률 ${champ.winRate}%|"
+                                         style="color:#5b8ef4;"></div>
+                                    <div class="game-count"
+                                         th:text="|${champ.gameCount}게임|">게임</div>
+                                </div>
                             </div>
                         </div>
                         <!-- 더보기 버튼 -->
@@ -137,7 +139,7 @@
                     <!-- 개인/2인 랭크 -->
                     <div class="champion-tab-content" data-mode="solo">
                         <div class="champion-row"
-                             th:each="champ, iterStat : ${favoriteChampions.solo}"
+                             th:each="champ, iterStat : ${soloChampions}"
                              th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
                             <div class="champion-icon">
@@ -167,7 +169,7 @@
                     <!-- 자유 랭크 -->
                     <div class="champion-tab-content" data-mode="flex">
                         <div class="champion-row"
-                             th:each="champ, iterStat : ${favoriteChampions.flex}"
+                             th:each="champ, iterStat : ${flexChampions}"
                              th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
                             <div class="champion-icon">

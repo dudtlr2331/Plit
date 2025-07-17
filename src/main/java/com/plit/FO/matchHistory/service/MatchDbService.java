@@ -12,12 +12,9 @@ public interface MatchDbService {
 
     List<String> getMatchIdsByPuuid(String puuid);
 
-    List<MatchHistoryDTO> getMatchHistoryFromRiot(String puuid);
-
-    MatchDetailDTO getMatchDetailFromRiot(String matchId, String puuid);
-
     void saveMatchHistory(MatchSummaryEntity summary, List<MatchPlayerEntity> players);
 
+    MatchDetailDTO getMatchDetailFromRiot(String matchId, String puuid);
 
     MatchDetailDTO getMatchDetailFromDB(String matchId);
 
@@ -26,5 +23,10 @@ public interface MatchDbService {
     void updateMatchHistory(String puuid);
 
     List<MatchHistoryDTO> getRecentMatchHistories(String puuid);
+
+    String findPuuidInCache(String normalizedGameName, String normalizedTagLine);
+    void saveRiotIdCache(String gameName, String tagLine, String normalizedGameName, String normalizedTagLine, String puuid);
+
+    void saveMatchHistory(String puuid);
 
 }

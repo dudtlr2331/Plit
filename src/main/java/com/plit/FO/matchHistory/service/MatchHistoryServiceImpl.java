@@ -1,28 +1,27 @@
 package com.plit.FO.matchHistory.service;
 
 import com.plit.FO.matchHistory.dto.FavoriteChampionDTO;
+import com.plit.FO.matchHistory.dto.MatchSummaryWithListDTO;
+import com.plit.FO.matchHistory.dto.SummonerSimpleDTO;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
 import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.dto.MatchSummaryDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.matchHistory.dto.riot.RiotMatchInfoDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
+import com.plit.FO.matchHistory.dto.riot.RiotSummonerResponse;
 import com.plit.FO.matchHistory.entity.ImageEntity;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
-import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
 import com.plit.FO.matchHistory.repository.RiotIdCacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriUtils;
 
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,67 +52,47 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
     }
 
 
-    // Riot id -> puuid ( DB 캐시 활용, riot api 호출 )
+    // ** Riot id -> puuid ( DB 캐시 활용, riot api 호출 ) **
+    @Override
     public String getPuuidOrRequest(String gameName, String tagLine) {
-        // 소문자화 + 띄어쓰기 제거
         String normalizedGameName = normalizeGameName(gameName);
         String normalizedTagLine = normalizeTagLine(tagLine);
 
-        // 정규화된 값으로 캐시 DB 먼저 조회
-        Optional<RiotIdCacheEntity> cache = riotIdCacheRepository
-                .findByNormalizedGameNameAndNormalizedTagLine(normalizedGameName, normalizedTagLine);
+        // DB 캐시 먼저 조회
+        String puuid = matchDbService.findPuuidInCache(normalizedGameName, normalizedTagLine);
+        if (puuid != null) return puuid;
 
-        System.out.println("[DB 직접 확인용] normalized = " + normalizedGameName + "#" + normalizedTagLine);
-        System.out.println("[DB 쿼리 결과] = " + (cache.isPresent() ? "존재함" : "없음"));
-
-        if (cache.isPresent()) {
-            System.out.println("[캐시 HIT] " + gameName + "#" + tagLine + " -> " + cache.get().getPuuid());
-            return cache.get().getPuuid();
+        // Riot API 호출
+        puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+        if (puuid != null) {
+            matchDbService.saveRiotIdCache(gameName, tagLine, normalizedGameName, normalizedTagLine, puuid);
         }
 
-        // 캐시에 없으면 Riot API에 정확한 원본 값으로 요청
-        try { // UriUtils.encodePathsegment() : URL에 넣을 수 있도록 문자열을 안전하게 변환(인코딩)해주는 메서드
-            String encodedGameName = gameName.trim();
-            String encodedTagLine = tagLine.trim();
+        return puuid;
+    }
 
-            System.out.println("encodedGameName = " + encodedGameName);
+    // (*) riotId [ 게임이름( 소환사명 ), 태그( # ) ] -> puuid -> 계정정보 [ account/v1 ]
+    public SummonerSimpleDTO getAccountByRiotId(String gameName, String tagLine) {
+        try {
+            RiotAccountResponse account = riotApiService.getAccountByRiotId(gameName, tagLine);
+            if (account == null) return null;
 
-            URI uri = new URI("https", "asia.api.riotgames.com",
-                    "/riot/account/v1/accounts/by-riot-id/" + encodedGameName + "/" + encodedTagLine,
-                    null);
+            RiotSummonerResponse summoner = riotApiService.getSummonerByPuuid(account.getPuuid());
+            if (summoner == null) return null;
 
-            System.out.println("uri = " + uri);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-Riot-Token", riotApiKey);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> response = restTemplate.exchange(uri, HttpMethod.GET, entity, Map.class);
-
-            Map<String, Object> body = response.getBody();
-
-            if (body != null && body.get("puuid") != null) {
-                String puuid = (String) body.get("puuid");
-
-                // DB 저장 (원본 + 정규화된 값 모두 저장)
-                RiotIdCacheEntity saved = RiotIdCacheEntity.builder()
-                        .gameName(gameName.trim())
-                        .tagLine(tagLine.trim())
-                        .normalizedGameName(normalizedGameName)
-                        .normalizedTagLine(normalizedTagLine)
-                        .puuid(puuid)
-                        .build();
-
-                riotIdCacheRepository.save(saved);
-
-                return puuid;
-            }
+            return SummonerSimpleDTO.builder()
+                    .puuid(account.getPuuid())
+                    .gameName(account.getGameName())
+                    .tagLine(account.getTagLine())
+                    .profileIconId(summoner.getProfileIconId())
+                    .profileIconUrl(imageService.getProfileIconUrl(summoner.getProfileIconId()))
+                    .summonerLevel(summoner.getSummonerLevel())
+                    .build();
 
         } catch (Exception e) {
-            System.err.println("[Riot API 오류] " + e.getMessage());
+            System.err.println("소환사 조회 오류: " + e.getMessage());
+            return null;
         }
-
-        return null;
     }
 
 
@@ -126,6 +105,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                 .map(MatchHistoryDTO::getGameEndTimestamp)
                 .min(LocalDateTime::compareTo)
                 .orElse(LocalDateTime.now().minusMonths(3)); // fallback: 최근 3개월
+
     }
 
     // 시즌 필터 (동적으로 시즌 시작일 넘겨받음)
@@ -144,6 +124,10 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
     private List<FavoriteChampionDTO> calculateFavoriteChampions(List<MatchHistoryDTO> matchList, String mode) {
         Map<String, List<MatchHistoryDTO>> byChampion = matchList.stream()
                 .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
+
+        if (matchList == null || matchList.isEmpty()) {
+            return new ArrayList<>();
+        }
 
         int totalFlexGames = (int) matchList.stream()
                 .filter(m -> "440".equals(m.getQueueType()))
@@ -202,24 +186,129 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
             result.add(dto);
         }
 
+        System.out.println("[calculateFavoriteChampions] mode: " + mode + ", result size: " + result.size());
+        result.forEach(dto -> System.out.println(" - " + dto.getChampionName() + " (" + dto.getGameCount() + " games)"));
+
+
         result.sort(Comparator.comparingInt(FavoriteChampionDTO::getFlexGames).reversed());
         return result;
     }
 
-    // 시즌 기반 선호 챔피언
-    public List<FavoriteChampionDTO> getFavoriteChampionsBySeason(String puuid, String mode) {
+    // Riot API에서 직접 20경기 가져와서 선호 챔피언 계산 (시즌 필터 없음)
+    public List<FavoriteChampionDTO> getFavoriteChampionsFromApi(String puuid, String mode) {
+        List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
 
-        List<MatchHistoryDTO> allMatches = matchDbService.getMatchHistoryFromRiot(puuid);
+        List<MatchHistoryDTO> allMatches = new ArrayList<>();
+        for (String matchId : matchIds) {
+            RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
+            RiotParticipantDTO participant = matchInfo.getParticipantByPuuid(puuid);
+            if (participant == null) continue;
 
-        LocalDateTime seasonStart = getSeasonStart(allMatches);
+            int teamId = participant.getTeamId();
+            int teamTotalKills = MatchHelper.getTeamTotalKills(matchInfo.getParticipants(), teamId);
+
+            int cs = participant.getTotalMinionsKilled() + participant.getNeutralMinionsKilled();
+            double csPerMin = cs / (matchInfo.getGameDurationSeconds() / 60.0);
+
+            LocalDateTime gameEndTime = Instant.ofEpochMilli(matchInfo.getGameEndTimestamp())
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+
+            MatchHistoryDTO dto = MatchHistoryDTO.builder()
+                    .matchId(matchId)
+                    .championName(participant.getChampionName())
+                    .kills(participant.getKills())
+                    .deaths(participant.getDeaths())
+                    .assists(participant.getAssists())
+                    .cs(participant.getTotalMinionsKilled() + participant.getNeutralMinionsKilled())
+                    .csPerMin(csPerMin)
+                    .win(participant.isWin())
+                    .queueType(matchInfo.getQueueId())
+                    .gameEndTimestamp(gameEndTime)
+                    .killParticipation(MatchHelper.calculateKillParticipation(
+                            participant.getKills(), participant.getAssists(), teamTotalKills
+                    ))
+                    .build();
+
+            allMatches.add(dto);
+        }
+
         List<MatchHistoryDTO> filtered = allMatches.stream()
-                .filter(m -> isCurrentSeason(m, seasonStart))
                 .filter(m -> matchesMode(m, mode))
                 .collect(Collectors.toList());
 
         return calculateFavoriteChampions(filtered, mode);
     }
 
+    @Override
+    public List<FavoriteChampionDTO> getFavoriteChampionsBySeason(String puuid, String season) {
+        List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
+        List<MatchHistoryDTO> allMatches = new ArrayList<>();
+
+        for (String matchId : matchIds) {
+            RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
+            RiotParticipantDTO participant = matchInfo.getParticipantByPuuid(puuid);
+            if (participant == null) continue;
+
+            int teamId = participant.getTeamId();
+            int teamTotalKills = MatchHelper.getTeamTotalKills(matchInfo.getParticipants(), teamId);
+
+            int cs = participant.getTotalMinionsKilled() + participant.getNeutralMinionsKilled();
+            double csPerMin = cs / (matchInfo.getGameDurationSeconds() / 60.0);
+
+            LocalDateTime gameEndTime = Instant.ofEpochMilli(matchInfo.getGameEndTimestamp())
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+
+            MatchHistoryDTO dto = MatchHistoryDTO.builder()
+                    .matchId(matchId)
+                    .championName(participant.getChampionName())
+                    .kills(participant.getKills())
+                    .deaths(participant.getDeaths())
+                    .assists(participant.getAssists())
+                    .cs(cs)
+                    .csPerMin(csPerMin)
+                    .win(participant.isWin())
+                    .queueType(matchInfo.getQueueId())
+                    .gameEndTimestamp(gameEndTime)
+                    .killParticipation(MatchHelper.calculateKillParticipation(
+                            participant.getKills(), participant.getAssists(), teamTotalKills
+                    ))
+                    .build();
+
+            allMatches.add(dto);
+        }
+
+        // 2025년 1월 1일 이후 경기만 필터링
+        LocalDateTime seasonStart = LocalDateTime.of(2025, 1, 1, 0, 0);
+        List<MatchHistoryDTO> filtered = allMatches.stream()
+                .filter(m -> m.getGameEndTimestamp().isAfter(seasonStart))
+                .collect(Collectors.toList());
+
+        System.out.println("getFavoriteChampionsBySeason - season: " + season + ", match count after filter: " + filtered.size());
+
+        return calculateFavoriteChampions(filtered, null);
+    }
+
+
+
+
+    public Map<String, List<FavoriteChampionDTO>> getFavoriteChampionsAll(String puuid) {
+
+        System.out.println("== getFavoriteChampionsAll 호출됨 ==");
+
+        Map<String, List<FavoriteChampionDTO>> result = new HashMap<>();
+
+        List<FavoriteChampionDTO> overall = getFavoriteChampionsBySeason(puuid, "all");
+        List<FavoriteChampionDTO> solo = getFavoriteChampionsBySeason(puuid, "solo");
+        List<FavoriteChampionDTO> flex = getFavoriteChampionsBySeason(puuid, "flex");
+
+        result.put("overall", overall != null ? overall : new ArrayList<>());
+        result.put("solo", solo != null ? solo : new ArrayList<>());
+        result.put("flex", flex != null ? flex : new ArrayList<>());
+
+        return result;
+    }
 
 
     // 오른쪽 패널
@@ -435,6 +524,107 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
     }
 
+    // db 에 정보 없을 때 riot api 에서 직접 matchList 가져옴
+    public MatchSummaryDTO getSummaryDirectlyFromApi(String puuid) {
+        try {
+            // Riot API에서 matchId 20개 받아오기
+            List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
+
+            // matchId들로부터 각 게임 정보 받아오기
+            List<MatchHistoryDTO> matchList = new ArrayList<>();
+            for (String matchId : matchIds) {
+                RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
+
+                // puuid에 해당하는 유저 참가자 정보 뽑아서 MatchHistoryDTO 만들기
+                RiotParticipantDTO participant = matchInfo.getParticipantByPuuid(puuid);
+                if (participant == null) continue;
+
+                int teamId = participant.getTeamId();
+                int teamTotalKills = MatchHelper.getTeamTotalKills(matchInfo.getParticipants(), teamId);
+
+                double kp = MatchHelper.calculateKillParticipation(
+                        participant.getKills(),
+                        participant.getAssists(),
+                        teamTotalKills
+                );
+
+                MatchHistoryDTO dto = MatchHistoryDTO.builder()
+                        .matchId(matchId)
+                        .championName(participant.getChampionName())
+                        .kills(participant.getKills())
+                        .deaths(participant.getDeaths())
+                        .assists(participant.getAssists())
+                        .win(participant.isWin())
+                        .killParticipation(kp)
+                        .teamPosition(participant.getTeamPosition())
+                        .build();
+
+                matchList.add(dto);
+            }
+
+            // 위에서 만든 matchList로 요약 계산
+            return getMatchSummary(matchList);
+
+        } catch (Exception e) {
+            System.err.println("getSummaryDirectlyFromApi() 중 에러 발생: " + e.getMessage());
+            return MatchSummaryDTO.builder().totalCount(0).build();
+        }
+    }
+
+    public MatchSummaryWithListDTO getSummaryAndListFromApi(String puuid) {
+        try {
+            List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
+            List<MatchHistoryDTO> matchList = new ArrayList<>();
+
+            for (String matchId : matchIds) {
+                RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
+                RiotParticipantDTO participant = matchInfo.getParticipantByPuuid(puuid);
+                if (participant == null) continue;
+
+                int teamId = participant.getTeamId();
+                int teamTotalKills = MatchHelper.getTeamTotalKills(matchInfo.getParticipants(), teamId);
+                double kp = MatchHelper.calculateKillParticipation(participant.getKills(), participant.getAssists(), teamTotalKills);
+
+                int cs = participant.getTotalMinionsKilled() + participant.getNeutralMinionsKilled();
+                int duration = matchInfo.getGameDurationSeconds();
+
+                MatchHistoryDTO dto = MatchHistoryDTO.builder()
+                        .matchId(matchId)
+                        .championName(participant.getChampionName())
+                        .kills(participant.getKills())
+                        .deaths(participant.getDeaths())
+                        .assists(participant.getAssists())
+                        .win(participant.isWin())
+                        .killParticipation(kp)
+                        .teamPosition(participant.getTeamPosition())
+                        .queueType(matchInfo.getQueueType())
+                        .cs(cs)
+                        .csPerMin(MatchHelper.getCsPerMin(cs, duration))
+                        .build();
+
+                matchList.add(dto);
+            }
+
+            MatchSummaryDTO summary = getMatchSummary(matchList);
+            List<FavoriteChampionDTO> favoriteChampions = getFavoriteChampions(matchList);
+
+            return MatchSummaryWithListDTO.builder()
+                    .summary(summary)
+                    .matchList(matchList)
+                    .favoriteChampions(favoriteChampions)
+                    .build();
+
+        } catch (Exception e) {
+            System.err.println("getSummaryAndListFromApi() 에러: " + e.getMessage());
+            return MatchSummaryWithListDTO.builder()
+                    .summary(MatchSummaryDTO.builder().totalCount(0).build())
+                    .matchList(Collections.emptyList())
+                    .favoriteChampions(Collections.emptyList())
+                    .build();
+        }
+    }
+
+
     @Override
     public void saveMatchHistory(String puuid) {
         List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
@@ -453,9 +643,6 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
             matchDbService.saveMatchHistory(summary, players);
         }
     }
-
-
-
 
 
 }

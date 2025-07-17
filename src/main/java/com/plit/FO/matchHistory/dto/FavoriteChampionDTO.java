@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FavoriteChampionDTO {
+public class FavoriteChampionDTO { // 선호챔피언
 
     private String championName;
     private String korName;

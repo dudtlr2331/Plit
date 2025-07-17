@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.service;
 
+import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import jakarta.annotation.PostConstruct;
@@ -106,14 +107,29 @@ public class MatchHelper { // 서브 메서드
         }
     }
 
+    // kda 계산
     public static double calculateKda(int kills, int deaths, int assists) {
         if (deaths == 0) return kills + assists;
         return (kills + assists) / (double) deaths;
     }
 
+    public static double getCsPerMin(int cs, int gameDurationSeconds) {
+        if (gameDurationSeconds == 0) return 0;
+        return cs / (gameDurationSeconds / 60.0);
+    }
+
+    // 킬 참여율
     public static double calculateKillParticipation(int kills, int assists, int teamTotalKills) {
         if (teamTotalKills == 0) return 0.0;
         return ((double)(kills + assists) / teamTotalKills) * 100;
+    }
+
+    // 팀 전체 킬 수
+    public static int getTeamTotalKills(List<RiotParticipantDTO> participants, int teamId) {
+        return participants.stream()
+                .filter(p -> p.getTeamId() == teamId)
+                .mapToInt(RiotParticipantDTO::getKills)
+                .sum();
     }
 
 
