@@ -6,6 +6,7 @@ import com.plit.FO.qna.repository.QnaRepository;
 import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,30 +69,49 @@ public class QnaServiceImpl implements QnaService {
             }
         }
 
-        qnaRepository.save(qna);
+        try {
+            qnaRepository.save(qna);
+        } catch (Exception e) {
+            throw new RuntimeException("문의 저장 중 문제가 발생했습니다.", e);
+        }
     }
 
     @Override
     public List<QnaEntity> getMyQuestions(Long userId) {
-        UserEntity user = userRepository.findById(userId.intValue())
-                .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다"));
-        return qnaRepository.findByUserAndDeleteYnOrderByAskedAtDesc(user, "N");
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+
+        try {
+            return userRepository.findById(userId.intValue())
+                    .map(user -> qnaRepository.findByUserAndDeleteYnOrderByAskedAtDesc(user, "N"))
+                    .orElse(Collections.emptyList());
+        } catch (Exception e) {
+            throw new RuntimeException("내 문의글 목록 조회 중 문제가 발생했습니다.", e);
+        }
     }
 
     @Override
     public void deleteQna(Long id, Long userId) {
-        qnaRepository.findById(id).ifPresent(qna -> {
-            if (qna.getUser() != null && qna.getUser().getUserSeq().equals(userId.intValue())) {
-                qnaRepository.softDelete(id, userId);
-            } else {
-                throw new IllegalArgumentException("삭제 권한이 없습니다.");
-            }
-        });
+        QnaEntity qna = qnaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문의글을 찾을 수 없습니다."));
+
+        if (qna.getUser() == null || !qna.getUser().getUserSeq().equals(userId.intValue())) {
+            throw new IllegalArgumentException("삭제 권한이 없습니다.");
+        }
+
+        qnaRepository.softDelete(id, userId);
     }
 
     @Override
     public List<QnaEntity> getAllQuestions() {
-        return qnaRepository.findByDeleteYnAndAdminDeletedFalseOrderByAskedAtDesc("N");
+        List<QnaEntity> result = qnaRepository.findByDeleteYnAndAdminDeletedFalseOrderByAskedAtDesc("N");
+
+        if (result.isEmpty()) {
+            System.out.println("등록된 문의글이 없습니다.");
+        }
+
+        return result;
     }
 
     @Override
@@ -101,6 +122,10 @@ public class QnaServiceImpl implements QnaService {
 
     @Override
     public void saveAnswer(Long id, String answer) {
+        if (answer == null || answer.trim().isEmpty()) {
+            throw new IllegalArgumentException("답변 내용이 비어 있을 수 없습니다.");
+        }
+
         QnaEntity qna = findById(id);
         qna.setAnswer(answer);
         qna.setStatus("답변완료");
@@ -115,10 +140,16 @@ public class QnaServiceImpl implements QnaService {
 
     @Override
     public List<QnaEntity> getQuestionsByType(String type) {
+        String status = null;
+
         if ("UNANSWERED".equalsIgnoreCase(type)) {
-            return qnaRepository.findByDeleteYnAndAdminDeletedFalseAndStatusOrderByAskedAtDesc("N", "대기중");
+            status = "대기중";
         } else if ("ANSWERED".equalsIgnoreCase(type)) {
-            return qnaRepository.findByDeleteYnAndStatusAndAdminDeletedFalseOrderByAskedAtDesc("N", "답변완료");
+            status = "답변완료";
+        }
+
+        if (status != null) {
+            return qnaRepository.findByDeleteYnAndStatusAndAdminDeletedFalseOrderByAskedAtDesc("N", status);
         } else {
             return qnaRepository.findByDeleteYnAndAdminDeletedFalseOrderByAskedAtDesc("N");
         }
@@ -147,9 +178,13 @@ public class QnaServiceImpl implements QnaService {
 
     @Override
     public void deleteById(Long id) {
-        QnaEntity qna = findById(id);
-        qna.setAdminDeleted(true);
-        qnaRepository.save(qna);
+        try {
+            QnaEntity qna = findById(id);
+            qna.setAdminDeleted(true);
+            qnaRepository.save(qna);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("관리자 삭제 중 오류 발생: " + e.getMessage());
+        }
     }
 
     @Override
@@ -159,6 +194,10 @@ public class QnaServiceImpl implements QnaService {
 
     @Override
     public void hardDelete(Long id) {
-        qnaRepository.deleteById(id);
+        try {
+            qnaRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new IllegalArgumentException("삭제할 문의글이 존재하지 않습니다.", e);
+        }
     }
 }

@@ -17,4 +17,11 @@ public class ClanDTO {
     private String imageUrl;
     private Long leaderId;
     private int memberCount;
+
+    public String getIntroPreview() {
+        if (this.intro == null || this.intro.trim().isEmpty()) {
+            return "소개글 없음";
+        }
+        return this.intro.split("\n")[0];
+    }
 }

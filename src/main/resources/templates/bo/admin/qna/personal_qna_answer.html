@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>QnA 답변 작성</title>
+    <link rel="stylesheet" th:href="@{/css/qna.css}"/>
 </head>
 <body>
 <div th:replace="bo/admin/admin_layout :: layout(~{::content})">
@@ -24,8 +25,18 @@
                     <p><strong>첨부파일:</strong>
                         <span th:if="${qna.fileName != null}">
                             📎
-                            <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
-                               th:text="${qna.fileName}">첨부파일</a>
+                        <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
+                            th:text="${qna.fileName}">첨부파일</a>
+
+                        <!-- 이미지 파일일 경우 미리보기 -->
+                        <br />
+                        <img th:if="${#strings.endsWith(qna.fileName.toLowerCase(), '.png') or
+                                      #strings.endsWith(qna.fileName.toLowerCase(), '.jpg') or
+                                      #strings.endsWith(qna.fileName.toLowerCase(), '.jpeg') or
+                                      #strings.endsWith(qna.fileName.toLowerCase(), '.gif')}"
+                             th:src="@{'/upload/qna/' + ${qna.fileName}}"
+                             alt="첨부 이미지 미리보기"
+                             class="qna-admin-preview-image" />
                         </span>
                         <span th:if="${qna.fileName == null}">없음</span>
                     </p>

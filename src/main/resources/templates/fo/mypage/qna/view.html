@@ -10,7 +10,20 @@
         <tr th:if="${qna.fileName != null && !qna.fileName.isEmpty()}">
             <th>첨부파일</th>
             <td>
-                <a th:href="@{/mypage/qna/download/{file}(file=${qna.fileName})}" th:text="${qna.fileName}" download></a>
+                <!-- 첨부파일 이름 다운로드 링크 -->
+                <a th:href="@{/mypage/qna/download/{file}(file=${qna.fileName})}"
+                   th:text="${qna.fileName}" download></a>
+
+                <!-- 미리보기 박스 (이미지일 경우에만 노출) -->
+                <div th:if="${#strings.endsWith(qna.fileName.toLowerCase(), '.png') or
+                     #strings.endsWith(qna.fileName.toLowerCase(), '.jpg') or
+                     #strings.endsWith(qna.fileName.toLowerCase(), '.jpeg') or
+                     #strings.endsWith(qna.fileName.toLowerCase(), '.gif')}"
+                     class="qna-image-preview-box">
+                    <img th:src="@{'/uploads/qna/' + ${qna.fileName}}"
+                         alt="미리보기"
+                         class="qna-preview-image" />
+                </div>
             </td>
         </tr>
         <tr>
@@ -36,6 +49,6 @@
     </table>
 
     <div class="qna-actions">
-        <a th:href="@{/mypage/qna}" class="qna-submit-button">← 목록으로</a>
+        <a th:href="@{/mypage/qna/list}" class="qna-submit-button">목록으로</a>
     </div>
 </div>

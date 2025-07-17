@@ -43,53 +43,6 @@
     </table>
 
     <div class="qna-actions">
-        <a th:href="@{/mypage/qna/write}" class="qna-submit-button">➕ 새 문의</a>
-        <!--        <button onclick="openChat()" class="qna-chat-btn">💬 실시간 문의</button>-->
-        <button onclick="requestChat()" class="qna-chat-btn">💬 실시간 문의</button>
+        <a th:href="@{/mypage/qna/write}" class="qna-submit-button">새 문의</a>
     </div>
-
-    <div id="chatPopup" class="chat-popup" style="display: none;">
-        <div class="chat-header">
-            실시간 문의
-            <button onclick="toggleChat()">✖</button>
-        </div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="메시지를 입력하세요...">
-            <button onclick="sendMessage()">전송</button>
-        </div>
-    </div>
-
-    <script>
-        function toggleChat() {
-            const popup = document.getElementById("chatPopup");
-            popup.style.display = popup.style.display === "none" ? "flex" : "none";
-        }
-
-        // 👉 버튼 클릭 시 팝업 열기용 함수
-        function requestChat() {
-            toggleChat(); // 나중에 여기에 서버에 요청 보내는 코드도 추가할 수 있어!
-        }
-
-        const roomId = "admin-room";
-        const userId = "plit유저"; // TODO: 실제 로그인 사용자 ID로 대체하기
-
-        const ws = new WebSocket(`wss://${location.host}/ws/chat?roomId=${roomId}&userId=${userId}`);
-
-        ws.onmessage = (event) => {
-            const msgBox = document.getElementById("chatMessages");
-            const div = document.createElement("div");
-            div.textContent = event.data;
-            msgBox.appendChild(div);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        };
-
-        function sendMessage() {
-            const input = document.getElementById("messageInput");
-            if (input.value.trim()) {
-                ws.send(input.value);
-                input.value = "";
-            }
-        }
-    </script>
 </div>

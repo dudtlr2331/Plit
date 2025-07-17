@@ -36,7 +36,6 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
             ClanJoinRequestEntity existingRequest = existingRequestOpt.get();
 
             if (existingRequest.getStatus() == JoinStatus.REJECTED) {
-                // 거절됐던 신청자는 다시 PENDING 으로 바꿈(재신청 허용)
                 existingRequest.setStatus(JoinStatus.PENDING);
                 existingRequest.setIntro(dto.getIntro());
                 existingRequest.setTier(dto.getTier());
@@ -47,11 +46,9 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
                 return;
             }
 
-            // 이미 신청 중이거나 승인된 경우
             throw new IllegalStateException("이미 신청되어 있습니다.");
         }
 
-        // 처음 신청하는 경우
         ClanEntity clan = clanRepository.findById(dto.getClanId())
                 .orElseThrow(() -> new IllegalArgumentException("클랜을 찾을 수 없습니다."));
 
@@ -98,7 +95,6 @@ public class ClanJoinRequestServiceImpl implements ClanJoinRequestService {
     @Override
     @Transactional
     public void approveJoinRequest(Long clanId, Long userId) {
-
         ClanJoinRequestEntity request = joinRequestRepository
                 .findByClanIdAndUserIdAndStatus(clanId, userId, JoinStatus.PENDING)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));

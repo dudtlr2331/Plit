@@ -87,10 +87,17 @@ public class ClanMemberServiceImpl implements ClanMemberService {
     @Override
     @Transactional
     public void addMember(Long clanId, Long userId, String position, String tier, String intro) {
+        Position posEnum;
+        try {
+            posEnum = Position.valueOf(position);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("잘못된 포지션 값입니다: " + position);
+        }
+
         ClanMemberEntity entity = ClanMemberEntity.builder()
                 .clanId(clanId)
                 .userId(userId)
-                .position(Position.valueOf(position))
+                .position(posEnum)
                 .tier(tier)
                 .intro(intro)
                 .status("APPROVED")

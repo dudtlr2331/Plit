@@ -6,6 +6,8 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}">
+    <meta name="login-user-nickname" th:if="${loginUser != null}" th:content="${loginUser.userNickname}">
     <title th:text="${clan.name} + ' - 클랜 정보'">클랜 정보</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/clan.css">
@@ -72,12 +74,23 @@
                 <img th:src="${clan.imageUrl != null ? clan.imageUrl : '/uploads/default.png'}" alt="클랜 이미지" />
             </div>
             <div class="detail-intro">
-                <h2>소개</h2>
+                <h2>클랜 소개</h2>
                 <div class="intro-content" th:utext="${clan.intro}"></div>
             </div>
             <div class="detail-tier">
                 <h2>가입 최소 티어</h2>
-                <p th:text="${clan.minTier}">골드</p>
+
+                <div class="tier-display">
+                    <img th:if="${clan.minTier != 'NONE'}"
+                         th:src="@{/images/tier/{t}.png(t=${clan.minTier})}"
+                         th:alt="${clan.minTier + ' 아이콘'}"
+                         width="30" height="30" />
+
+                    <span class="tier-label">
+                        <span th:text="${clan.minTier}">PLATINUM</span>
+                        <span th:if="${clan.minTier != 'CHALLENGER'}"> 이상</span>
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -606,17 +619,14 @@
 
         </div>
 
-        <!-- 소개글 입력창 -->
         <label>소개</label>
         <textarea id="joinIntro"
                   name="intro"
                   maxlength="14"
                   placeholder="나를 소개해주세요. 최대 14자까지 가능합니다."></textarea>
 
-        <!-- 클랜 ID 숨김 -->
         <input type="hidden" id="joinClanId" th:value="${clan.id}" />
 
-        <!-- 버튼 -->
         <div class="modal-actions">
             <button class="clan-btn" onclick="submitJoinRequest()">가입 신청</button>
             <button class="clan-btn cancel" onclick="closeJoinClanModal()">취소</button>
@@ -624,24 +634,21 @@
     </div>
 </div>
 
-<!-- 푸터 -->
-<!--<footer>-->
-<!--    <div class="container">-->
-<!--        <div class="footer-nav">-->
-<!--            <a href="#">공지사항</a>-->
-<!--            <a href="#">사용방법</a>-->
-<!--            <a href="#">개인정보처리방침</a>-->
-<!--            <a href="#">광고/제휴문의</a>-->
-<!--            <a href="#">개발문의</a>-->
-<!--            <a href="#">404 Squad</a>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--            lol.ps is hosted by PS Analytics, Inc. This site isn't endorsed by Riot Games and doesn’t reflect their views.-->
-<!--            League of Legends is a trademark of Riot Games.-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</footer>-->
-
 <script src="/js/clan.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/chatPopup.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const userSeqMeta = document.querySelector('meta[name="login-user-seq"]');
+        if (userSeqMeta) {
+            const userSeq = userSeqMeta.getAttribute("content");
+            if (userSeq) {
+                // 여기서 initChatFeature 호출
+                initChatFeature(userSeq);
+            }
+        }
+    });
+</script>
 </body>
 </html>

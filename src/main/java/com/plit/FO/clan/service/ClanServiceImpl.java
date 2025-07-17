@@ -9,7 +9,6 @@ import com.plit.FO.clan.repository.ClanRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-//import lombok.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,21 +30,26 @@ public class ClanServiceImpl implements ClanService {
         return clanRepository.findByUseYnOrderByCreatedAtDesc("Y");
     }
 
+    // 예외2
     @Override
     public void createClan(ClanEntity clan) {
         clan.setUseYn("Y");
         ClanEntity saved = clanRepository.save(clan);
 
-        // 리더 자동 등록
         if (saved.getLeaderId() != null) {
-            ClanMemberEntity leader = ClanMemberEntity.builder()
-                    .userId(saved.getLeaderId())
-                    .clanId(saved.getId())
-                    .role("LEADER")
-                    .status(JoinStatus.APPROVED.name())
-                    .intro("리더입니다 👑")
-                    .build();
-            clanMemberRepository.save(leader);
+            try {
+                ClanMemberEntity leader = ClanMemberEntity.builder()
+                        .userId(saved.getLeaderId())
+                        .clanId(saved.getId())
+                        .role("LEADER")
+                        .status(JoinStatus.APPROVED.name())
+                        .intro("리더입니다")
+                        .build();
+
+                clanMemberRepository.save(leader);
+            } catch (Exception e) {
+                throw new RuntimeException("리더 자동 등록에 실패했습니다.", e);
+            }
         }
     }
 
@@ -119,6 +123,7 @@ public class ClanServiceImpl implements ClanService {
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
 
+    // 예외3
     @Override
     @Transactional
     public void updateClan(Long id, ClanEntity updatedClan, MultipartFile imageFile) throws IOException {
@@ -131,11 +136,15 @@ public class ClanServiceImpl implements ClanService {
         existing.setDiscordLink(updatedClan.getDiscordLink());
 
         if (imageFile != null && !imageFile.isEmpty()) {
-            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-            File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
-            imageFile.transferTo(new File(dir, fileName));
-            existing.setImageUrl("/upload/clan/" + fileName);
+            try {
+                String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
+                File dir = new File(uploadDir);
+                if (!dir.exists()) dir.mkdirs();
+                imageFile.transferTo(new File(dir, fileName));
+                existing.setImageUrl("/upload/clan/" + fileName);
+            } catch (IOException e) {
+                throw new IOException("이미지 업로드 중 문제가 발생했습니다.", e);
+            }
         }
 
         clanRepository.save(existing);
@@ -144,7 +153,7 @@ public class ClanServiceImpl implements ClanService {
     @Override
     public ClanDTO findById(Long id) {
         ClanEntity entity = clanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("클랜을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID(" + id + ")에 해당하는 클랜이 없습니다."));
 
         int count = clanMemberRepository.countByClanId(entity.getId());
 

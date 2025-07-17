@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{bo/admin/admin_layout :: layout(~{::body})}">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>문의 상세 보기</title>
+    <link rel="stylesheet" href="/css/qna.css" />
 </head>
+
 <body>
+<div th:replace="bo/admin/admin_layout :: layout(~{::content})">
 <div th:fragment="content">
     <div class="container-fluid px-4">
         <h1 class="mt-4">QnA 답변 보기</h1>
@@ -23,10 +26,18 @@
 
                 <p><strong>첨부파일:</strong>
                     <span th:if="${qna.fileName != null}">
-                        📎
-                        <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
-                           th:text="${qna.fileName}">첨부파일</a>
-                    </span>
+        📎
+        <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
+           th:text="${qna.fileName}">첨부파일</a>
+        <br />
+        <img th:if="${#strings.endsWith(qna.fileName.toLowerCase(), '.png') or
+                     #strings.endsWith(qna.fileName.toLowerCase(), '.jpg') or
+                     #strings.endsWith(qna.fileName.toLowerCase(), '.jpeg') or
+                     #strings.endsWith(qna.fileName.toLowerCase(), '.gif')}"
+             th:src="@{'/uploads/qna/' + ${qna.fileName}}"
+             alt="첨부 이미지 미리보기"
+             class="qna-admin-preview-image" />
+    </span>
                     <span th:if="${qna.fileName == null}">없음</span>
                 </p>
 

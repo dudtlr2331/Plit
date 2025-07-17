@@ -291,8 +291,8 @@ label {
     justify-content: space-between;
     width: calc(100% - 48px);
     max-width: 1200px;
-    margin: 60px auto;
-    padding: 40px 32px;
+    margin: 0 auto;
+    padding: 24px 32px 40px 32px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
@@ -429,6 +429,16 @@ label {
     line-height: 1.6;
     color: #333;
     text-align: center;
+}
+
+.intro-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-word;
 }
 
 .detail-intro img {
@@ -877,4 +887,22 @@ textarea#memberIntro:focus {
     object-fit: contain;
     display: block;
     margin: 0 auto;
+}
+
+.tier-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+.tier-display img {
+    display: block;
+    width: 34px;
+    height: 34px;
+}
+
+.tier-label {
+    font-size: 16px;
+    font-weight: 500;
 }
