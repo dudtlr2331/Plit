@@ -2,6 +2,7 @@ package com.plit.FO.user.controller;
 
 import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.user.dto.UserDTO;
+import com.plit.FO.user.enums.EmailVerificationPurpose;
 import com.plit.FO.user.security.CustomUserDetails;
 import com.plit.FO.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -226,24 +227,29 @@ public class UserController {
     // 이메일 인증번호 전송
     @PostMapping("/send-code")
     @ResponseBody
-    public ResponseEntity<String> sendCode(@RequestParam String email) {
+    public ResponseEntity<String> sendCode(@RequestParam String email,
+                                           @RequestParam String purpose) {
         try {
-            userService.sendEmailCode(email);
+            EmailVerificationPurpose p = EmailVerificationPurpose.valueOf(purpose.toUpperCase());
+            userService.sendEmailCode(email, p);
             return ResponseEntity.ok("인증번호가 전송되었습니다.");
-        } catch (IllegalStateException e) {
-            System.out.println("이메일 인증 실패 사유: " + e.getMessage()); // 로그 찍기
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
 
     // 이메일 인증번호 확인
     @PostMapping("/verify-code")
     @ResponseBody
     public String verifyCode(@RequestParam String email,
-                             @RequestParam String inputCode) {
-        boolean ok = userService.verifyEmailCode(email, inputCode);
+                             @RequestParam String inputCode,
+                             @RequestParam String purpose) {
+        EmailVerificationPurpose p = EmailVerificationPurpose.valueOf(purpose.toUpperCase());
+        boolean ok = userService.verifyEmailCode(email, inputCode, p);
         return ok ? "인증 성공" : "인증 실패";
     }
+
 
     @GetMapping("/mypage/main")
     public String userMainPage() {
