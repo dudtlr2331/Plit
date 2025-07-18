@@ -81,15 +81,15 @@ public class FriendRestController {
         UserDTO loginUser = userService.findByUserId(user.getUsername());
         if (loginUser == null) return ResponseEntity.badRequest().build();
 
-        String nickname = request.get("toUserId"); // 닉네임 기반
-        Optional<UserEntity> toUserOpt = userService.findByUserNickname(nickname);
+        String userId = request.get("toUserId"); // 닉네임 기반
+        UserDTO toUserDTO = userService.findByUserId(userId);
 
-        if (toUserOpt.isEmpty()) {
+        if (toUserDTO == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("해당 닉네임을 가진 사용자가 존재하지 않습니다.");
         }
 
-        Integer toUserSeq = toUserOpt.get().getUserSeq();
+        Integer toUserSeq = toUserDTO.getUserSeq();
         String memo = request.getOrDefault("memo", null);
 
         friendService.sendFriendRequest(loginUser.getUserSeq(), toUserSeq, memo);

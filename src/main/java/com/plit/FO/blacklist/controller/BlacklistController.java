@@ -29,30 +29,26 @@ public class BlacklistController {
     public String getBlacklist(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
-            return "redirect:/login";
+        UserDTO loginUser = null;
+        if (authentication != null && authentication.isAuthenticated()
+                && !authentication.getPrincipal().equals("anonymousUser")) {
+
+            Object principal = authentication.getPrincipal();
+            String username = null;
+
+            if (principal instanceof UserDetails userDetails) {
+                username = userDetails.getUsername();
+            } else if (principal instanceof OAuth2User oAuth2User) {
+                username = (String) oAuth2User.getAttributes().get("email");
+            }
+
+            if (username != null) {
+                loginUser = userService.findByUserId(username);
+            }
         }
 
-        Object principal = authentication.getPrincipal();
-        String username = null;
+        Integer currentUserSeq = (loginUser != null) ? loginUser.getUserSeq() : -1;
 
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof OAuth2User oAuth2User) {
-            username = (String) oAuth2User.getAttributes().get("email"); // 또는 nickname, id 등
-        }
-
-        if (username == null) {
-            return "redirect:/login";
-        }
-
-        UserDTO loginUser = userService.findByUserId(username);
-        if (loginUser == null) {
-            return "redirect:/login";
-        }
-
-        Integer currentUserSeq = loginUser.getUserSeq();
         List<BlacklistDTO> blacklist = blacklistService.getAllReportsWithCount(currentUserSeq);
 
         model.addAttribute("loginUser", loginUser);

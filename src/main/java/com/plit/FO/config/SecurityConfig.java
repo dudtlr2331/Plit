@@ -89,6 +89,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/mypage/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/report").permitAll()
 
+                        // 신고
+                        .requestMatchers("/api/blacklist/**").permitAll()
+
                         // 웹 소켓 사용을 위한 설정
                         .requestMatchers("/ws/**", "/chat/**", "/sub/**", "/pub/**").permitAll()
                         .anyRequest().permitAll() //위에 명시하지 않은 모든 요청은 기본적으로 인증 없이 접근 허용

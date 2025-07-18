@@ -64,7 +64,7 @@ body {
     transition: background 0.2s ease;
 }
 #openReportPopup:hover {
-    background: linear-gradient(to right, #8d5aa8, #7383c0);
+    background: #7c4798;
 }
 
 /* ================================
@@ -150,7 +150,7 @@ tr:hover {
     transition: background 0.2s ease;
 }
 .report-btn:hover {
-    background: linear-gradient(to right, #8d5aa8, #7383c0);
+    background: #7c4798;
 }
 
 /* ================================
@@ -208,7 +208,7 @@ tr:hover {
     border: none;
 }
 #reportPopup button:last-of-type:hover {
-    background: linear-gradient(to right, #8d5aa8, #7383c0);
+    background: #7c4798;
 }
 
 /* ================================

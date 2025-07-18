@@ -34,10 +34,8 @@ public class BlockRestController {
         Integer blockerId = userService.findByUserId(user.getUsername()).getUserSeq();
 
         // 닉네임으로 조회
-        String nickname = request.get("blockedUserId"); // 실제로는 nickname
-        Integer blockedUserId = userService.findByUserNickname(nickname)
-                .map(u -> u.getUserSeq())
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저 없음"));
+        String targetUserId = request.get("blockedUserId"); // 실제로는 nickname
+        Integer blockedUserId = userService.findByUserId(targetUserId).getUserSeq();
 
         blockService.blockUser(blockerId, blockedUserId);
         return ResponseEntity.ok().build();
