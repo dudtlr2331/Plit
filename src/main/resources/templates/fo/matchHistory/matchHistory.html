@@ -96,7 +96,7 @@
                     <!--                    <button class="tab-button active" data-mode="overall"-->
                     <!--                            th:text="${seasonName}">S2025</button>-->
                     <!--                </th:block>-->
-                    <button class="tab-button" data-mode="all">s2025</button>
+                    <button class="tab-button" data-mode="overall">s2025</button>
                     <button class="tab-button" data-mode="solo">개인/2인 랭크</button>
                     <button class="tab-button" data-mode="flex">자유 랭크</button>
                 </div>
@@ -105,7 +105,7 @@
                 <div class="champion-list">
 
                     <!-- 전체 (현재 시즌) -->
-                    <div class="champion-tab-content" data-mode="overall">
+                    <div class="champion-tab-content" data-mode="overall" style="display: block;">
                         <div th:if="${overallChampions != null}">
                             <div class="champion-row"
                                  th:each="champ, iterStat : ${overallChampions}"

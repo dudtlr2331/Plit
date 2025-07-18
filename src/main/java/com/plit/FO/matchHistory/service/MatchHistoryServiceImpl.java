@@ -247,6 +247,18 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
         for (String matchId : matchIds) {
             RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
+
+            int queueId;
+            try {
+                queueId = Integer.parseInt(matchInfo.getQueueId());
+            } catch (NumberFormatException e) {
+                continue; // queueId가 숫자가 아니면 해당 경기 skip
+            }
+
+            if ("solo".equals(season) && queueId != 420) continue;
+            if ("flex".equals(season) && queueId != 440) continue;
+            if ("overall".equals(season) && queueId != 420 && queueId != 440) continue;
+
             RiotParticipantDTO participant = matchInfo.getParticipantByPuuid(puuid);
             if (participant == null) continue;
 
@@ -287,7 +299,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
         System.out.println("getFavoriteChampionsBySeason - season: " + season + ", match count after filter: " + filtered.size());
 
-        return calculateFavoriteChampions(filtered, null);
+        return calculateFavoriteChampions(filtered, season);
     }
 
 
@@ -299,7 +311,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
         Map<String, List<FavoriteChampionDTO>> result = new HashMap<>();
 
-        List<FavoriteChampionDTO> overall = getFavoriteChampionsBySeason(puuid, "all");
+        List<FavoriteChampionDTO> overall = getFavoriteChampionsBySeason(puuid, "overall");
         List<FavoriteChampionDTO> solo = getFavoriteChampionsBySeason(puuid, "solo");
         List<FavoriteChampionDTO> flex = getFavoriteChampionsBySeason(puuid, "flex");
 

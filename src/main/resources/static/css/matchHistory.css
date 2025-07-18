@@ -226,6 +226,10 @@ body {
     color: #666;
 }
 
+.champion-tab-content {
+    display: none;
+}
+
 .hidden-champ {
     display: none;
 }

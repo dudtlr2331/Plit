@@ -84,6 +84,11 @@ public class MatchHistoryController {
         model.addAttribute("soloChampions", favoriteChampionsMap.get("solo"));
         model.addAttribute("flexChampions", favoriteChampionsMap.get("flex"));
 
+        System.out.println("overall size: " + favoriteChampionsMap.get("overall").size());
+        System.out.println("solo size: " + favoriteChampionsMap.get("solo").size());
+        System.out.println("flex size: " + favoriteChampionsMap.get("flex").size());
+        System.out.println("같은 객체? " + (favoriteChampionsMap.get("overall") == favoriteChampionsMap.get("solo")));
+
 
         // 스타일 계산
         int total = dto.getSummary().getTotalCount();
