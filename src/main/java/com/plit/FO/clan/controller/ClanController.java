@@ -7,6 +7,8 @@ import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.service.ClanJoinRequestService;
 import com.plit.FO.clan.service.ClanMemberService;
 import com.plit.FO.clan.service.ClanService;
+import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.repository.UserRepository;
 import com.plit.FO.user.service.UserService;
 import com.plit.FO.user.dto.UserDTO;
 
@@ -41,6 +43,7 @@ public class ClanController {
     private final UserService userService;
     private final ClanMemberService clanMemberService;
     private final ClanJoinRequestService clanJoinRequestService;
+    private final UserRepository userRepository;
 
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
@@ -137,6 +140,15 @@ public class ClanController {
             List<ClanMemberDTO> members = clanMemberService.findApprovedMembersByClanId(id);
             List<ClanJoinRequestDTO> pendingMembers = clanJoinRequestService.getJoinRequests(id);
 
+            for (ClanMemberDTO member : members) {
+                if (member.getUserId() != null) {
+                    userService.getUserByUserId(member.getUserId()).ifPresent(user -> {
+                        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getUserAuth()) || "MASTER".equalsIgnoreCase(user.getUserAuth());
+                        member.setAdminUser(isAdmin);
+                    });
+                }
+            }
+
             if (clan.getLeaderId() != null) {
                 clanMemberService.findByClanIdAndUserId(id, clan.getLeaderId()).ifPresent(leaderDto -> {
                     leaderDto.setRole("LEADER");
@@ -158,10 +170,31 @@ public class ClanController {
                 String userIdStr = principal.getName();
                 userService.getUserByUserId(userIdStr).ifPresent(userDTO -> {
                     Long userSeq = userDTO.getUserSeq().longValue();
-                    clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresent(currentMemberDto -> {
-                        currentUserMemberId.set(currentMemberDto.getMemberId());
-                    });
+                    model.addAttribute("nickname", userDTO.getUserNickname());
+
+                    boolean isAdmin = "MASTER".equalsIgnoreCase(userDTO.getUserAuth()) || "ADMIN".equalsIgnoreCase(userDTO.getUserAuth());
+                    model.addAttribute("isAdmin", isAdmin);
+
+                    boolean isJoinPending = clanJoinRequestService.isJoinPending(id, userSeq);
+                    model.addAttribute("joinPending", isJoinPending);
+                    model.addAttribute("currentUserId", userDTO.getUserSeq());
+                    model.addAttribute("currentUserIdStr", userDTO.getUserId());
+
+                    clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresentOrElse(
+                            memberDto -> {
+                                model.addAttribute("editMember", memberDto);
+                                currentUserMemberId.set(memberDto.getMemberId());
+                                model.addAttribute("role", memberDto.getRole());
+                            },
+                            () -> {
+                                model.addAttribute("role", "GUEST");
+                            }
+                    );
                 });
+            } else {
+                model.addAttribute("role", "GUEST");
+                model.addAttribute("joinPending", false);
+                model.addAttribute("isAdmin", false);
             }
 
             members.sort((m1, m2) -> {
@@ -183,42 +216,6 @@ public class ClanController {
             model.addAttribute("members", members);
             model.addAttribute("pendingMembers", pendingMembers);
             model.addAttribute("pendingCount", pendingMembers.size());
-
-            if (principal != null) {
-                String userIdStr = principal.getName();
-                userService.getUserByUserId(userIdStr).ifPresent(userDTO -> {
-                    Long userSeq = userDTO.getUserSeq().longValue();
-                    model.addAttribute("nickname", userDTO.getUserNickname());
-
-                    boolean isJoinPending = clanJoinRequestService.isJoinPending(id, userSeq);
-                    model.addAttribute("currentUserId", userDTO.getUserSeq());
-
-                    clanMemberService.findByClanIdAndUserId(id, userSeq).ifPresentOrElse(
-                            memberDto -> {
-                                model.addAttribute("editMember", memberDto);
-                                String role = memberDto.getRole();
-                                if ("LEADER".equals(role) || "MEMBER".equals(role)) {
-                                    model.addAttribute("role", role);
-                                } else {
-                                    model.addAttribute("role", "GUEST");
-                                    model.addAttribute("joinPending", isJoinPending);
-                                }
-                            },
-                            () -> {
-                                model.addAttribute("role", "GUEST");
-                                model.addAttribute("joinPending", isJoinPending);
-                            }
-                    );
-                });
-
-                if (!model.containsAttribute("role") || model.getAttribute("role") == null) {
-                    model.addAttribute("role", "GUEST");
-                }
-
-            } else {
-                model.addAttribute("role", "GUEST");
-                model.addAttribute("joinPending", false);
-            }
 
             return "fo/clan/clan-detail";
 
@@ -245,8 +242,8 @@ public class ClanController {
                 return "redirect:/clan";
             }
 
-            if (!clan.getLeaderId().equals(user.getUserSeq().longValue())) {
-                redirectAttributes.addFlashAttribute("errorMessage", "리더만 삭제할 수 있습니다.");
+            if (!isLeaderOrAdmin(user, clan)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "리더 또는 관리자만 삭제할 수 있습니다.");
                 return "redirect:/clan/" + id;
             }
 
@@ -255,6 +252,7 @@ public class ClanController {
             return "redirect:/clan";
 
         } catch (Exception e) {
+            System.err.println("클랜 삭제 오류: " + e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "클랜 삭제 중 오류가 발생했습니다.");
             return "redirect:/clan/" + id;
         }
@@ -353,18 +351,33 @@ public class ClanController {
 
             String userId = principal.getName();
             UserDTO userDTO = userService.findByUserId(userId);
+
             if (userDTO == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유저 정보를 찾을 수 없습니다.");
             }
 
-            dto.setUserId(userDTO.getUserSeq().longValue());
+            Long userSeq = userDTO.getUserSeq().longValue();
+            dto.setUserId(userSeq);
 
             if (dto.getClanId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("클랜 ID가 유효하지 않습니다.");
             }
 
+            Long clanId = dto.getClanId();
+
+            boolean isMember = clanMemberService.findByClanIdAndUserId(clanId, userSeq).isPresent();
+            if (isMember) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 해당 클랜의 멤버입니다.");
+            }
+
+            boolean isPending = clanJoinRequestService.isJoinPending(clanId, userSeq);
+            if (isPending) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 가입 신청 중입니다.");
+            }
+
             clanJoinRequestService.requestJoin(dto);
             return ResponseEntity.ok("가입 요청이 정상적으로 처리되었습니다.");
+
         } catch (Exception e) {
             System.err.println("클랜 가입 요청 중 오류: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("클랜 가입 요청 중 오류가 발생했습니다.");
@@ -387,14 +400,13 @@ public class ClanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유저 정보를 찾을 수 없습니다.");
             }
 
-            Long loginUserSeq = loginUser.getUserSeq().longValue();
             ClanDTO clan = clanService.findById(clanId);
             if (clan == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 클랜을 찾을 수 없습니다.");
             }
 
-            if (!clan.getLeaderId().equals(loginUserSeq)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더만 수락할 수 있습니다.");
+            if (!isLeaderOrAdmin(loginUser, clan)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더 또는 관리자만 수락할 수 있습니다.");
             }
 
             clanJoinRequestService.approveJoinRequest(clanId, userId);
@@ -421,14 +433,13 @@ public class ClanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유저 정보를 찾을 수 없습니다.");
             }
 
-            Long loginUserSeq = loginUser.getUserSeq().longValue();
             ClanDTO clan = clanService.findById(clanId);
             if (clan == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 클랜을 찾을 수 없습니다.");
             }
 
-            if (!clan.getLeaderId().equals(loginUserSeq)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더만 거절할 수 있습니다.");
+            if (!isLeaderOrAdmin(loginUser, clan)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더 또는 관리자만 거절할 수 있습니다.");
             }
 
             clanJoinRequestService.rejectJoinRequest(clanId, userId);
@@ -456,18 +467,16 @@ public class ClanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유저 정보를 찾을 수 없습니다.");
             }
 
-            Long fromUserSeq = loginUser.getUserSeq().longValue();
-
             ClanDTO clan = clanService.findById(clanId);
             if (clan == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 클랜을 찾을 수 없습니다.");
             }
 
-            if (!clan.getLeaderId().equals(fromUserSeq)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더만 위임할 수 있습니다.");
+            if (!isLeaderOrAdmin(loginUser, clan)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더 또는 관리자만 위임할 수 있습니다.");
             }
 
-            clanMemberService.delegateLeader(clanId, fromUserSeq, toUserSeq);
+            clanMemberService.delegateLeader(clanId, clan.getLeaderId(), toUserSeq);
             return ResponseEntity.ok("리더 위임 완료!");
         } catch (Exception e) {
             System.err.println("리더 위임 오류: " + e.getMessage());
@@ -492,18 +501,16 @@ public class ClanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유저 정보를 찾을 수 없습니다.");
             }
 
-            Long loginUserSeq = loginUser.getUserSeq().longValue();
-
             ClanDTO clan = clanService.findById(clanId);
             if (clan == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 클랜을 찾을 수 없습니다.");
             }
 
-            if (!clan.getLeaderId().equals(loginUserSeq)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더만 멤버를 추방할 수 있습니다.");
+            if (!isLeaderOrAdmin(loginUser, clan)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("리더 또는 관리자만 멤버를 추방할 수 있습니다.");
             }
 
-            clanMemberService.kickMember(clanId, loginUserSeq, targetUserSeq);
+            clanMemberService.kickMember(clanId, clan.getLeaderId(), targetUserSeq);
             return ResponseEntity.ok("멤버 추방 완료!");
         } catch (Exception e) {
             System.err.println("멤버 추방 오류: " + e.getMessage());
@@ -540,5 +547,18 @@ public class ClanController {
             System.err.println("클랜 탈퇴 오류: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("클랜 탈퇴 중 오류가 발생했습니다.");
         }
+    }
+
+    private boolean isLeaderOrAdmin(UserDTO user, ClanDTO clan) {
+        if (user == null || clan == null || user.getUserSeq() == null || clan.getLeaderId() == null) {
+            return false;
+        }
+
+        Long userSeq = user.getUserSeq().longValue();
+        String auth = user.getUserAuth();
+
+        return clan.getLeaderId().equals(userSeq)
+                || "MASTER".equalsIgnoreCase(auth)
+                || "ADMIN".equalsIgnoreCase(auth);
     }
 }

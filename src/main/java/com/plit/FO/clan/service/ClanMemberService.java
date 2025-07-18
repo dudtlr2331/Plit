@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface ClanMemberService {
     List<ClanMemberDTO> findApprovedMembersByClanId(Long clanId);
+
     List<ClanMemberDTO> findPendingMembersByClanId(Long clanId);
 
     Optional<ClanMemberDTO> findByClanIdAndUserId(Long clanId, Long userId);

@@ -26,17 +26,17 @@
                         <span th:if="${qna.fileName != null}">
                             📎
                         <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
-                            th:text="${qna.fileName}">첨부파일</a>
+                           th:text="${qna.fileName}">첨부파일</a>
 
-                        <!-- 이미지 파일일 경우 미리보기 -->
-                        <br />
+                            <!-- 이미지 파일일 경우 미리보기 -->
+                        <br/>
                         <img th:if="${#strings.endsWith(qna.fileName.toLowerCase(), '.png') or
                                       #strings.endsWith(qna.fileName.toLowerCase(), '.jpg') or
                                       #strings.endsWith(qna.fileName.toLowerCase(), '.jpeg') or
                                       #strings.endsWith(qna.fileName.toLowerCase(), '.gif')}"
                              th:src="@{'/upload/qna/' + ${qna.fileName}}"
                              alt="첨부 이미지 미리보기"
-                             class="qna-admin-preview-image" />
+                             class="qna-admin-preview-image"/>
                         </span>
                         <span th:if="${qna.fileName == null}">없음</span>
                     </p>
@@ -53,7 +53,7 @@
                 </div>
                 <div class="card-body">
                     <form th:action="@{/bo/admin/qna/answer/{id}(id=${qna.id})}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <div class="mb-3">
                             <label for="answer" class="form-label">답변 내용</label>
                             <textarea id="answer" name="answer" class="form-control" rows="6"
