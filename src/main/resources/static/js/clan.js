@@ -667,8 +667,8 @@ function confirmLeaveClan(clanId) {
         });
 }
 
-function confirmDelete(button) {
-    const form = button.closest('form');
+function confirmDelete() {
+    const form = document.getElementById('deleteForm');
 
     if (!form) {
         alert("삭제 폼을 찾을 수 없습니다.");
@@ -690,7 +690,6 @@ function handleJoinClick() {
     try {
         const isAuthenticated = document.getElementById("isAuthenticated")?.value === 'true';
         const userRole = document.getElementById("userRole")?.value;
-        const isAdmin = document.getElementById("isAdmin")?.value === 'true';
 
         if (!isAuthenticated) {
             alert("로그인이 필요합니다!");
@@ -698,7 +697,7 @@ function handleJoinClick() {
             return;
         }
 
-        if (userRole === 'GUEST' || isAdmin) {
+        if (userRole === 'GUEST' || userRole === '') {
             openJoinClanModal();
         } else {
             alert("이미 클랜에 가입된 사용자입니다!");

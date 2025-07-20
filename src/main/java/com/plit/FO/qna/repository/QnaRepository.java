@@ -16,9 +16,7 @@ public interface QnaRepository extends JpaRepository<QnaEntity, Long> {
 
     // 사용자 문의 조회
     List<QnaEntity> findByUser(UserEntity user);
-
     List<QnaEntity> findByUserOrderByAskedAtDesc(UserEntity user);
-
     List<QnaEntity> findByUserAndDeleteYnOrderByAskedAtDesc(UserEntity user, String deleteYn);
 
     // 관리자용 문의 조회

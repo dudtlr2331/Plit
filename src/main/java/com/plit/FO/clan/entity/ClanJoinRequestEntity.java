@@ -4,7 +4,6 @@ import com.plit.FO.clan.enums.JoinStatus;
 import com.plit.FO.clan.enums.Position;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity

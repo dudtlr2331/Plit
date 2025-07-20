@@ -31,7 +31,7 @@
             </div>
 
             <form method="get" th:action="@{/bo/admin/qna/list}" class="d-flex align-items-center">
-                <input type="hidden" name="type" th:value="${type}"/>
+                <input type="hidden" name="type" th:value="${type}" />
                 <select name="sort" class="form-select" onchange="this.form.submit()" style="width: 150px;">
                     <option value="latest" th:selected="${sort == 'latest'}">최신순</option>
                     <option value="oldest" th:selected="${sort == 'oldest'}">오래된순</option>
@@ -91,14 +91,14 @@
                     <form th:if="${type != 'DELETED'}"
                           th:action="@{/bo/admin/qna/delete/{id}(id=${qna.id})}" method="post"
                           th:onsubmit="return confirm('정말 삭제하시겠습니까?')">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit" class="btn btn-sm btn-danger">삭제</button>
                     </form>
 
                     <form th:if="${type == 'DELETED'}"
                           th:action="@{/bo/admin/qna/hard-delete/{id}(id=${qna.id})}" method="post"
                           th:onsubmit="return confirm('정말로 완전히 삭제하시겠습니까? 복구할 수 없습니다!')">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit" class="btn btn-sm btn-dark">완전삭제</button>
                     </form>
                 </td>
