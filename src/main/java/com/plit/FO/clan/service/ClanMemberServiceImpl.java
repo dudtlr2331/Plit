@@ -68,6 +68,7 @@ public class ClanMemberServiceImpl implements ClanMemberService {
 
         return dto;
     }
+
     @Override
     public Optional<ClanMemberDTO> findByClanIdAndUserId(Long clanId, Long userId) {
         return clanMemberRepository.findByClanIdAndUserId(clanId, userId)

@@ -30,7 +30,8 @@
             <td>
                 <form th:action="@{/mypage/qna/delete/{id}(id=${qna.id})}" method="post">
                     <button type="submit" class="qna-delete-btn"
-                            onclick="return confirm('정말 삭제할까요?')">삭제</button>
+                            onclick="return confirm('정말 삭제할까요?')">삭제
+                    </button>
                 </form>
             </td>
         </tr>
