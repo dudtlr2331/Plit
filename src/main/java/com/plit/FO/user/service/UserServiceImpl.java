@@ -434,19 +434,28 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     public RiotAccountResponse getAccountByRiotId(String gameName, String tagLine) {
-        String encodedGameName = UriUtils.encodePathSegment(gameName, StandardCharsets.UTF_8);
-        String encodedTagLine = UriUtils.encodePathSegment(tagLine, StandardCharsets.UTF_8);
-
-        String url = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/" + encodedGameName + "/" + encodedTagLine;
-
-        URI uri = UriComponentsBuilder.fromHttpUrl(url)
-                .queryParam("api_key", riotApiKey)
-                .build()
-                .toUri();
-
         try {
-            return restTemplate.getForObject(uri, RiotAccountResponse.class);
+            String encodedGameName = URLEncoder.encode(gameName.trim(), StandardCharsets.UTF_8);
+            String encodedTagLine = URLEncoder.encode(tagLine.trim(), StandardCharsets.UTF_8);
+
+            String riotIdUrl = "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
+                    + encodedGameName + "/" + encodedTagLine + "?api_key=" + riotApiKey;
+
+            URI riotIdUri = URI.create(riotIdUrl);
+
+            ResponseEntity<Map> response = restTemplate.getForEntity(riotIdUri, Map.class);
+            Map<String, Object> body = response.getBody();
+
+            if (body == null || body.get("puuid") == null) return null;
+
+            return RiotAccountResponse.builder()
+                    .puuid((String) body.get("puuid"))
+                    .gameName((String) body.get("gameName"))
+                    .tagLine((String) body.get("tagLine"))
+                    .build();
+
         } catch (Exception e) {
+            System.err.println("[Riot API 오류] " + e.getMessage());
             return null;
         }
     }
