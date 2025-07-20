@@ -423,13 +423,24 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         UserEntity user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        user.setRiotGameName(response.getGameName());
-        user.setRiotTagLine(response.getTagLine());
+        String gameName = response.getGameName();
+        String tag = response.getTagLine();
+        String nicknameCandidate = gameName + "#" + tag;
+
+        boolean nicknameUpdated = false;
+
+        if (!userRepository.existsByUserNickname(nicknameCandidate)) {
+            user.setUserNickname(nicknameCandidate);
+            nicknameUpdated = true;
+        }
+
+        user.setRiotGameName(gameName);
+        user.setRiotTagLine(tag);
         user.setPuuid(response.getPuuid());
         user.setUserModiDate(LocalDate.now());
 
         userRepository.save(user);
-        return true;
+        return nicknameUpdated;
     }
 
     @Override
@@ -466,10 +477,21 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     public void deleteSummonerInfo(String userId) {
         UserEntity user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
         user.setRiotGameName(null);
         user.setRiotTagLine(null);
         user.setPuuid(null);
+
+        // ✅ 랜덤 닉네임 재부여
+        String newNickname;
+        do {
+            newNickname = generateRandomNickname();
+        } while (userRepository.existsByUserNickname(newNickname));
+
+        user.setUserNickname(newNickname);
         user.setUserModiDate(LocalDate.now());
+
         userRepository.save(user);
     }
+
 }

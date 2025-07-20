@@ -191,11 +191,13 @@ public class UserController {
             return "redirect:/mypage";
         }
 
-        boolean verified = userService.verifyAndSaveSummoner(userId, summonerName, tagLine);
-        if (verified) {
-            redirectAttributes.addFlashAttribute("summonerMessage", "소환사 인증이 완료되었습니다.");
+        boolean nicknameChanged = userService.verifyAndSaveSummoner(userId, summonerName, tagLine);
+
+        if (nicknameChanged) {
+            redirectAttributes.addFlashAttribute("summonerMessage", "소환사 인증이 완료되었습니다. 닉네임이 소환사명으로 변경되었습니다.");
         } else {
-            redirectAttributes.addFlashAttribute("summonerError", "소환사 정보를 찾을 수 없습니다.");
+            redirectAttributes.addFlashAttribute("summonerMessage", "소환사 인증이 완료되었습니다.");
+            redirectAttributes.addFlashAttribute("summonerError", "※ 소환사명은 이미 다른 사용자가 닉네임으로 사용 중이므로 닉네임은 변경되지 않았습니다.");
         }
 
         return "redirect:/mypage";

@@ -38,7 +38,9 @@
             <h2>기본 정보</h2>
 
             <!-- 닉네임 표시 -->
-            <div class="info-row" id="nicknameRow" style="justify-content: space-between;">
+            <div class="info-row" id="nicknameRow"
+                 th:if="${loginUser.riotGameName == null}"
+                 style="justify-content: space-between;">
                 <label>닉네임</label>
                 <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
                     <span th:if="${loginUser != null}" th:text="${loginUser.userNickname}">닉네임</span>
@@ -48,7 +50,9 @@
             </div>
 
             <!-- 닉네임 수정 -->
-            <div class="info-row" id="nicknameEditRow" style="display: none; justify-content: space-between;">
+            <div class="info-row" id="nicknameEditRow"
+                 th:if="${loginUser.riotGameName == null}"
+                 style="display: none; justify-content: space-between;">
                 <label>닉네임</label>
                 <form th:action="@{/mypage/change-nickname}" method="post"
                       style="flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
