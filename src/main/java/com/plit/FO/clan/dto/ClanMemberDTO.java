@@ -25,6 +25,8 @@ public class ClanMemberDTO {
     private String tag;
     private Long clanId;
     private String joinedAgo;
+    private boolean isAdmin;
+    private boolean adminUser;
 
     public String getPositionLabel() {
         return position != null ? position.getLabel() : null;
