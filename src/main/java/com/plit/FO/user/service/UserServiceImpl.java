@@ -59,8 +59,15 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         long now = System.currentTimeMillis();
         long lastTime = emailSendTimeMap.getOrDefault(key, 0L);
 
+        // ✅ 인증번호 요청 제한 (3분)
         if (now - lastTime < 3 * 60 * 1000) {
             throw new IllegalStateException("인증번호는 3분 후에 다시 요청할 수 있습니다.");
+        }
+
+        // ✅ RESET_PASSWORD 요청 시 가입 여부 확인
+        if (purpose == EmailVerificationPurpose.RESET_PASSWORD &&
+                !userRepository.existsByUserId(email)) {
+            throw new IllegalArgumentException("가입되지 않은 이메일입니다.");
         }
 
         String code = generateCode();
@@ -76,6 +83,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         mailSender.send(msg);
         return code;
     }
+
 
     @Override
     public boolean verifyEmailCode(String email, String inputCode, EmailVerificationPurpose purpose) {
