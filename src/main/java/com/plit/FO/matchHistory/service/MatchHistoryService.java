@@ -3,10 +3,13 @@ package com.plit.FO.matchHistory.service;
 import com.plit.FO.matchHistory.dto.*;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
 import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
+@Service
 public interface MatchHistoryService {
 
     SummonerSimpleDTO getAccountByRiotId(String gameName, String tagLine);

@@ -20,9 +20,11 @@ import java.util.stream.Collectors;
 @Builder
 public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
 
+    private String myPuuid;
     private List<RiotParticipantDTO> participants;
 
     private String gameMode;
+    private String queueType;
     private LocalDateTime gameEndTimestamp;
     private String matchId;
 
@@ -30,12 +32,17 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
 
     private List<MatchPlayerDTO> blueTeam;
     private List<MatchPlayerDTO> redTeam;
+    private List<String> otherSummonerNames;
 
     // 바로 출력 가능하게 가공
     private MatchObjectiveDTO blueObjectives;
     private MatchObjectiveDTO redObjectives;
 
     private boolean blueWin;
+
+    private List<String> otherProfileIconIds;
+
+    private int gameDurationSeconds;
 
     // 매치 참여자들 중 입힌 데미지 딜량 최대값
     private int calculateMaxDamage() {
@@ -52,25 +59,47 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
         if (participants == null || participants.isEmpty()) return new ArrayList<>();
 
         return participants.stream()
-                .map(p -> MatchPlayerEntity.builder()
-                        .matchId(matchId)
-                        .puuid(p.getPuuid())
-                        .summonerName(p.getSummonerName())
-                        .championName(p.getChampionName())
-                        .teamPosition(p.getTeamPosition())
-                        .kills(p.getKills())
-                        .deaths(p.getDeaths())
-                        .assists(p.getAssists())
-                        .win(p.isWin())
-                        .tier(p.getTier())
-                        .champLevel(p.getChampLevel())
-                        .cs(p.getTotalMinionsKilled())
-                        .itemIds(convertItemIds(p.getItemIds()))
-                        .damageDealt(p.getTotalDamageDealtToChampions())
-                        .damageTaken(p.getTotalDamageTaken())
-                        .gameMode(gameMode)
-                        .gameEndTimestamp(gameEndTimestamp)
-                        .build())
+                .map(p -> {
+                    int cs = p.getTotalMinionsKilled() + p.getNeutralMinionsKilled();
+                    double csPerMin = gameDurationSeconds > 0 ? (double) cs / (gameDurationSeconds / 60.0) : 0;
+
+                    double kdaRatio = (p.getDeaths() == 0) ? (p.getKills() + p.getAssists()) : ((double)(p.getKills() + p.getAssists()) / p.getDeaths());
+
+                    return MatchPlayerEntity.builder()
+                            .matchId(matchId)
+                            .puuid(p.getPuuid() != null ? p.getPuuid() : myPuuid)
+                            .summonerName(p.getSummonerName())
+                            .championName(p.getChampionName())
+                            .teamPosition(p.getTeamPosition())
+                            .kills(p.getKills())
+                            .deaths(p.getDeaths())
+                            .assists(p.getAssists())
+                            .win(p.isWin())
+                            .tier(p.getTier())
+                            .championLevel(p.getChampionLevel())
+
+                            .cs(cs)
+                            .csPerMin(csPerMin)
+                            .kdaRatio(kdaRatio)
+
+                            .mainRune1(p.getPerkPrimaryStyle())
+                            .mainRune2(p.getPerkSubStyle())
+                            .statRune1(p.getStatRune1())
+                            .statRune2(p.getStatRune2())
+
+                            .profileIconId(p.getProfileIcon())
+
+                            .itemIds(convertItemIds(p.getItemIds()))
+
+                            .gameMode(gameMode)
+                            .queueType(queueType)
+
+                            .gameEndTimestamp(gameEndTimestamp)
+                            .gameDurationSeconds(gameDurationSeconds)
+                            .gameDurationMinutes(gameDurationSeconds / 60)
+
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -90,6 +119,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
         this.participants = matchInfo.getParticipants();
+        this.gameDurationSeconds = matchInfo.getGameDurationSeconds();
 
         // 초기값 세팅
         this.totalMaxDamage = calculateMaxDamage();

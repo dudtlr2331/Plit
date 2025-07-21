@@ -1,7 +1,9 @@
 package com.plit.FO.matchHistory.service;
 
+import com.plit.FO.matchHistory.dto.MatchSummaryDTO;
+import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
+import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
-import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
@@ -11,7 +13,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 public class MatchHelper { // 서브 메서드
@@ -87,30 +93,15 @@ public class MatchHelper { // 서브 메서드
         return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
     }
 
-    // 몇 일, 몇 시간, 몇 분 전 매치였는지
-    public static String getTimeAgo(LocalDateTime gameEndTime) {
-        LocalDateTime now = LocalDateTime.now();
-        Duration duration = Duration.between(gameEndTime, now);
-
-        long days = duration.toDays();
-        long hours = duration.toHours();
-        long minutes = duration.toMinutes();
-
-        if (days > 0) {
-            return days + "일 전";
-        } else if (hours > 0) {
-            return hours + "시간 전";
-        } else if (minutes > 0) {
-            return minutes + "분 전";
-        } else {
-            return "방금 전";
+    public static double getKda(int kills, int deaths, int assists) {
+        if (deaths == 0) {
+            return kills + assists;
         }
+        return (double) (kills + assists) / deaths;
     }
 
-    // kda 계산
-    public static double calculateKda(int kills, int deaths, int assists) {
-        if (deaths == 0) return kills + assists;
-        return (kills + assists) / (double) deaths;
+    public static String getKdaString(int kills, int deaths, int assists) {
+        return kills + " / " + deaths + " / " + assists;
     }
 
     public static double getCsPerMin(int cs, int gameDurationSeconds) {
@@ -132,5 +123,125 @@ public class MatchHelper { // 서브 메서드
                 .sum();
     }
 
+    public static String getTimeAgo(LocalDateTime gameEnd) {
+        Duration duration = Duration.between(gameEnd, LocalDateTime.now());
+
+        long minutes = duration.toMinutes();
+        long hours = duration.toHours();
+        long days = duration.toDays();
+
+        if (minutes < 1) return "방금 전";
+        if (minutes < 60) return minutes + "분 전";
+        if (hours < 24) return hours + "시간 전";
+        return days + "일 전";
+    }
+
+    public static MatchOverallSummaryDTO getOverallSummary(String puuid, String gameName, String tagLine, List<MatchSummaryEntity> matches) {
+        int totalMatches = matches.size();
+        int totalWins = (int) matches.stream().filter(MatchSummaryEntity::isWin).count();
+
+        double avgKills = matches.stream().mapToInt(MatchSummaryEntity::getKills).average().orElse(0.0);
+        double avgDeaths = matches.stream().mapToInt(MatchSummaryEntity::getDeaths).average().orElse(0.0);
+        double avgAssists = matches.stream().mapToInt(MatchSummaryEntity::getAssists).average().orElse(0.0);
+        double avgCs = matches.stream().mapToInt(MatchSummaryEntity::getCs).average().orElse(0.0);
+        double avgKda = avgDeaths == 0 ? avgKills + avgAssists : (avgKills + avgAssists) / avgDeaths;
+        double winRate = totalMatches == 0 ? 0.0 : (100.0 * totalWins / totalMatches);
+
+        String preferredPosition = matches.stream()
+                .map(MatchSummaryEntity::getTeamPosition)
+                .filter(pos -> pos != null && !pos.equals("NONE"))
+                .collect(Collectors.groupingBy(p -> p, Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("UNKNOWN");
+
+        // 챔피언별 사용 횟수 카운트 후 상위 3개 추출
+        List<String> preferredChampions = matches.stream()
+                .map(MatchSummaryEntity::getChampionName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(name -> name, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(3)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        Map<String, Long> positionCounts = matches.stream()
+                .map(MatchSummaryEntity::getTeamPosition)
+                .filter(pos -> pos != null && !pos.equals("NONE"))
+                .collect(Collectors.groupingBy(pos -> pos, Collectors.counting()));
+
+        return MatchOverallSummaryDTO.builder()
+                .puuid(puuid)
+                .gameName(gameName)
+                .tagLine(tagLine)
+                .totalMatches(totalMatches)
+                .totalWins(totalWins)
+                .winRate(winRate)
+                .averageKills(avgKills)
+                .averageDeaths(avgDeaths)
+                .averageAssists(avgAssists)
+                .averageKda(avgKda)
+                .averageCs(avgCs)
+                .preferredPosition(preferredPosition)
+                .preferredChampions(preferredChampions)
+                .positionCounts(positionCounts)
+                .build();
+    }
+
+    public static MatchOverallSummaryDTO convertToMatchOverallSummary(
+            String puuid,
+            String gameName,
+            String tagLine,
+            MatchSummaryDTO summary,
+            List<MatchHistoryDTO> matchList
+    ) {
+        double averageCs = matchList.stream()
+                .mapToInt(MatchHistoryDTO::getCs)
+                .average()
+                .orElse(0.0);
+
+        Map<String, Long> converted = summary.getFavoritePositions().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().longValue()
+                ));
+
+        return MatchOverallSummaryDTO.builder()
+                .puuid(puuid)
+                .gameName(gameName)
+                .tagLine(tagLine)
+                .totalCount(summary.getTotalCount())
+                .winCount(summary.getWinCount())
+                .totalWins(summary.getWinCount()) // 중복 필드
+                .totalMatches(summary.getTotalCount()) // 중복 필드
+                .winRate(summary.getTotalCount() > 0
+                        ? summary.getWinCount() * 100.0 / summary.getTotalCount()
+                        : 0.0)
+                .averageKills(summary.getAvgKills())
+                .averageDeaths(summary.getAvgDeaths())
+                .averageAssists(summary.getAvgAssists())
+                .averageKda(summary.getKdaRatio())
+                .averageCs(averageCs)
+                .preferredPosition(summary.getSortedPositionList() != null && !summary.getSortedPositionList().isEmpty()
+                        ? summary.getSortedPositionList().get(0)
+                        : null)
+                .positionCounts(converted)
+                .favoritePositions(summary.getFavoritePositions())
+                .preferredChampions(summary.getSortedChampionList() != null
+                        ? summary.getSortedChampionList().stream().map(Map.Entry::getKey).toList()
+                        : null)
+                .championTotalGames(summary.getChampionTotalGames())
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+
+    public static List<String> splitString(String str) {
+        return (str != null && !str.isBlank())
+                ? Arrays.asList(str.split(","))
+                : new ArrayList<>();
+    }
 
 }

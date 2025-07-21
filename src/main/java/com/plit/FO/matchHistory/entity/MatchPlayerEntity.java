@@ -22,6 +22,8 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     private Long id;
 
     private String puuid;
+
+    @Column(name = "match_id")
     private String matchId;
     private String summonerName;
     private String championName;
@@ -30,22 +32,24 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     private int deaths;
     private int assists;
     private double kdaRatio;
-    private int damageDealt;
-    private int damageTaken;
 
     private int cs; // 미니언 처치수
     private double csPerMin;
+    private Integer damageDealt;
     private int totalDamageDealtToChampions;
     private int totalDamageTaken;
 
     private String teamPosition;
     private String tier;
-    private int champLevel;
 
     private int mainRune1;
     private int mainRune2;
     private int statRune1;
     private int statRune2;
+    @Column(name = "spell1_id")
+    private int spell1Id;
+    @Column(name = "spell2_id")
+    private int spell2Id;
 
     private int wardsPlaced;
     private int wardsKilled;
@@ -65,28 +69,39 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     // 문자열로 콤마(,) 구분하여 저장
     private String itemIds;
 
+    @Column(name = "profile_icon_id")
+    private Integer profileIconId;
+
+    @Column(name = "champion_level")
+    private Integer championLevel;
+
     // dto -> entity ( db 저장 전에 가공 )
     public static MatchPlayerEntity fromDTO(MatchPlayerDTO dto) {
+        System.out.println("Entity 저장 전: matchId = " + dto.getMatchId());
         return MatchPlayerEntity.builder()
+                .matchId(dto.getMatchId())
+                .puuid(dto.getPuuid())
+                .profileIconId(dto.getProfileIconId())
                 .summonerName(dto.getSummonerName())
                 .championName(dto.getChampionName())
                 .kills(dto.getKills())
                 .deaths(dto.getDeaths())
                 .assists(dto.getAssists())
                 .kdaRatio(dto.getKdaRatio())
-                .damageDealt(dto.getTotalDamageDealtToChampions())
-                .damageTaken(dto.getTotalDamageTaken())
                 .cs(dto.getCs())
                 .csPerMin(dto.getCsPerMin())
+                .damageDealt(dto.getDamageDealt())
                 .totalDamageDealtToChampions(dto.getTotalDamageDealtToChampions())
                 .totalDamageTaken(dto.getTotalDamageTaken())
                 .teamPosition(dto.getTeamPosition())
                 .tier(dto.getTier())
-                .champLevel(dto.getChampionLevel())
+                .championLevel(dto.getChampionLevel())
                 .mainRune1(dto.getMainRune1())
                 .mainRune2(dto.getMainRune2())
                 .statRune1(dto.getStatRune1())
                 .statRune2(dto.getStatRune2())
+                .spell1Id(dto.getSpell1Id())
+                .spell2Id(dto.getSpell2Id())
                 .wardsPlaced(dto.getWardsPlaced())
                 .wardsKilled(dto.getWardsKilled())
                 .gameEndTimestamp(dto.getGameEndTimestamp())
@@ -99,6 +114,7 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
                 .goldEarned(dto.getGoldEarned())
                 .itemIds(String.join(",", dto.getItemIds()))
                 .build();
+
     }
 
 }

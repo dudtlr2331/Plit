@@ -2,8 +2,8 @@ package com.plit.FO.matchHistory.controller;
 
 import com.plit.FO.matchHistory.dto.*;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
-import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
+import com.plit.FO.matchHistory.repository.MatchSummaryRepository;
 import com.plit.FO.matchHistory.repository.RiotIdCacheRepository;
 import com.plit.FO.matchHistory.service.ImageService;
 import com.plit.FO.matchHistory.service.MatchDbService;
@@ -16,8 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,11 +36,21 @@ public class MatchHistoryController {
                                @RequestParam String tagLine,
                                Model model) {
 
-        // PUUID 조회
+        // PUUID 조회( DB 에 있으면 가져오고 없으면 rot api 에서 받아오기 )
         String puuid = matchHistoryService.getPuuidOrRequest(gameName, tagLine);
-        String message = null;
+
         if (puuid == null) {
-            model.addAttribute("message", "해당 소환사의 정보를 찾을 수 없습니다.");
+            model.addAttribute("message", "소환사 정보를 찾을 수 없습니다.");
+            return "fo/matchHistory/matchHistory";
+        }
+
+        // 매치 기록도 DB 에 있는지
+        boolean hasMatch = matchDbService.existsMatchByPuuid(puuid);
+
+        // 초기화 필요한 경우 -> /match/init 호출
+        if (!hasMatch) {
+            model.addAttribute("initRequired", true);
+            model.addAttribute("puuid", puuid);
             return "fo/matchHistory/matchHistory";
         }
 
@@ -64,8 +73,8 @@ public class MatchHistoryController {
         }
 
 
-        // 선호 챔피언
-        MatchSummaryWithListDTO dto = matchHistoryService.getSummaryAndListFromApi(puuid);
+        // 전적 요약 ( DB 기반 )
+        MatchSummaryWithListDTO dto = matchDbService.getSummaryAndList(puuid);
 
         model.addAttribute("summary", dto.getSummary());
         model.addAttribute("matchList", dto.getMatchList());
@@ -74,42 +83,48 @@ public class MatchHistoryController {
         model.addAttribute("winCount", dto.getSummary().getWinCount());
         model.addAttribute("totalCount", dto.getSummary().getTotalCount());
 
-        Map<String, List<FavoriteChampionDTO>> favoriteChampionsMap =
-                matchHistoryService.getFavoriteChampionsAll(puuid);
-
-        // 탭별 챔피언 리스트
+        // 선호 챔피언
+        Map<String, List<FavoriteChampionDTO>> favoriteChampionsMap = matchDbService.getFavoriteChampionsAll(puuid);
         model.addAttribute("favoriteChampionsByMode", favoriteChampionsMap);
 
-        model.addAttribute("overallChampions", favoriteChampionsMap.get("overall"));
-        model.addAttribute("soloChampions", favoriteChampionsMap.get("solo"));
-        model.addAttribute("flexChampions", favoriteChampionsMap.get("flex"));
+        // 처음 페이지에 overall 만 보이니
+        List<FavoriteChampionDTO> overall = matchDbService.getFavoriteChampions(puuid, "overall");
+        model.addAttribute("overallChampions", overall);
 
-        System.out.println("overall size: " + favoriteChampionsMap.get("overall").size());
-        System.out.println("solo size: " + favoriteChampionsMap.get("solo").size());
-        System.out.println("flex size: " + favoriteChampionsMap.get("flex").size());
-        System.out.println("같은 객체? " + (favoriteChampionsMap.get("overall") == favoriteChampionsMap.get("solo")));
-
-
-        // 스타일 계산
-        int total = dto.getSummary().getTotalCount();
-        Map<String, String> championHeightStyles = dto.getSummary().getChampionTotalGames().entrySet().stream()
+        // 챔피언별 전적 비율 계산
+        int totalChampionGames = dto.getSummary().getTotalCount();
+        Map<String, String> championHeightStyles = Optional.ofNullable(dto.getSummary().getChampionTotalGames())
+                .orElse(Collections.emptyMap())
+                .entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> {
                             int value = e.getValue() != null ? e.getValue() : 0;
-                            double height = total > 0 ? (value * 100.0 / total) : 0.0;
+                            double height = totalChampionGames > 0 ? (value * 100.0 / totalChampionGames) : 0.0;
                             return "height:" + height + "%";
                         }
                 ));
-        Map<String, String> positionHeightStyles = dto.getSummary().getFavoritePositions().entrySet().stream()
+
+
+        // 포지션별 전적 비율 계산
+        Map<String, Integer> favoritePositions = Optional.ofNullable(dto.getSummary().getFavoritePositions())
+                .orElse(Collections.emptyMap());
+
+        int totalPositionGames = favoritePositions.values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+
+
+        Map<String, String> positionHeightStyles = favoritePositions.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> {
                             int value = e.getValue() != null ? e.getValue() : 0;
-                            double height = total > 0 ? (value * 100.0 / total) : 0.0;
+                            double height = totalPositionGames > 0 ? (value * 100.0 / totalPositionGames) : 0.0;
                             return "height:" + height + "%";
                         }
                 ));
+
         model.addAttribute("championHeightStyles", championHeightStyles);
         model.addAttribute("positionHeightStyles", positionHeightStyles);
 
@@ -124,16 +139,19 @@ public class MatchHistoryController {
         );
         model.addAttribute("modeMap", modeMap);
 
-        // 메시지 최종 추가
-        if (message != null) {
-            model.addAttribute("message", message);
-        }
-
         return "fo/matchHistory/matchHistory";
     }
 
+    // 선호 챔피언 비동기 요청( 탭 눌러야 동기화 )
+    @GetMapping("/favorite-champions")
+    @ResponseBody
+    public List<FavoriteChampionDTO> getFavoriteChampions(
+            @RequestParam("puuid") String puuid,
+            @RequestParam("mode") String mode) {
+        return matchDbService.getFavoriteChampions(puuid, mode);
+    }
 
-    // 초기화 버튼 누르면 호출
+    // 초기화 호출
     @GetMapping("/init") // 일단 get 방식으로..
     @ResponseBody
     public ResponseEntity<String> initMatchHistory(@RequestParam String puuid) {
@@ -164,7 +182,7 @@ public class MatchHistoryController {
     @ResponseBody
     public MatchDetailDTO getMatchDetail(@RequestParam String matchId,
                                          @RequestParam String puuid) {
-        return riotApiService.getMatchDetailFromRiot(matchId, puuid);
+        return matchDbService.getMatchDetailFromDb(matchId, puuid);
     }
 
     @GetMapping("/autocomplete")
@@ -182,4 +200,12 @@ public class MatchHistoryController {
         return ResponseEntity.ok(result);
     }
 
+    // 테스트 - 어리고싶다#kr1 테이블에 정보 넣기
+    @GetMapping("/test-init")
+    @ResponseBody
+    public String testInit() {
+        log.info("testInit() 실행됨");
+        matchDbService.testSave("어리고싶다", "KR1");
+        return "전적 저장 완료";
+    }
 }

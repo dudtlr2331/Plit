@@ -44,25 +44,11 @@ public class RiotApiServiceImpl implements RiotApiService{
     @Value("${riot.api.key}")
     private String riotApiKey;
 
-    @Override
-    public List<String> getRecentMatchIds(String puuid, int count) {
-        try {
-            String url = "https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/"
-                    + puuid + "/ids?start=0&count=" + count + "&api_key=" + riotApiKey;
-
-            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class);
-            return response.getBody();
-        } catch (Exception e) {
-            System.err.println("[getRecentMatchIds] Error: " + e.getMessage());
-            return List.of();
-        }
-    }
-
-
 
     // riot api 기본정보 가져오기
 
 
+    // riot id -> puuid
     @Override
     public RiotAccountResponse getAccountByRiotId(String gameName, String tagLine) {
         try {
@@ -90,6 +76,34 @@ public class RiotApiServiceImpl implements RiotApiService{
         }
     }
 
+    // puuid -> gameName + tagLine
+    @Override
+    public RiotAccountResponse getAccountByPuuid(String puuid) {
+        try {
+            URI uri = UriComponentsBuilder
+                    .fromHttpUrl("https://asia.api.riotgames.com/riot/account/v1/accounts/by-puuid/{puuid}")
+                    .queryParam("api_key", riotApiKey)
+                    .buildAndExpand(puuid)
+                    .toUri();
+
+            ResponseEntity<Map> response = restTemplate.getForEntity(uri, Map.class);
+            Map<String, Object> body = response.getBody();
+
+            if (body == null) return null;
+
+            return RiotAccountResponse.builder()
+                    .gameName((String) body.get("gameName"))
+                    .tagLine((String) body.get("tagLine"))
+                    .puuid((String) body.get("puuid"))
+                    .build();
+
+        } catch (Exception e) {
+            System.err.println("[Riot API account 오류] " + e.getMessage());
+            return null;
+        }
+    }
+
+
     @Override
     public RiotSummonerResponse getSummonerByPuuid(String puuid) {
         try {
@@ -114,8 +128,6 @@ public class RiotApiServiceImpl implements RiotApiService{
             return null;
         }
     }
-
-
 
     @Override
     public String requestPuuidFromRiot(String gameName, String tagLine) {
@@ -166,11 +178,20 @@ public class RiotApiServiceImpl implements RiotApiService{
 
         try {
             ResponseEntity<List> response = restTemplate.getForEntity(url, List.class);
+            System.out.println("response = " + response);
+            System.out.println("status = " + response.getStatusCode());
+            System.out.println("body = " + response.getBody());
+
             List<Map<String, Object>> body = response.getBody();
 
             if (body != null) {
                 for (Map<String, Object> entry : body) {
                     String queueType = (String) entry.get("queueType");
+
+                    System.out.println("entry.get(\"wins\") = " + entry.get("wins"));
+                    System.out.println("entry.get(\"losses\") = " + entry.get("losses"));
+                    System.out.println("entry.get(\"leaguePoints\") = " + entry.get("leaguePoints"));
+
 
                     if ("RANKED_SOLO_5x5".equals(queueType) || "RANKED_FLEX_SR".equals(queueType)) {
                         RankDTO dto = new RankDTO();
@@ -197,6 +218,8 @@ public class RiotApiServiceImpl implements RiotApiService{
         return rankMap;
     }
 
+
+
     private RiotParticipantDTO convertToParticipantDTO(Map<String, Object> p) {
         RiotParticipantDTO dto = new RiotParticipantDTO();
         dto.setPuuid((String) p.get("puuid"));
@@ -212,7 +235,7 @@ public class RiotApiServiceImpl implements RiotApiService{
         dto.setTeamPosition((String) p.get("teamPosition"));
         dto.setWin((Boolean) p.getOrDefault("win", false));
         dto.setTeamId(((Number) p.getOrDefault("teamId", 0)).intValue());
-        dto.setChampLevel(((Number) p.getOrDefault("champLevel", 0)).intValue());
+        dto.setChampionLevel(((Number) p.getOrDefault("championLevel", 0)).intValue());
         dto.setSummoner1Id(((Number) p.getOrDefault("summoner1Id", 0)).intValue());
         dto.setSummoner2Id(((Number) p.getOrDefault("summoner2Id", 0)).intValue());
         dto.setProfileIcon(((Number) p.getOrDefault("profileIcon", 0)).intValue());
@@ -222,6 +245,10 @@ public class RiotApiServiceImpl implements RiotApiService{
         dto.setPerkSubStyle(((Number) p.getOrDefault("perks.styles.1.style", 0)).intValue());    // 보조 룬
         dto.setIndividualPosition((String) p.get("individualPosition"));
 
+        // 와드
+        dto.setWardsPlaced(((Number) p.getOrDefault("wardsPlaced", 0)).intValue());
+        dto.setWardsKilled(((Number) p.getOrDefault("wardsKilled", 0)).intValue());
+
         // 아이템 ID 모으기
         List<Integer> itemIds = new ArrayList<>();
         for (int i = 0; i <= 6; i++) {
@@ -229,6 +256,17 @@ public class RiotApiServiceImpl implements RiotApiService{
             itemIds.add(((Number) p.getOrDefault(key, 0)).intValue());
         }
         dto.setItemIds(itemIds);
+
+        // 룬 (메인/서브 스타일)
+        Map<String, Object> perks = (Map<String, Object>) p.get("perks");
+        List<Map<String, Object>> styles = (List<Map<String, Object>>) perks.get("styles");
+        dto.setPerkPrimaryStyle(((Number) styles.get(0).get("style")).intValue());
+        dto.setPerkSubStyle(((Number) styles.get(1).get("style")).intValue());
+
+        // 룬 (스탯)
+        Map<String, Object> statPerks = (Map<String, Object>) perks.get("statPerks");
+        dto.setStatRune1(((Number) statPerks.getOrDefault("defense", 0)).intValue());
+        dto.setStatRune2(((Number) statPerks.getOrDefault("flex", 0)).intValue());
 
         return dto;
     }
@@ -273,7 +311,7 @@ public class RiotApiServiceImpl implements RiotApiService{
                         int kills = ((Number) p.get("kills")).intValue();
                         int assists = ((Number) p.get("assists")).intValue();
                         int deaths = ((Number) p.get("deaths")).intValue();
-                        double kdaRatio = MatchHelper.calculateKda(kills, deaths, assists);
+                        double kdaRatio = MatchHelper.getKda(kills, deaths, assists);
 
                         int totalMinions = ((Number) p.get("totalMinionsKilled")).intValue()
                                 + ((Number) p.get("neutralMinionsKilled")).intValue();
@@ -354,7 +392,7 @@ public class RiotApiServiceImpl implements RiotApiService{
 
                         LocalDateTime endTime = LocalDateTime.ofEpochSecond(
                                 ((Number) info.get("gameEndTimestamp")).longValue() / 1000, 0, ZoneOffset.UTC);
-                        String timeAgo = getTimeAgo(endTime);
+                        String timeAgo = MatchHelper.getTimeAgo(endTime);
 
                         MatchHistoryDTO dto = MatchHistoryDTO.builder()
                                 .matchId(matchId)
@@ -402,6 +440,23 @@ public class RiotApiServiceImpl implements RiotApiService{
         return result;
     }
 
+
+    // puuid + 가져올 매치 수 -> matchId 가져오기 ( 매치의 고유 아이디 )
+    @Override
+    public List<String> getRecentMatchIds(String puuid, int count) {
+        try {
+            String url = "https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/"
+                    + puuid + "/ids?start=0&count=" + count + "&api_key=" + riotApiKey;
+
+            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class);
+            return response.getBody();
+        } catch (Exception e) {
+            System.err.println("[getRecentMatchIds] Error: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    // matchId -> 매치 정보들
     public RiotMatchInfoDTO getMatchInfo(String matchId) {
         String url = "https://asia.api.riotgames.com/lol/match/v5/matches/" + matchId;
 
@@ -423,7 +478,7 @@ public class RiotApiServiceImpl implements RiotApiService{
 
         dto.setGameEndTimestamp(((Number) infoMap.get("gameEndTimestamp")).longValue());
         dto.setGameDurationSeconds(((Number) infoMap.get("gameDuration")).intValue());
-        dto.setGameMode((String) infoMap.get("gameMode"));
+        dto.setGameMode(Optional.ofNullable((String) infoMap.get("gameMode")).orElse("UNKNOWN"));
         dto.setQueueId(String.valueOf(infoMap.get("queueId")));
 
         List<Map<String, Object>> participantsMap = (List<Map<String, Object>>) infoMap.get("participants");
@@ -435,23 +490,104 @@ public class RiotApiServiceImpl implements RiotApiService{
         return dto;
     }
 
+    // matchId -> 상세정보 반복처리
     @Override
     public MatchDetailDTO getMatchDetailFromRiot(String matchId, String puuid) {
-        RiotMatchInfoDTO matchInfo = getMatchInfo(matchId); // Riot API로 match info 가져오기
+        RiotMatchInfoDTO matchInfo = getMatchInfo(matchId);
         List<RiotParticipantDTO> participants = matchInfo.getParticipants();
 
-        long timestamp = matchInfo.getGameEndTimestamp();
-        LocalDateTime gameEndTime = Instant.ofEpochMilli(timestamp)
+        List<MatchPlayerDTO> blueTeam = new ArrayList<>();
+        List<MatchPlayerDTO> redTeam = new ArrayList<>();
+
+        for (RiotParticipantDTO p : participants) {
+
+            // 기본 변환
+            MatchPlayerDTO dto = MatchPlayerDTO.fromRiotParticipant(
+                    p,
+                    matchInfo.getGameDurationSeconds(),
+                    Instant.ofEpochMilli(matchInfo.getGameEndTimestamp())
+                            .atZone(ZoneId.of("Asia/Seoul"))
+                            .toLocalDateTime(),
+                    matchInfo.getGameMode(),
+                    matchInfo.getQueueId()
+            );
+
+            // CDN 기반 이미지 (DB에서 조회)
+            dto.setChampionImageUrl(imageService.getImageUrl(p.getChampionName() + ".png", "champion"));
+            dto.setProfileIconUrl(imageService.getImageUrl(p.getProfileIcon() + ".png", "profile"));
+            dto.setMainRune1Url(imageService.getImageUrl(p.getPerkPrimaryStyle() + ".png", "rune"));
+            dto.setMainRune2Url(imageService.getImageUrl(p.getPerkSubStyle() + ".png", "rune"));
+
+            // 아이템 이미지
+            List<String> itemImages = new ArrayList<>();
+            for (Integer itemId : p.getItemIds()) {
+                if (itemId != null && itemId > 0) {
+                    String itemImg = imageService.getImageUrl(itemId + ".png", "item");
+                    itemImages.add(itemImg);
+                } else {
+                    itemImages.add("/images/default.png");
+                }
+            }
+            dto.setItemImageUrls(itemImages);
+
+            // static 경로 이미지 (spell, tier)
+            dto.setSpell1ImageUrl("/images/spell/" + p.getSummoner1Id() + ".png");
+            dto.setSpell2ImageUrl("/images/spell/" + p.getSummoner2Id() + ".png");
+
+            String tier = p.getTier();
+            if (tier != null) {
+                dto.setTierImageUrl("/images/tier/" + tier.toUpperCase() + ".png");
+            } else {
+                dto.setTierImageUrl("/images/default.png");
+            }
+
+            // Kill Participation 계산
+            int teamKills = participants.stream()
+                    .filter(pp -> pp.getTeamId() == p.getTeamId())
+                    .mapToInt(RiotParticipantDTO::getKills)
+                    .sum();
+            if (teamKills > 0) {
+                double kp = ((double) (p.getKills() + p.getAssists()) / teamKills) * 100;
+                dto.setKillParticipation(String.format("%.0f", kp));
+            } else {
+                dto.setKillParticipation("0");
+            }
+
+            // KDA 계산
+            if (p.getDeaths() > 0) {
+                dto.setKdaRatio((double) (p.getKills() + p.getAssists()) / p.getDeaths());
+            } else {
+                dto.setKdaRatio(p.getKills() + p.getAssists());
+            }
+
+            // 팀 분류
+            if (p.getTeamId() == 100) {
+                blueTeam.add(dto);
+            } else {
+                redTeam.add(dto);
+            }
+        }
+
+        // 승패 계산
+        boolean blueWin = !blueTeam.isEmpty() && blueTeam.get(0).isWin();
+
+        LocalDateTime gameEndTime = Instant.ofEpochMilli(matchInfo.getGameEndTimestamp())
                 .atZone(ZoneId.of("Asia/Seoul"))
                 .toLocalDateTime();
 
         return MatchDetailDTO.builder()
                 .matchId(matchId)
-                .gameMode(matchInfo.getGameMode())
+                .gameMode(matchInfo.getGameMode() != null ? matchInfo.getGameMode() : "UNKNOWN")
+                .queueType(matchInfo.getQueueId())
                 .gameEndTimestamp(gameEndTime)
+                .gameDurationSeconds(matchInfo.getGameDurationSeconds())
                 .participants(participants)
+                .blueTeam(blueTeam)
+                .redTeam(redTeam)
+                .blueWin(blueWin)
                 .build();
     }
+
 
 
 }

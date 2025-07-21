@@ -39,4 +39,14 @@ public class RiotIdCacheEntity { // gameName + tagLine -> puuid 변환 결과 �
         this.createdAt = LocalDateTime.now();
     }
 
+    public static RiotIdCacheEntity ofDummy(String puuid) {
+        return RiotIdCacheEntity.builder()
+                .puuid(puuid)
+                .normalizedGameName("UNKNOWN")
+                .normalizedTagLine("UNKNOWN")
+                .gameName("UNKNOWN")
+                .tagLine("UNKNOWN")
+                .build();
+    }
+
 }

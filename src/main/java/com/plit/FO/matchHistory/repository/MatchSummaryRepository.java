@@ -2,6 +2,8 @@ package com.plit.FO.matchHistory.repository;
 
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -12,4 +14,11 @@ public interface MatchSummaryRepository extends JpaRepository<MatchSummaryEntity
 
     // 특정 matchId가 이미 저장되어 있는지 확인
     boolean existsByMatchId(String matchId);
+
+    boolean existsByPuuid(String puuid);
+
+    @Query("SELECT m.matchId FROM MatchSummaryEntity m WHERE m.puuid = :puuid")
+    List<String> findMatchIdsByPuuid(@Param("puuid") String puuid);
+
+    List<MatchSummaryEntity> findByPuuid(String puuid);
 }

@@ -27,6 +27,7 @@ public interface RiotIdCacheRepository extends JpaRepository<RiotIdCacheEntity, 
     // 대소문자 구분 없이 존재 여부 확인
     boolean existsByGameNameIgnoreCaseAndTagLineIgnoreCase(String gameName, String tagLine);
 
+    Optional<RiotIdCacheEntity> findByPuuid(String puuid);
 
 }
 

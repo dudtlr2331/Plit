@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.dto;
 
+import com.plit.FO.matchHistory.entity.FavoriteChampionEntity;
 import lombok.*;
 
 @Getter
@@ -9,8 +10,12 @@ import lombok.*;
 @Builder
 public class FavoriteChampionDTO { // 선호챔피언
 
+    private String puuid;
     private String championName;
     private String korName;
+    private String queueType;
+    private int gamesPlayed;
+    private int wins;
 
     private int totalCs;
     private int averageCs;
@@ -33,5 +38,18 @@ public class FavoriteChampionDTO { // 선호챔피언
 
     private Integer flexGameCount;
     private Double flexUsagePercent;
+
+    public static FavoriteChampionDTO fromEntity(FavoriteChampionEntity entity) {
+        return FavoriteChampionDTO.builder()
+                .puuid(entity.getPuuid())
+                .championName(entity.getChampionName())
+                .queueType(entity.getQueueType())
+                .gameCount(entity.getPlayCount())
+                .winCount(entity.getWinCount())
+                .winRate(entity.getWinRate())
+                .kdaRatio(entity.getKdaRatio())
+                .championImageUrl(entity.getChampionImageUrl())
+                .build();
+    }
 
 }

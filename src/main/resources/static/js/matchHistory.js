@@ -1,38 +1,12 @@
 console.log("JS loaded");
 document.addEventListener('DOMContentLoaded', () => {
-    const updateBtn = document.getElementById('update-btn');
-    const puuid = "[[${summoner.puuid}]]";
-
-    updateBtn.addEventListener('click', () => {
-        if (!puuid) {
-            alert('소환사 정보가 없습니다.');
-            return;
-        }
-
-        if (!confirm('전적을 최신 상태로 갱신하시겠습니까?')) return;
-
-        fetch(`/match/update?puuid=${puuid}`, {
-            method: 'POST'
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('서버 오류');
-            return res.text(); // 서버에서 텍스트 응답 반환한다고 가정
-        })
-        .then(msg => {
-            alert(msg || '전적 갱신 완료!');
-            location.reload();
-        })
-        .catch(err => {
-            alert('갱신 중 오류가 발생했습니다.');
-            console.error(err);
-        });
-    });
-});
-
-// 왼쪽 파넬 - 랭크 모드별 선호챔피언 정보
-document.addEventListener("DOMContentLoaded", function () {
 
     const updateBtn = document.getElementById('update-btn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', updateMatch);
+    }
+
+    // 왼쪽 파넬 - 랭크 모드별 선호챔피언 정보
     const buttons = document.querySelectorAll(".tab-button");
 
     function activateTab(mode) {
@@ -57,12 +31,72 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     buttons.forEach((btn => {
-        btn.addEventListener("click", () => { activateTab(btn.dataset.mode));
+        btn.addEventListener("click", () => { activateTab(btn.dataset.mode);
         });
-    });
+    }));
 
     activateTab("overall"); // 초기 설정
 
+    // 매치 요약 5개씩 표시
+    const matchCards = document.querySelectorAll('.match-block');
+    const loadMoreButton = document.getElementById('match-load-more-button');
+    let visibleCount = 5;
+    const step = 5;
+
+    function updateVisibleMatches() {
+        matchCards.forEach((card, index) => {
+            card.style.display = index < visibleCount ? 'block' : 'none';
+        });
+
+        if (visibleCount >= matchCards.length && loadMoreButton) {
+            loadMoreButton.style.display = 'none';
+        }
+    }
+
+    if (loadMoreButton) {
+        loadMoreButton.addEventListener('click', function () {
+            visibleCount += step;
+            updateVisibleMatches();
+        });
+    }
+
+    // 처음 상태 반영
+    updateVisibleMatches();
+
+    // 처음 초기화할 때 팝업 창
+    const patchPopupShown = localStorage.getItem("patchPopupShown");
+
+    if (!patchPopupShown) {
+        const images = [
+            "/images/patch/25.14/img1.png"
+        ];
+        for (let i = 2; i <= 5; i++) {
+            images.push(`/images/patch/25.14/img${i}.jpg`);
+        }
+
+        let currentIndex = 0;
+        const patchImage = document.getElementById("patchImage");
+
+        function rotateImage() {
+            patchImage.src = images[currentIndex];
+            currentIndex = (currentIndex + 1) % images.length;
+        }
+
+        // 처음 이미지
+        rotateImage();
+        // 3초마다 이미지 변경
+        setInterval(rotateImage, 3000);
+
+        // 내용 설정
+        document.getElementById("patchTitle").innerText = "시즌 중간 조정!";
+        document.getElementById("patchContent").innerText = "25.14 패치에서는 챔피언과 특성, 시스템 변화가 포함되어 있어요.";
+
+        // 팝업 보여주기
+        document.getElementById("patchPopup").style.display = "block";
+
+        // 다시 안 보이게 플래그 저장
+        localStorage.setItem("patchPopupShown", "true");
+    }
 });
 
 // 더보기 버튼
@@ -186,34 +220,6 @@ function loadMatchDetail(element) {
         });
 }
 
-// 매치 요약 5개씩 표시 + 더보기 버튼
-document.addEventListener("DOMContentLoaded", function () {
-    const matchCards = document.querySelectorAll('.match-block');
-    const loadMoreButton = document.getElementById('match-load-more-button');
-    let visibleCount = 5;
-    const step = 5;
-
-    function updateVisibleMatches() {
-        matchCards.forEach((card, index) => {
-            card.style.display = index < visibleCount ? 'block' : 'none';
-        });
-
-        if (visibleCount >= matchCards.length && loadMoreButton) {
-            loadMoreButton.style.display = 'none';
-        }
-    }
-
-    if (loadMoreButton) {
-        loadMoreButton.addEventListener('click', function () {
-            visibleCount += step;
-            updateVisibleMatches();
-        });
-    }
-
-    // 처음 상태 반영
-    updateVisibleMatches();
-});
-
 function initMatch() {
     const puuid = document.getElementById("puuid").value;
 
@@ -243,4 +249,11 @@ function updateMatch() {
             alert("갱신 중 오류가 발생했습니다.");
             console.error(err);
         });
+}
+
+function cancelInit() {
+    // 초기화 중지: 팝업 닫고, 초기화 중단 플래그 설정
+    document.getElementById("patchPopup").style.display = "none";
+    localStorage.setItem("initCanceled", "true");
+    window.location.href = "/main";
 }

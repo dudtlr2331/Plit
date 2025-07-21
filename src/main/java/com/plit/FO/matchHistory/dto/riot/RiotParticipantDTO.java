@@ -19,16 +19,27 @@ public class RiotParticipantDTO { // info 안의 participants 리스트 요소 (
     private int deaths;
     private int assists;
     private int goldEarned;
+    private int teamTotalKills;
     private int totalDamageDealtToChampions;
     private int totalDamageTaken;
     private String teamPosition;
     private boolean win;
     private int teamId;
 
-    private int champLevel;
+    private int wardsPlaced;
+    private int wardsKilled;
+
+    private int championLevel;
     private int summoner1Id;
     private int summoner2Id;
     private List<Integer> itemIds;
+    private List<String> traits;
+    private int spell1Id;
+    private int spell2Id;
+    private int mainRune1;
+    private int mainRune2;
+    private int statRune1;
+    private int statRune2;
 
     private int profileIcon;
     private int totalMinionsKilled;

@@ -21,7 +21,9 @@ import java.util.stream.Stream;
 public class ImageService {
 
     private final ImageRepository imageRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    private static final Set<String> STATIC_TYPES = Set.of("spell", "tier", "trait", "position", "objective");
 
 //    이미지 조회용
 
@@ -32,6 +34,10 @@ public class ImageService {
 
     // name, type -> DB 에서 이미지 url 반환
     public String getImageUrl(String name, String type) {
+        if (STATIC_TYPES.contains(type)) {
+            return "/images/" + type + "/" + name;
+        }
+
         return imageRepository.findByNameAndType(name, type)
                 .map(ImageEntity::getImageUrl)
                 .orElse("/images/default.png");
@@ -43,6 +49,31 @@ public class ImageService {
 
         return getImageUrl(profileIconId + ".png", "profile-icon");
     }
+
+    public List<String> getItemImageUrls(String itemIds) {
+        if (itemIds == null || itemIds.isBlank()) return List.of();
+
+        return Arrays.stream(itemIds.split(","))
+                .map(id -> getImageUrl(id + ".png", "item"))
+                .toList();
+    }
+
+    public List<String> getProfileIconUrls(List<String> iconIds) {
+        if (iconIds == null) return List.of();
+
+        return iconIds.stream()
+                .map(id -> getImageUrl(id + ".png", "profile-icon"))
+                .toList();
+    }
+
+    public List<String> getTraitImageUrls(List<String> traitIds) {
+        if (traitIds == null) return List.of();
+
+        return traitIds.stream()
+                .map(id -> getImageUrl(id + ".png", "rune"))
+                .toList();
+    }
+
 
 
 

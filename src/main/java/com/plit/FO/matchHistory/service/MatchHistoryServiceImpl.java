@@ -1,11 +1,13 @@
 package com.plit.FO.matchHistory.service;
 
+import com.nimbusds.jose.shaded.gson.Gson;
 import com.plit.FO.matchHistory.dto.FavoriteChampionDTO;
 import com.plit.FO.matchHistory.dto.MatchSummaryWithListDTO;
 import com.plit.FO.matchHistory.dto.SummonerSimpleDTO;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
 import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.dto.MatchSummaryDTO;
+import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
 import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.matchHistory.dto.riot.RiotMatchInfoDTO;
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
@@ -13,6 +15,7 @@ import com.plit.FO.matchHistory.dto.riot.RiotSummonerResponse;
 import com.plit.FO.matchHistory.entity.ImageEntity;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
+import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
 import com.plit.FO.matchHistory.repository.RiotIdCacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +35,6 @@ import static com.plit.FO.matchHistory.service.MatchHelper.*;
 public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 정보의 주요 비즈니스 로직
 
     private final MatchDbService matchDbService;
-    private final RiotIdCacheRepository riotIdCacheRepository;
     private final ImageService imageService;
     private final RiotApiService riotApiService;
 
@@ -121,9 +123,11 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
     }
 
     // 내부 계산 로직
-    private List<FavoriteChampionDTO> calculateFavoriteChampions(List<MatchHistoryDTO> matchList, String mode) {
+    public List<FavoriteChampionDTO> calculateFavoriteChampions(List<MatchHistoryDTO> matchList, String mode, String puuid) {
         Map<String, List<MatchHistoryDTO>> byChampion = matchList.stream()
                 .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
+
+        System.out.println("[2] calculateFavoriteChampions 호출됨, puuid = " + puuid);
 
         if (matchList == null || matchList.isEmpty()) {
             return new ArrayList<>();
@@ -167,6 +171,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .orElse("/images/default.png");
 
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
+                    .puuid(puuid)
                     .championName(engName)
                     .korName(korName)
                     .kills(sumKills / total)
@@ -181,6 +186,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .gameCount(total)
                     .winCount(wins)
                     .winRate(winRate)
+                    .queueType(mode)
                     .build();
 
             result.add(dto);
@@ -188,7 +194,6 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
         System.out.println("[calculateFavoriteChampions] mode: " + mode + ", result size: " + result.size());
         result.forEach(dto -> System.out.println(" - " + dto.getChampionName() + " (" + dto.getGameCount() + " games)"));
-
 
         result.sort(Comparator.comparingInt(FavoriteChampionDTO::getFlexGames).reversed());
         return result;
@@ -237,13 +242,15 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                 .filter(m -> matchesMode(m, mode))
                 .collect(Collectors.toList());
 
-        return calculateFavoriteChampions(filtered, mode);
+        return calculateFavoriteChampions(filtered, mode, puuid);
     }
 
     @Override
     public List<FavoriteChampionDTO> getFavoriteChampionsBySeason(String puuid, String season) {
         List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
         List<MatchHistoryDTO> allMatches = new ArrayList<>();
+
+        System.out.println("[1] getFavoriteChampionsBySeason 호출됨, puuid = " + puuid);
 
         for (String matchId : matchIds) {
             RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
@@ -299,7 +306,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
         System.out.println("getFavoriteChampionsBySeason - season: " + season + ", match count after filter: " + filtered.size());
 
-        return calculateFavoriteChampions(filtered, season);
+        return calculateFavoriteChampions(filtered, season, puuid);
     }
 
 
@@ -585,6 +592,10 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
     public MatchSummaryWithListDTO getSummaryAndListFromApi(String puuid) {
         try {
+            RiotAccountResponse account = riotApiService.getAccountByPuuid(puuid);
+            String gameName = account.getGameName();
+            String tagLine = account.getTagLine();
+
             List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
             List<MatchHistoryDTO> matchList = new ArrayList<>();
 
@@ -610,6 +621,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                         .killParticipation(kp)
                         .teamPosition(participant.getTeamPosition())
                         .queueType(matchInfo.getQueueType())
+                        .gameMode(matchInfo.getQueueType())
                         .cs(cs)
                         .csPerMin(MatchHelper.getCsPerMin(cs, duration))
                         .build();
@@ -618,10 +630,13 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
             }
 
             MatchSummaryDTO summary = getMatchSummary(matchList);
+            MatchOverallSummaryDTO overallSummary = MatchHelper.convertToMatchOverallSummary(
+                    puuid, gameName, tagLine, summary, matchList);
+
             List<FavoriteChampionDTO> favoriteChampions = getFavoriteChampions(matchList);
 
             return MatchSummaryWithListDTO.builder()
-                    .summary(summary)
+                    .summary(overallSummary)
                     .matchList(matchList)
                     .favoriteChampions(favoriteChampions)
                     .build();
@@ -629,7 +644,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
         } catch (Exception e) {
             System.err.println("getSummaryAndListFromApi() 에러: " + e.getMessage());
             return MatchSummaryWithListDTO.builder()
-                    .summary(MatchSummaryDTO.builder().totalCount(0).build())
+                    .summary(MatchOverallSummaryDTO.builder().totalCount(0).build())
                     .matchList(Collections.emptyList())
                     .favoriteChampions(Collections.emptyList())
                     .build();
