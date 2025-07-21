@@ -1,0 +1,273 @@
+/* ===============================
+   친구 목록 (공통)
+=============================== */
+.friend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fff;
+}
+
+.friend-left {
+    display: flex;
+    align-items: center;
+}
+
+.profile-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ccc;
+    margin-right: 12px;
+}
+
+.memo-input {
+    margin-left: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.memo-edit-btn {
+    margin-left: 6px;
+    background: #eee;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.friends-header {
+    display: flex;
+    justify-content: space-between; /* 제목은 왼쪽, 버튼은 오른쪽 */
+    align-items: center;
+    margin-bottom: 20px; /* 아래쪽 여백 */
+}
+
+/* ===============================
+   친구 목록 액션 버튼
+=============================== */
+.friend-actions button {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.chat-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #ff5c5c;
+    cursor: pointer;
+    padding: 0;
+}
+
+.block-btn {
+    background: #ffe5e5;
+    color: #cc0000;
+}
+
+.delete-btn {
+    background: #7c4798;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background-color: #6a3f8a;
+}
+
+/* ===============================
+   친구 요청 팝업
+=============================== */
+.request-btn-wrap {
+    position: relative; /* 부모 기준으로 팝업 위치를 잡도록 지정 */
+    display: inline-block;
+}
+#requestPopup {
+    position: absolute;
+    top: 100%; /* 버튼 바로 아래 */
+    right: 0;
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    width: 420px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+    z-index: 999;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    padding: 10px;
+}
+
+.request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background-color: #f7f7f7;
+    border: 1px solid #eee;
+}
+
+.request-item span.nickname {
+    flex: 1;
+    font-weight: bold;
+    color: #333;
+}
+
+.request-item .memo {
+    flex: 2;
+    background: #ddd;
+    padding: 6px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    color: #555;
+}
+
+.request-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.request-actions .submit-button {
+    background: #7c4798;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.request-actions .delete-btn {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+/* ===============================
+   채팅 팝업
+=============================== */
+.chat-popup {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 560px;
+    height: 760px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+/* 채팅 헤더 */
+.chat-header {
+    background: linear-gradient(to right, #7c4798, #6570b4);
+    color: white;
+    font-weight: bold;
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 채팅 내용 영역 */
+.chat-body {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #f4f4f4;
+}
+
+/* 메시지 한 줄 단위로 블록 정렬 */
+.chat-message {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-message.sent {
+    align-items: flex-end;
+}
+
+.chat-message.received {
+    align-items: flex-start;
+}
+
+/* 닉네임 */
+.message-nickname {
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 4px;
+    max-width: 75%;
+    word-break: break-word;
+}
+
+/* 말풍선 */
+.message-bubble {
+    background-color: #f1f0f0;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    max-width: 75%;
+    display: inline-block;
+    word-break: break-word;
+}
+
+.chat-message.sent .message-bubble {
+    background-color: #dcf8c6;
+}
+
+/* 전송 시간 */
+.message-time {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    max-width: 75%;
+}
+
+/* 입력창 */
+#chatInput {
+    border: none;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+}
+
+
+
