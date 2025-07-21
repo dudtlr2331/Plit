@@ -30,7 +30,7 @@
                     <div class="sb-sidenav-menu-heading">Core</div>
 
                     <!-- null 체크 추가 -->
-                    <a th:if="${loginUser != null and (loginUser.userAuth == 'master' or loginUser.userAuth == 'admin')}"
+                    <a th:if="${loginUser != null and (loginUser.userAuth == 'MASTER' or loginUser.userAuth == 'ADMIN')}"
                        class="nav-link" href="/index">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                         Dashboard
@@ -97,7 +97,7 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     const userAuth = /*[[${loginUser != null ? loginUser.userAuth : 'guest'}]]*/ "guest";
-    if (userAuth !== "admin" && userAuth !== "master") {
+    if (userAuth !== "ADMIN" && userAuth !== "MASTER") {
         alert("접근 권한이 없습니다.");
         location.href = "/main";
     }

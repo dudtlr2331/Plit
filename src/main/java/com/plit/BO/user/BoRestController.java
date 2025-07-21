@@ -31,20 +31,6 @@ public class BoRestController {
     private final BlacklistService blacklistService;
     private final BlacklistRepository blacklistRepository;
 
-    @PostMapping("/add")
-    public ResponseEntity<?> addAdminAccount(@RequestBody UserDTO userDTO) {
-        try {
-            userDTO.setUserAuth("admin");
-            userDTO.setUseYn("Y");
-            userDTO.setIsBanned(false);
-            userDTO.setUserCreateDate(LocalDate.now());
-
-            userService.registerUser(userDTO);
-            return ResponseEntity.ok("관리자 계정이 성공적으로 추가되었습니다.");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
 
     @PutMapping("/update/{userSeq}")
     public ResponseEntity<?> updateAdminInfo(@PathVariable Integer userSeq, @RequestBody UserDTO userDTO) {

@@ -40,13 +40,13 @@ public class BoController {
         }
 
         String auth = loginUser.getUserAuth();
-        if (!auth.equals("admin") && !auth.equals("master")) {
+        if (!auth.equals("ADMIN") && !auth.equals("MASTER")) {
             return "redirect:/main"; // 권한 없음
         }
 
-        // 🔹 관리자 목록 추가
+        // 관리자 목록 추가
         List<UserDTO> adminList = userService.getAllUsers().stream()
-                .filter(u -> "admin".equals(u.getUserAuth()) || "master".equals(u.getUserAuth()))
+                .filter(u -> "ADMIN".equals(u.getUserAuth()) || "MASTER".equals(u.getUserAuth()))
                 .collect(Collectors.toList());
 
         model.addAttribute("loginUser", loginUser);
