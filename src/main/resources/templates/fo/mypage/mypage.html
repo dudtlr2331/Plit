@@ -13,6 +13,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/qna.css}">
     <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage_friends.css}">
+
 </head>
 <body>
 <div class="container">
@@ -68,7 +70,7 @@
             <div th:if="${error}" class="flash-message error" th:text="${error}"></div>
             <div th:if="${message}" class="flash-message success" th:text="${message}"></div>
 
-            <!-- ✅ 소환사 인증 -->
+            <!-- 소환사 인증 -->
             <div class="info-row" style="margin-top: 30px; justify-content: space-between;">
                 <label>소환사</label>
 
@@ -89,7 +91,7 @@
                 </div>
 
 
-                <!-- ✅ 항상 렌더링하고 인증 상태에 따라 숨김 -->
+                <!-- 항상 렌더링하고 인증 상태에 따라 숨김 -->
                 <form th:action="@{/mypage/verify-summoner}" method="post" id="summonerForm"
                       th:style="${loginUser != null and loginUser.riotGameName != null} ? 'display:none;' : 'display:flex;'"
                       style="flex: 1; justify-content: space-between; align-items: center; gap: 10px;">
@@ -100,7 +102,7 @@
                 </form>
             </div>
 
-            <!-- ✅ 메시지 -->
+            <!-- 메시지 -->
             <div>
                 <p style="color: green;">[[${summonerMessage}]]</p>
                 <p style="color: red;">[[${summonerError}]]</p>
