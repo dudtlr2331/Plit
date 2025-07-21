@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Entity
 @Table(name = "match_summary")
 @Getter
@@ -107,7 +109,7 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
                 .kills(kills)
                 .deaths(deaths)
                 .assists(assists)
-                .kdaRatio(kdaRatio)
+                .kdaRatio(round(kdaRatio,1))
                 .tier(tier)
                 .cs(cs)
                 .csPerMin(csPerMin)
@@ -133,7 +135,7 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
                 .assists(this.assists)
                 .cs(this.cs)
                 .csPerMin(this.csPerMin)
-                .kdaRatio(this.kdaRatio)
+                .kdaRatio(round(this.kdaRatio,1))
                 .tier(this.tier)
                 .gameMode(this.gameMode)
                 .gameEndTimestamp(this.gameEndTimestamp)

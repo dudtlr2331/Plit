@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Entity
 @Table(name = "favorite_champion")
 @Getter
@@ -44,8 +46,8 @@ public class FavoriteChampionEntity {
         entity.setQueueType(dto.getQueueType());
         entity.setPlayCount(dto.getGameCount());
         entity.setWinCount(dto.getWinCount());
-        entity.setWinRate(dto.getWinRate());
-        entity.setKdaRatio(dto.getKdaRatio());
+        entity.setWinRate(round(dto.getWinRate(),0));
+        entity.setKdaRatio(round(dto.getKdaRatio(),1));
         entity.setChampionImageUrl(dto.getChampionImageUrl());
         return entity;
     }

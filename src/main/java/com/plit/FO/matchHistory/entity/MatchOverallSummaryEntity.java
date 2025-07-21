@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Entity
 @Table(name = "match_overall_summary")
 @Getter
@@ -71,11 +73,11 @@ public class MatchOverallSummaryEntity {
                 .tier(dto.getTier())
                 .totalMatches(dto.getTotalMatches())
                 .totalWins(dto.getTotalWins())
-                .winRate(dto.getWinRate())
+                .winRate(round(dto.getWinRate(),0))
                 .averageKills(dto.getAverageKills())
                 .averageDeaths(dto.getAverageDeaths())
                 .averageAssists(dto.getAverageAssists())
-                .averageKda(dto.getAverageKda())
+                .averageKda(round(dto.getAverageKda(), 2))
                 .averageCs(dto.getAverageCs())
                 .preferredPosition(dto.getPreferredPosition())
                 .positionCounts(new Gson().toJson(dto.getPositionCounts()))
@@ -100,11 +102,11 @@ public class MatchOverallSummaryEntity {
                 .tier(this.tier)
                 .totalMatches(this.totalMatches)
                 .totalWins(this.totalWins)
-                .winRate(this.winRate)
+                .winRate(round(this.winRate,0))
                 .averageKills(this.averageKills)
                 .averageDeaths(this.averageDeaths)
                 .averageAssists(this.averageAssists)
-                .averageKda(this.averageKda)
+                .averageKda(round(this.averageKda, 2))
                 .averageCs(this.averageCs)
                 .preferredPosition(this.preferredPosition)
                 .positionCounts(positionMap)

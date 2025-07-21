@@ -8,6 +8,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -97,10 +99,10 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .kills(summary.getKills())
                 .deaths(summary.getDeaths())
                 .assists(summary.getAssists())
-                .kdaRatio(kdaRatio)
+                .kdaRatio(round(kdaRatio,1))
 
                 .cs(cs)
-                .csPerMin(MatchHelper.round(csPerMin, 1))
+                .csPerMin(round(csPerMin, 1))
                 .damageDealt(summary.getDamageDealt())
                 .damageTaken(summary.getDamageTaken())
                 .gameDurationSeconds(duration)

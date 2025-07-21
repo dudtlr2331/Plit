@@ -204,7 +204,7 @@ public class RiotApiServiceImpl implements RiotApiService{
                         int wins = dto.getWins();
                         int losses = dto.getLosses();
                         double winRate = (wins + losses > 0) ? (wins * 100.0 / (wins + losses)) : 0.0;
-                        dto.setWinRate(winRate);
+                        dto.setWinRate(round(winRate,0));
 
                         rankMap.put(queueType, dto);
                     }

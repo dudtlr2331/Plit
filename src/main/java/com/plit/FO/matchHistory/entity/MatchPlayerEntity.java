@@ -8,6 +8,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Entity
 @Table(name = "match_player")
 @Getter
@@ -83,7 +85,7 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
                 .kills(dto.getKills())
                 .deaths(dto.getDeaths())
                 .assists(dto.getAssists())
-                .kdaRatio(dto.getKdaRatio())
+                .kdaRatio(round(dto.getKdaRatio(),1))
                 .cs(dto.getCs())
                 .csPerMin(dto.getCsPerMin())
                 .damageDealt(dto.getDamageDealt())

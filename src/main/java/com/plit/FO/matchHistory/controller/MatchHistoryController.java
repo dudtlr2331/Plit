@@ -209,23 +209,23 @@ public class MatchHistoryController {
         matchDbService.saveMatchSummaryAndPlayers("96년생 티모장인", "9202", "MASTER");
         matchDbService.saveMatchSummaryAndPlayers("허거덩", "0303", "DIAMOND1");
         matchDbService.saveMatchSummaryAndPlayers("Hide on bush", "KR1", "DIAMOND1");
-        matchDbService.saveMatchSummaryAndPlayers("T1 Gumayusi", "KR1", "DIAMOND1");
-        matchDbService.saveMatchSummaryAndPlayers("Summer", "pado", "MASTER");
-        matchDbService.saveMatchSummaryAndPlayers("죽기장인", "KR1", "GRANDMASTER");
-        matchDbService.saveMatchSummaryAndPlayers("kiin", "KR1", "DIAMOND1");
-        matchDbService.saveMatchSummaryAndPlayers("귀찮게하지마", "KR3", "MASTER");
-        matchDbService.saveMatchSummaryAndPlayers("역천괴", "КR1", "MASTER");
+//        matchDbService.saveMatchSummaryAndPlayers("T1 Gumayusi", "KR1", "DIAMOND1");
+//        matchDbService.saveMatchSummaryAndPlayers("Summer", "pado", "MASTER");
+//        matchDbService.saveMatchSummaryAndPlayers("죽기장인", "KR1", "GRANDMASTER");
+//        matchDbService.saveMatchSummaryAndPlayers("kiin", "KR1", "DIAMOND1");
+//        matchDbService.saveMatchSummaryAndPlayers("귀찮게하지마", "KR3", "MASTER");
+//        matchDbService.saveMatchSummaryAndPlayers("파피몬", "1111", "DIAMOND3");
 
         matchDbService.saveOnlyOverallSummary("어리고싶다", "KR1", "MASTER");
         matchDbService.saveOnlyOverallSummary("96년생 티모장인", "9202", "MASTER");
         matchDbService.saveOnlyOverallSummary("허거덩", "0303", "DIAMOND1");
         matchDbService.saveOnlyOverallSummary("Hide on bush", "KR1", "DIAMOND1");
-        matchDbService.saveOnlyOverallSummary("T1 Gumayusi", "KR1", "DIAMOND1");
-        matchDbService.saveOnlyOverallSummary("Summer", "pado", "MASTER");
-        matchDbService.saveOnlyOverallSummary("죽기장인", "KR1", "GRANDMASTER");
-        matchDbService.saveOnlyOverallSummary("kiin", "KR1", "DIAMOND1");
-        matchDbService.saveOnlyOverallSummary("귀찮게하지마", "KR3", "MASTER");
-        matchDbService.saveOnlyOverallSummary("역천괴", "КR1", "MASTER");
+//        matchDbService.saveOnlyOverallSummary("T1 Gumayusi", "KR1", "DIAMOND1");
+//        matchDbService.saveOnlyOverallSummary("Summer", "pado", "MASTER");
+//        matchDbService.saveOnlyOverallSummary("죽기장인", "KR1", "GRANDMASTER");
+//        matchDbService.saveOnlyOverallSummary("kiin", "KR1", "DIAMOND1");
+//        matchDbService.saveOnlyOverallSummary("귀찮게하지마", "KR3", "MASTER");
+//        matchDbService.saveOnlyOverallSummary("파피몬", "1111", "DIAMOND3R");
 
         return "전적 저장 완료";
     }

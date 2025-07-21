@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -77,7 +79,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
                             .win(p.isWin())
                             .cs(cs)
                             .csPerMin(csPerMin)
-                            .kdaRatio(kdaRatio)
+                            .kdaRatio(round(kdaRatio,1))
 
                             .mainRune1(p.getPerkPrimaryStyle())
                             .mainRune2(p.getPerkSubStyle())

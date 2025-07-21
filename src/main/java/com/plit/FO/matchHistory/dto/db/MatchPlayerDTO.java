@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.round;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,6 +23,7 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     private boolean win;
     private int teamId;
     private String teamPosition;
+    private String tier;
 
     // 기본 정보
     private String championName;
@@ -113,7 +116,7 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .profileIconId(p.getProfileIconId())
                 .cs(p.getTotalMinionsKilled() + p.getNeutralMinionsKilled())
                 .csPerMin(csPerMin)
-                .kdaRatio(kdaRatio)
+                .kdaRatio(round(kdaRatio,1))
                 .gameEndTimestamp(endTime)
                 .gameDurationSeconds(durationSec)
                 .gameDurationMinutes(durationSec / 60)
@@ -132,11 +135,12 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
 
     public static List<MatchPlayerDTO> fromRiotParticipantList(List<RiotParticipantDTO> participants, String matchId,
                                                                int durationSec, LocalDateTime endTime,
-                                                               String gameMode, String queueType) {
+                                                               String gameMode, String queueType, String tier) {
         return participants.stream()
                 .map(p -> {
                     MatchPlayerDTO dto = MatchPlayerDTO.fromRiotParticipant(p, durationSec, endTime, gameMode, queueType);
                     dto.setMatchId(matchId);
+                    dto.setTier(tier);
 
                     return dto;
                 })

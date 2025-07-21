@@ -178,12 +178,13 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         return List.of();
     }
 
-    public void updateOverallSummary(String puuid, String gameName, String tagLine) {
+    public void updateOverallSummary(String puuid, String gameName, String tagLine, String tier) {
         // 해당 유저의 모든 전적 요약 가져오기
         List<MatchSummaryEntity> matchList = matchSummaryRepository.findByPuuid(puuid);
 
         // 요약 통계 계산
         MatchOverallSummaryDTO dto = MatchHelper.getOverallSummary(puuid, gameName, tagLine, matchList);
+        dto.setTier(tier);
         log.info("[updateOverallSummary] 요약 계산 결과 dto={}", dto);
 
         Optional<MatchOverallSummaryEntity> existing = matchOverallSummaryRepository.findByPuuid(puuid);
@@ -258,7 +259,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .kills(sumKills / total)
                     .deaths(sumDeaths / total)
                     .assists(sumAssists / total)
-                    .kdaRatio(round(kdaRatio, 2))
+                    .kdaRatio(round(kdaRatio, 1))
                     .averageCs((int) (sumCs / total))
                     .csPerMin(round(sumCsPerMin / total, 1))
                     .flexGames(flexGames)
@@ -266,7 +267,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .championImageUrl(championImageUrl)
                     .gameCount(total)
                     .winCount(wins)
-                    .winRate(winRate)
+                    .winRate(round(winRate,0))
                     .queueType(mode)
                     .build();
 
@@ -317,7 +318,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     RiotIdCacheEntity riotId = optionalRiotId.get();
                     String gameName = riotId.getGameName();
                     String tagLine = riotId.getTagLine();
-                    updateOverallSummary(puuid, gameName, tagLine);
+                    updateOverallSummary(puuid, gameName, tagLine, tier);
                 } else {
                     System.err.println("RiotIdCacheEntity not found for puuid: " + puuid);
                 }
@@ -583,7 +584,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     public void saveOnlyOverallSummary(String gameName, String tagLine, String tier) {
         String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
 
-        updateOverallSummary(puuid, gameName, tagLine);
+        updateOverallSummary(puuid, gameName, tagLine, tier);
     }
 
 
@@ -604,7 +605,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 String queueType = matchDetail.getQueueType();
 
                 List<MatchPlayerDTO> playerList = MatchPlayerDTO.fromRiotParticipantList(
-                        matchDetail.getParticipants(), matchId, durationSec, endTime, gameMode, queueType);
+                        matchDetail.getParticipants(), matchId, durationSec, endTime, gameMode, queueType, tier);
 
                 for (MatchPlayerDTO player : playerList) {
                     MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
@@ -696,7 +697,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 String queueType = matchDetail.getQueueType();
 
                 List<MatchPlayerDTO> playerList = MatchPlayerDTO.fromRiotParticipantList(matchDetail.getParticipants(), matchId,durationSec,
-                        endTime, gameMode, queueType);
+                        endTime, gameMode, queueType, tier);
 
                 for (MatchPlayerDTO player : playerList) {
                     MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
@@ -786,7 +787,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         Optional<RiotIdCacheEntity> riotIdOpt = riotIdCacheRepository.findByPuuid(puuid);
         if (riotIdOpt.isPresent()) {
             RiotIdCacheEntity riotId = riotIdOpt.get();
-            updateOverallSummary(puuid, riotId.getGameName(), riotId.getTagLine());
+            updateOverallSummary(puuid, riotId.getGameName(), riotId.getTagLine(), tier);
         } else {
             log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
         }
@@ -927,7 +928,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .tagLine(riotId.getTagLine())
                 .totalMatches(totalMatches)
                 .totalWins(totalWins)
-                .winRate(winRate)
+                .winRate(round(winRate,0))
                 .averageKills(round(avgKills, 1))
                 .averageDeaths(round(avgDeaths, 1))
                 .averageAssists(round(avgAssists, 1))

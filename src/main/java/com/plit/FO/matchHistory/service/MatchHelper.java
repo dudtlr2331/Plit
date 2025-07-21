@@ -179,7 +179,7 @@ public class MatchHelper { // 서브 메서드
                 .tagLine(tagLine)
                 .totalMatches(totalMatches)
                 .totalWins(totalWins)
-                .winRate(winRate)
+                .winRate(round(winRate,0))
                 .averageKills(avgKills)
                 .averageDeaths(avgDeaths)
                 .averageAssists(avgAssists)
