@@ -137,7 +137,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                 .userNickname(nickname)
                 .useYn("Y")
                 .isBanned(false)
-                .userAuth("user")
+                .userAuth("USER")
                 .userCreateDate(LocalDate.now())
                 .build());
 
@@ -407,7 +407,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                                     .userNickname(nickname)
                                     .useYn("Y")
                                     .isBanned(false)
-                                    .userAuth("user")
+                                    .userAuth("USER")
                                     .userCreateDate(LocalDate.now())
                                     .build()
                     );

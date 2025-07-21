@@ -82,7 +82,7 @@
             <td>
                 <div th:id="'auth-display-' + ${user.userSeq}" th:text="${user.userAuth}"></div>
                 <select th:id="'auth-select-' + ${user.userSeq}" class="form-select form-select-sm mb-1 d-none">
-                    <option value="user" th:selected="${user.userAuth == 'user'}">user</option>
+                    <option value="user" th:selected="${user.userAuth == 'USER'}">user</option>
                     <option value="admin" th:selected="${user.userAuth == 'admin'}">admin</option>
                 </select>
             </td>
