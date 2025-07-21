@@ -334,11 +334,9 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 } else if ((type === 'scrim' && headcount >= 10) || (type !== 'scrim' && headcount >= max)) {
                     joinBtnHtml = `<p style="color: red;"><strong>파티 인원이 모두 찼습니다.</strong></p>`;
                 } else if (joinStatus === 'NONE') {
-                    if (type === 'scrim') {
-                        joinBtnHtml = `<button onclick="openScrimJoinPopup(${seq})">팀 신청</button>`;
-                    } else {
-                        joinBtnHtml = `<button onclick="openJoinPopup(${seq})">참가하기</button>`;
-                    }
+                    joinBtnHtml = type === 'scrim'
+                        ? `<button onclick="openScrimJoinPopup(${seq})">팀 신청</button>`
+                        : `<button onclick="openJoinPopup(${seq})">참가하기</button>`;
                 } else if (joinStatus === 'PENDING') {
                     joinBtnHtml = `<p style="color: orange;"><strong>참가 신청 중입니다.</strong></p>`;
                 } else if (joinStatus === 'ACCEPTED') {
@@ -351,6 +349,14 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
             fetchPartyMembers(seq).then(members => {
                 const approved = members.filter(m => m.status === 'ACCEPTED');
                 const pending = members.filter(m => m.status === 'PENDING');
+
+                const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
+
+                approved.sort((a, b) => {
+                    const aPos = positionOrder[a.position] ?? 99;
+                    const bPos = positionOrder[b.position] ?? 99;
+                    return aPos - bPos;
+                });
 
                 const detailHtml = `
                     <p><strong>이름:</strong> ${name}</p>
@@ -366,43 +372,59 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 `;
 
                 Promise.all(approved.map(async m => {
-                    if (m.status !== 'ACCEPTED') return '';
-
                     const encodedId = encodeURIComponent(m.userId);
                     const res = await fetch(`/api/users/${encodedId}/relation-status`);
                     const relation = await res.json();
 
-                    // 파티장만 멤버 내보내기 가능
-                    const kickBtn = (isOwner && m.userId !== createdBy)
-                        ? `<button onclick="kickMember(${seq}, ${m.id})">내보내기</button>` : '';
-
-                    // 일반 멤버가 본인일 때 나가기 버튼
+                    const icon = getPositionIconHTML(m.position, true);
                     const isCurrentUser = m.userId === currentUserId;
-                    const leaveBtn = (!isOwner && isCurrentUser && m.userId !== createdBy)
-                        ? `<button onclick="leaveParty(${seq})">나가기</button>` : '';
-
-                    // 현재 사용자가 파티에 accepted 인지 확인
                     const canInteract = isOwner || joinStatus === 'ACCEPTED';
 
-                    // 친구신청 버튼 (이미 친구면 출력 안함)
+                    const nicknameHtml = m.userId === createdBy
+                        ? `<span class="leader-icon" style="margin-left:4px;">👑</span><strong>${m.userNickname}</strong>`
+                        : m.userNickname;
+
+                    const kickBtn = (isOwner && !isCurrentUser) ? `<button onclick="kickMember(${seq}, ${m.id})">내보내기</button>` : '';
+                    const leaveBtn = (!isOwner && isCurrentUser) ? `<button onclick="leaveParty(${seq})">나가기</button>` : '';
                     const friendBtn = (canInteract && !isCurrentUser && !relation.isFriend && !relation.isBlocked)
-                        ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>`
-                        : '';
-
-                    // 차단 버튼 (이미 차단이면 출력 안함)
+                        ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>` : '';
                     const blockBtn = (canInteract && !isCurrentUser && !relation.isBlocked)
-                        ? `<button onclick="blockMember('${m.userId}')">차단</button>`
-                        : '';
+                        ? `<button onclick="blockMember('${m.userId}')">차단</button>` : '';
 
-                    return `<li>${m.userNickname} (${m.userId}) - ${m.message || ''} ${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</li>`;
-                })).then(listItems => {
-                    // Promise.all 결과로 approvedHtml 구성
-                    const approvedHtml = listItems.length > 0
-                        ? `<ul>${listItems.join('')}</ul>`
-                        : '<p>참가 멤버 없음</p>';
+                    return `
+                        <tr>
+                            <td>${nicknameHtml}</td>
+                            <td>${icon}</td>
+                            <td>${m.tier || 'Unranked'}</td>
+                            <td>
+                              ${(m.preferredChampions || []).map(c => `
+                                <img src="/img/champion/${c}.png" width="24" />
+                              `).join('')}
+                            </td>
+                            <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
+                            <td>${m.averageKda != null ? m.averageKda.toFixed(2) : '0 / 0 / 0'}</td>
+                            <td>${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</td>
+                        </tr>
+                    `;
+                })).then(rows => {
+                    const approvedHtml = `
+                        <table class="member-table">
+                            <thead>
+                                <tr>
+                                    <th>닉네임</th>
+                                    <th>포지션</th>
+                                    <th>티어</th>
+                                    <th>선호 챔피언</th>
+                                    <th>승률</th>
+                                    <th>KDA</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows.join('')}</tbody>
+                        </table>
+                    `;
 
-                    // pendingHtml은 기존처럼 바로 작성
-                    const grouped = {};  // message 기준으로 그룹핑
+                    const grouped = {};
                     pending.forEach(m => {
                         const key = m.message || '기타';
                         if (!grouped[key]) grouped[key] = [];
@@ -410,52 +432,49 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     });
 
                     const pendingHtml = Object.entries(grouped).map(([message, members]) => {
-                        const ids = members.map(m => m.id); // 팀 멤버 ID들
-
-                        const memberList = members.map(m => `${m.userId}`).join(', ');
-                        const buttons = isOwner ? (
-                            type === 'scrim'
+                        const ids = members.map(m => m.id);
+                        const memberList = members.map(m => m.userId).join(', ');
+                        const buttons = isOwner
+                            ? (type === 'scrim'
                                 ? `<button onclick="approveTeam(${seq}, [${ids.join(',')}])">수락</button>
-                           <button onclick="rejectTeam(${seq}, [${ids.join(',')}])">거절</button>`
-                                                : members.map(m => `
-                           <button onclick="approveMember(${seq}, ${m.id})">수락</button>
-                           <button onclick="rejectMember(${seq}, ${m.id})">거절</button>
-                        `).join('')
-                        ) : '';
+                                   <button onclick="rejectTeam(${seq}, [${ids.join(',')}])">거절</button>`
+                                : members.map(m => `
+                                   <button onclick="approveMember(${seq}, ${m.id})">수락</button>
+                                   <button onclick="rejectMember(${seq}, ${m.id})">거절</button>
+                                `).join(''))
+                            : '';
 
                         return `<li><strong>${message}</strong>: ${memberList} ${buttons}</li>`;
                     }).join('');
 
-                    // 파티장이면 수정/삭제 버튼
                     const ownerButtons = isOwner ? `
-            <button onclick="handleEditFromDetail('${encodeURIComponent(JSON.stringify({
+                        <button onclick="handleEditFromDetail('${encodeURIComponent(JSON.stringify({
                         partySeq: seq, partyName: name, partyType: type, partyCreateDate: createDate,
                         partyEndTime: endDate, partyStatus: status, partyHeadcount: headcount,
                         partyMax: max, memo: memo, mainPosition: mainPosition,
                         positions: positions.split(',').map(p => p.trim())
                     }))}')">수정</button>
-            <button onclick="deleteParty(${seq})">삭제</button>
-        ` : '';
+                        <button onclick="deleteParty(${seq})">삭제</button>
+                    ` : '';
 
                     popup.innerHTML = `
-            <h3>파티 상세 정보</h3>
+                        <h3>파티 상세 정보</h3>
+                        <div class="tabs">
+                            <button class="tab-btn active" onclick="switchDetailTab('detail')">상세</button>
+                            <button class="tab-btn" onclick="switchDetailTab('approved')">참가 멤버</button>
+                            <button class="tab-btn" onclick="switchDetailTab('pending')">수락 대기</button>
+                        </div>
 
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchDetailTab('detail')">상세</button>
-                <button class="tab-btn" onclick="switchDetailTab('approved')">참가 멤버</button>
-                <button class="tab-btn" onclick="switchDetailTab('pending')">수락 대기</button>
-            </div>
+                        <div id="tab-detail" class="tab-content">${detailHtml}</div>
+                        <div id="tab-approved" class="tab-content" style="display:none;">${approvedHtml}</div>
+                        <div id="tab-pending" class="tab-content" style="display:none;">${pendingHtml}</div>
 
-            <div id="tab-detail" class="tab-content">${detailHtml}</div>
-            <div id="tab-approved" class="tab-content" style="display:none;">${approvedHtml}</div>
-            <div id="tab-pending" class="tab-content" style="display:none;">${pendingHtml}</div>
-
-            <div class="popup-buttons">
-                ${ownerButtons}
-                <button onclick="closePartyDetail()">닫기</button>
-                ${joinBtnHtml}
-            </div>
-        `;
+                        <div class="popup-buttons">
+                            ${ownerButtons}
+                            <button onclick="closePartyDetail()">닫기</button>
+                            ${joinBtnHtml}
+                        </div>
+                    `;
 
                     popup.style.display = 'block';
                 });
@@ -757,9 +776,11 @@ function openPartyFormPopup(party = null) {
         ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
 
         <label>메모 (선택)<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
-
-        <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
-        <button type="button" onclick="closePartyPopup()">닫기</button>
+        
+        <div class="form-buttons">
+          <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
+          <button type="button" onclick="closePartyPopup()">닫기</button>
+        </div>
       </div>
     `;
 

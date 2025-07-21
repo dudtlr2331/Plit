@@ -4,6 +4,7 @@ import com.plit.FO.chat.entity.ChatRoomEntity;
 import com.plit.FO.chat.entity.ChatRoomUserEntity;
 import com.plit.FO.chat.repository.ChatRoomRepository;
 import com.plit.FO.chat.repository.ChatRoomUserRepository;
+import com.plit.FO.matchHistory.repository.MatchOverallSummaryRepository;
 import com.plit.FO.party.dto.*;
 import com.plit.FO.party.enums.MemberStatus;
 import com.plit.FO.party.enums.PartyStatus;
@@ -33,6 +34,9 @@ public class PartyServiceImpl implements PartyService {
     private final PartyFindPositionRepository partyFindPositionRepository;
     private final PartyMemberRepository partyMemberRepository;
     private final UserRepository userRepository;
+
+    @Autowired
+    private MatchOverallSummaryRepository summaryRepository;
 
     @Autowired
     private ChatRoomRepository chatRoomRepository;
@@ -356,19 +360,37 @@ public class PartyServiceImpl implements PartyService {
     }
 
     @Override
-    public List<PartyMemberDTO> getPartyMemberDTOs(Long partySeq) {
-        PartyEntity party = partyRepository.findById(partySeq).orElseThrow();
+    public List<PartyMemberDTO> getPartyMemberDTOs(Long partyId) {
+        List<PartyMemberEntity> members = partyMemberRepository.findByParty_PartySeq(partyId);
+        List<PartyMemberDTO> result = new ArrayList<>();
 
-        return partyMemberRepository.findByParty(party).stream()
-                .map(member -> {
-                    Optional<UserEntity> userOpt = userRepository.findByUserId(member.getUserId());
+        for (PartyMemberEntity m : members) {
+            UserEntity user = userRepository.findByUserId(m.getUserId()).orElse(null);
+            if (user == null) continue;
 
-                    Integer userSeq = userOpt.map(UserEntity::getUserSeq).orElse(null);
-                    String nickname = userOpt.map(UserEntity::getUserNickname).orElse("알 수 없음");
+            PartyMemberDTO dto = new PartyMemberDTO(m, user.getUserSeq(), user.getUserNickname());
 
-                    return new PartyMemberDTO(member, userSeq, nickname);
-                })
-                .collect(Collectors.toList());
+            // Riot 통계 추가
+            if (user.getPuuid() != null) {
+                summaryRepository.findByPuuid(user.getPuuid()).ifPresent(summary -> {
+                    dto.setTier("Unranked"); // 현재 등급 시스템 없으므로 임시
+                    dto.setWinRate(summary.getWinRate());
+                    dto.setAverageKda(summary.getAverageKda());
+
+                    String champions = summary.getPreferredChampions();
+                    if (champions != null) {
+                        dto.setPreferredChampions(Arrays.stream(champions.split(","))
+                                .map(String::trim)
+                                .limit(3)
+                                .toList());
+                    }
+                });
+            }
+
+            result.add(dto);
+        }
+
+        return result;
     }
 
     @Override

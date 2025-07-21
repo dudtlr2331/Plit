@@ -132,9 +132,9 @@ public class PartyRestController {
 
     @GetMapping("/{partyId}/join-status")
     public ResponseEntity<String> getJoinStatus(@PathVariable Long partyId,
-                                                @AuthenticationPrincipal(expression = "username") String userId) {
-        MemberStatus status = partyService.getJoinStatus(partyId, userId); // enum or null
-        String result = status != null ? status.name() : "NONE"; // "ACCEPTED", "PENDING", "REJECTED", or "NONE"
+                                                @AuthenticationPrincipal String userId) {
+        MemberStatus status = partyService.getJoinStatus(partyId, userId);
+        String result = status != null ? status.name() : "NONE";
         return ResponseEntity.ok(result);
     }
 
