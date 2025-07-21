@@ -119,8 +119,16 @@
                     <!-- 소환사명 + 리더 왕관 -->
                     <div class="member-cell name">
                         <strong>
-                            <span th:text="${#strings.substringBefore(member.nickname, '#')}"></span>
-                            <span class="tag" th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}"></span>
+                            <th:block th:if="${member.nickname != null and #strings.contains(member.nickname, '#')}">
+                                <span th:text="${#strings.substringBefore(member.nickname, '#')}"></span>
+                                <span class="tag" th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}"></span>
+                            </th:block>
+                            <th:block th:if="${member.nickname != null and !#strings.contains(member.nickname, '#')}">
+                                <span th:text="${member.nickname}"></span>
+                            </th:block>
+                            <th:block th:if="${member.nickname == null}">
+                                <span>알 수 없음</span>
+                            </th:block>
                         </strong>
                         <span th:if="${member.role == 'LEADER'}" class="leader-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 64 64"
@@ -274,8 +282,16 @@
                     <!-- 소환사명 -->
                     <div class="member-cell name">
                         <strong>
-                            <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
-                            <span class="tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
+                            <th:block th:if="${member.nickname != null and #strings.contains(member.nickname, '#')}">
+                                <span th:text="${#strings.substringBefore(member.nickname, '#')}"></span>
+                                <span class="tag" th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}"></span>
+                            </th:block>
+                            <th:block th:if="${member.nickname != null and !#strings.contains(member.nickname, '#')}">
+                                <span th:text="${member.nickname}"></span>
+                            </th:block>
+                            <th:block th:if="${member.nickname == null}">
+                                <span>알 수 없음</span>
+                            </th:block>
                         </strong>
                     </div>
 
@@ -618,20 +634,18 @@
         <!-- 닉네임 표시 -->
         <div class="member-info">
             <div class="nickname">
-                <div class="nickname">
-                    <strong>
-                        <th:block th:if="${nickname != null and #strings.contains(nickname, '#')}">
-                            <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
-                            <span class="light-tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
-                        </th:block>
-                        <th:block th:if="${nickname != null and !#strings.contains(nickname, '#')}">
-                            <span th:text="${nickname}"></span>
-                        </th:block>
-                        <th:block th:if="${nickname == null}">
-                            <span>내 닉네임</span>
-                        </th:block>
-                    </strong>
-                </div>
+                <strong>
+                    <th:block th:if="${nickname != null and #strings.contains(nickname, '#')}">
+                        <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
+                        <span class="light-tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
+                    </th:block>
+                    <th:block th:if="${nickname != null and !#strings.contains(nickname, '#')}">
+                        <span th:text="${nickname}"></span>
+                    </th:block>
+                    <th:block th:if="${nickname == null}">
+                        <span>내 닉네임</span>
+                    </th:block>
+                </strong>
             </div>
         </div>
 

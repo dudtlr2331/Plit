@@ -79,7 +79,16 @@
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; font-weight: bold; margin-bottom: 4px;">소환사 이름</label>
                         <div style="padding: 10px; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; color: #333;">
-                            <span th:text="${nickname}">닉네임</span>
+                            <th:block th:if="${nickname != null and #strings.contains(nickname, '#')}">
+                                <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
+                                <span class="light-tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
+                            </th:block>
+                            <th:block th:if="${nickname != null and !#strings.contains(nickname, '#')}">
+                                <span th:text="${nickname}"></span>
+                            </th:block>
+                            <th:block th:if="${nickname == null}">
+                                <span>알 수 없음</span>
+                            </th:block>
                         </div>
                         <input type="hidden" name="summonerName" th:value="${nickname}"/>
                     </div>
