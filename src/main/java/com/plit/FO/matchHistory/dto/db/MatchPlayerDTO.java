@@ -25,9 +25,7 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     // 기본 정보
     private String championName;
     private String championKorName;
-    private int championLevel;
     private String summonerName;
-    private String tier;
     private int profileIconId;
     private String profileIconUrl;
 
@@ -101,7 +99,6 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .puuid(p.getPuuid())
                 .summonerName(p.getSummonerName())
                 .championName(p.getChampionName())
-                .tier(p.getTier())
                 .kills(p.getKills())
                 .deaths(p.getDeaths())
                 .assists(p.getAssists())
@@ -112,9 +109,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .teamPosition(p.getTeamPosition())
                 .win(p.isWin())
                 .teamId(p.getTeamId())
-                .championLevel(p.getChampionLevel())
                 .itemIds(p.getItemIds().stream().map(String::valueOf).toList())
-                .profileIconId(p.getProfileIcon())
+                .profileIconId(p.getProfileIconId())
                 .cs(p.getTotalMinionsKilled() + p.getNeutralMinionsKilled())
                 .csPerMin(csPerMin)
                 .kdaRatio(kdaRatio)
@@ -141,7 +137,6 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .map(p -> {
                     MatchPlayerDTO dto = MatchPlayerDTO.fromRiotParticipant(p, durationSec, endTime, gameMode, queueType);
                     dto.setMatchId(matchId);
-                    System.out.println("DTO 생성됨: matchId = " + dto.getMatchId() + ", puuid = " + dto.getPuuid());
 
                     return dto;
                 })
@@ -153,7 +148,6 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .puuid(e.getPuuid())
                 .summonerName(e.getSummonerName())
                 .championName(e.getChampionName())
-                .tier(e.getTier())
                 .kills(e.getKills())
                 .deaths(e.getDeaths())
                 .assists(e.getAssists())
@@ -164,7 +158,6 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .teamPosition(e.getTeamPosition())
                 .win(e.isWin())
                 .teamId(e.getTeamId())
-                .championLevel(e.getChampionLevel())
                 .itemIds(Arrays.asList(e.getItemIds().split(",")))
                 .profileIconId(e.getProfileIconId())
                 .cs(e.getCs())

@@ -174,9 +174,9 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .puuid(puuid)
                     .championName(engName)
                     .korName(korName)
-                    .kills(sumKills / total)
-                    .deaths(sumDeaths / total)
-                    .assists(sumAssists / total)
+                    .kills(round(sumKills / total, 1))
+                    .deaths(round(sumDeaths / total, 1))
+                    .assists(round(sumAssists / total, 1))
                     .kdaRatio(round(kdaRatio, 2))
                     .averageCs((int) (sumCs / total))
                     .csPerMin(round(sumCsPerMin / total, 1))
@@ -185,7 +185,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .championImageUrl(championImageUrl)
                     .gameCount(total)
                     .winCount(wins)
-                    .winRate(winRate)
+                    .winRate(round(winRate,0))
                     .queueType(mode)
                     .build();
 
@@ -226,7 +226,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .deaths(participant.getDeaths())
                     .assists(participant.getAssists())
                     .cs(participant.getTotalMinionsKilled() + participant.getNeutralMinionsKilled())
-                    .csPerMin(csPerMin)
+                    .csPerMin(round(csPerMin, 1))
                     .win(participant.isWin())
                     .queueType(matchInfo.getQueueId())
                     .gameEndTimestamp(gameEndTime)
@@ -661,9 +661,10 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
             // Riot API에서 match 상세 정보 가져오기
             RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
 
-            MatchDetailDTO detailDTO = new MatchDetailDTO(matchInfo, matchId);
+            MatchDetailDTO detailDTO = new MatchDetailDTO(matchInfo, matchId, puuid);
 
-            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detailDTO, puuid);
+            String tier ="UNRANKED";
+            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detailDTO, puuid, tier);
             List<MatchPlayerEntity> players = detailDTO.toPlayerEntities();
 
             // DB 저장

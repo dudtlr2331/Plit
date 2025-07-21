@@ -40,7 +40,6 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     private int totalDamageTaken;
 
     private String teamPosition;
-    private String tier;
 
     private int mainRune1;
     private int mainRune2;
@@ -72,9 +71,6 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     @Column(name = "profile_icon_id")
     private Integer profileIconId;
 
-    @Column(name = "champion_level")
-    private Integer championLevel;
-
     // dto -> entity ( db 저장 전에 가공 )
     public static MatchPlayerEntity fromDTO(MatchPlayerDTO dto) {
         System.out.println("Entity 저장 전: matchId = " + dto.getMatchId());
@@ -94,8 +90,6 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
                 .totalDamageDealtToChampions(dto.getTotalDamageDealtToChampions())
                 .totalDamageTaken(dto.getTotalDamageTaken())
                 .teamPosition(dto.getTeamPosition())
-                .tier(dto.getTier())
-                .championLevel(dto.getChampionLevel())
                 .mainRune1(dto.getMainRune1())
                 .mainRune2(dto.getMainRune2())
                 .statRune1(dto.getStatRune1())

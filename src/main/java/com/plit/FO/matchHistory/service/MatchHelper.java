@@ -4,7 +4,9 @@ import com.plit.FO.matchHistory.dto.MatchSummaryDTO;
 import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
+import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
+import com.plit.FO.matchHistory.repository.MatchOverallSummaryRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class MatchHelper { // 서브 메서드
 
     private static final Map<String, String> korNameMap = new HashMap<>();
+    private static MatchOverallSummaryRepository matchPlayerRepository;
 
     // 한글 챔피언 이름 - riot 챔피언 json 으로 호출 - 모든 챔피언의 영어 이름(key) 과 한글 이름 필드가 들어있음
     @PostConstruct
@@ -100,10 +103,6 @@ public class MatchHelper { // 서브 메서드
         return (double) (kills + assists) / deaths;
     }
 
-    public static String getKdaString(int kills, int deaths, int assists) {
-        return kills + " / " + deaths + " / " + assists;
-    }
-
     public static double getCsPerMin(int cs, int gameDurationSeconds) {
         if (gameDurationSeconds == 0) return 0;
         return cs / (gameDurationSeconds / 60.0);
@@ -172,6 +171,8 @@ public class MatchHelper { // 서브 메서드
                 .filter(pos -> pos != null && !pos.equals("NONE"))
                 .collect(Collectors.groupingBy(pos -> pos, Collectors.counting()));
 
+        int loseCount = totalMatches - totalWins;
+
         return MatchOverallSummaryDTO.builder()
                 .puuid(puuid)
                 .gameName(gameName)
@@ -187,6 +188,7 @@ public class MatchHelper { // 서브 메서드
                 .preferredPosition(preferredPosition)
                 .preferredChampions(preferredChampions)
                 .positionCounts(positionCounts)
+                .loseCount(loseCount)
                 .build();
     }
 

@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.dto.riot;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.List;
@@ -29,7 +30,6 @@ public class RiotParticipantDTO { // info 안의 participants 리스트 요소 (
     private int wardsPlaced;
     private int wardsKilled;
 
-    private int championLevel;
     private int summoner1Id;
     private int summoner2Id;
     private List<Integer> itemIds;
@@ -41,7 +41,8 @@ public class RiotParticipantDTO { // info 안의 participants 리스트 요소 (
     private int statRune1;
     private int statRune2;
 
-    private int profileIcon;
+    @JsonProperty("profileIcon")
+    private Integer profileIconId;
     private int totalMinionsKilled;
     private int neutralMinionsKilled;
 

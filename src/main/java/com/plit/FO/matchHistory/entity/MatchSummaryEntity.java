@@ -27,7 +27,6 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
 
     private String championName;
     private String teamPosition;
-    private int championLevel;
 
     private String gameMode;
     private String queueType;
@@ -35,8 +34,6 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
     private boolean win;
 
     private int kills;
-    @Column(name = "kill_participation")
-    private Double killParticipation;
     private int deaths;
     private int assists;
     @Column(name = "kda_ratio")
@@ -59,22 +56,6 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
     @Column(columnDefinition = "TEXT") // 내용이 길어질 수 있는 경우를 위해 ( 콤마로 구분된 긴 문자열을 저장 )
     private String itemIds;
 
-
-    @Column(columnDefinition = "TEXT")
-    private String traitIds;
-
-    private Integer spell1Id;
-    private Integer spell2Id;
-
-    private Integer mainRune1Id;
-    private Integer mainRune2Id;
-
-    @Column(columnDefinition = "TEXT")
-    private String otherProfileIconIds;
-
-    @Column(columnDefinition = "TEXT")
-    private String otherSummonerNames;
-
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private java.sql.Timestamp createdAt;
 
@@ -84,7 +65,7 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
     }
 
     // 상세 전적에서 나의 정보만 추출 -> 요약 엔티티로 변환
-    public static MatchSummaryEntity fromDetailDTO(MatchDetailDTO detail, String puuid) {
+    public static MatchSummaryEntity fromDetailDTO(MatchDetailDTO detail, String puuid, String tier) {
         RiotParticipantDTO me = detail.getParticipants().stream()
                 .filter(p -> puuid.equals(p.getPuuid()))
                 .findFirst()
@@ -106,10 +87,6 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
         String itemIds = me.getItemIds() == null ? "" :
                 me.getItemIds().stream().map(String::valueOf).collect(Collectors.joining(","));
 
-        double killParticipation = MatchHelper.calculateKillParticipation(
-                kills, assists, me.getTeamTotalKills()
-        );
-
         Map<Integer, Integer> teamKillMap = detail.getParticipants().stream()
                 .collect(Collectors.groupingBy(
                         RiotParticipantDTO::getTeamId,
@@ -124,40 +101,22 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
                 .matchId(detail.getMatchId())
                 .puuid(puuid)
                 .queueType(detail.getQueueType())
-                .tier(me.getTier())
                 .win(me.isWin())
                 .teamPosition(me.getTeamPosition())
                 .championName(me.getChampionName())
                 .kills(kills)
-                .killParticipation(killParticipation)
                 .deaths(deaths)
                 .assists(assists)
                 .kdaRatio(kdaRatio)
+                .tier(tier)
                 .cs(cs)
                 .csPerMin(csPerMin)
                 .damageDealt(me.getTotalDamageDealtToChampions())
                 .damageTaken(me.getTotalDamageTaken())
-                .championLevel(me.getChampionLevel())
                 .itemIds(itemIds)
-                .traitIds(Optional.ofNullable(me.getTraits()).map(l -> String.join(",", l)).orElse(null))
-                .otherSummonerNames(
-                        Optional.ofNullable(detail.getOtherSummonerNames())
-                                .map(list -> String.join(",", list))
-                                .orElse(null)
-                )
                 .gameEndTimestamp(detail.getGameEndTimestamp())
                 .gameMode(detail.getGameMode())
                 .gameDurationSeconds(duration)
-                .spell1Id(me.getSpell1Id())
-                .spell2Id(me.getSpell2Id())
-                .mainRune1Id(me.getMainRune1())
-                .mainRune2Id(me.getMainRune2())
-                .otherProfileIconIds(
-                        Optional.ofNullable(detail.getOtherProfileIconIds())
-                                .map(list -> String.join(",", list))
-                                .orElse(null)
-                )
-
                 .build();
     }
 
@@ -170,7 +129,6 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
                 .teamPosition(this.teamPosition)
                 .championName(this.championName)
                 .kills(this.kills)
-                .killParticipation(this.killParticipation)
                 .deaths(this.deaths)
                 .assists(this.assists)
                 .cs(this.cs)
@@ -180,9 +138,6 @@ public class MatchSummaryEntity { // 매치 요약 페이지 테이블
                 .gameMode(this.gameMode)
                 .gameEndTimestamp(this.gameEndTimestamp)
                 .queueType(this.queueType)
-                .championLevel(this.championLevel)
-                .traitIds(MatchHelper.splitString(this.traitIds))
-                .otherSummonerNames(MatchHelper.splitString(this.otherSummonerNames))
                 .gameDurationSeconds(this.gameDurationSeconds)
                 .build();
     }

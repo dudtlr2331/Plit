@@ -6,6 +6,7 @@ import com.plit.FO.matchHistory.dto.MatchSummaryWithListDTO;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
 import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
+import com.plit.FO.matchHistory.dto.db.UserMatchSummaryDTO;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,8 @@ public interface MatchDbService {
 
     void saveMatchHistory(String puuid);
 
+    void saveMatchSummaryAndPlayers(String gameName, String tagLine, String tier);
+
     boolean existsMatchByPuuid(String puuid);
 
     // 선호 챔피언 정보 저장
@@ -55,7 +58,10 @@ public interface MatchDbService {
     List<FavoriteChampionDTO> getFavoriteChampions(String puuid, String queueType);
 
     // 어리고싶다#kr1 저장 샘플
-    void testSave(String gameName, String tagLine);
+    void testSave(String gameName, String tagLine, String tier);
 
+//    UserMatchSummaryDTO getUserMatchSummary(String puuid);
+    void saveOnlyOverallSummary(String gameName, String tagLine, String tier);
 
+    void overwriteTier(String gameName, String tagLine, String tier);
 }

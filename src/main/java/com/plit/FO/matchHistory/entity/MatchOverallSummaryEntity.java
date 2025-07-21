@@ -3,13 +3,13 @@ package com.plit.FO.matchHistory.entity;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
+import com.plit.FO.matchHistory.dto.db.UserMatchSummaryDTO;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
 
 @Entity
 @Table(name = "match_overall_summary")
@@ -32,6 +32,8 @@ public class MatchOverallSummaryEntity {
 
     @Column(length = 20)
     private String tagLine;
+
+    private String tier;
 
     private Integer totalMatches;
     private Integer totalWins;
@@ -66,6 +68,7 @@ public class MatchOverallSummaryEntity {
                 .puuid(dto.getPuuid())
                 .gameName(dto.getGameName())
                 .tagLine(dto.getTagLine())
+                .tier(dto.getTier())
                 .totalMatches(dto.getTotalMatches())
                 .totalWins(dto.getTotalWins())
                 .winRate(dto.getWinRate())
@@ -94,6 +97,7 @@ public class MatchOverallSummaryEntity {
                 .puuid(this.puuid)
                 .gameName(this.gameName)
                 .tagLine(this.tagLine)
+                .tier(this.tier)
                 .totalMatches(this.totalMatches)
                 .totalWins(this.totalWins)
                 .winRate(this.winRate)

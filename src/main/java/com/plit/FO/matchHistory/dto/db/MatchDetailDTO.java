@@ -40,7 +40,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
 
     private boolean blueWin;
 
-    private List<String> otherProfileIconIds;
+    private List<Integer> otherProfileIconIds;
 
     private int gameDurationSeconds;
 
@@ -75,9 +75,6 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
                             .deaths(p.getDeaths())
                             .assists(p.getAssists())
                             .win(p.isWin())
-                            .tier(p.getTier())
-                            .championLevel(p.getChampionLevel())
-
                             .cs(cs)
                             .csPerMin(csPerMin)
                             .kdaRatio(kdaRatio)
@@ -87,7 +84,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
                             .statRune1(p.getStatRune1())
                             .statRune2(p.getStatRune2())
 
-                            .profileIconId(p.getProfileIcon())
+                            .profileIconId(p.getProfileIconId())
 
                             .itemIds(convertItemIds(p.getItemIds()))
 
@@ -112,7 +109,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
     }
 
     // 주요 필드
-    public MatchDetailDTO(RiotMatchInfoDTO matchInfo, String matchId) {
+    public MatchDetailDTO(RiotMatchInfoDTO matchInfo, String matchId, String puuid) {
         this.matchId = matchId;
         this.gameMode = matchInfo.getGameMode();
         this.gameEndTimestamp = Instant.ofEpochMilli(matchInfo.getGameEndTimestamp())
@@ -135,6 +132,15 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
                 .findFirst()
                 .map(RiotParticipantDTO::isWin)
                 .orElse(true);  // 기본값 true
+
+        this.otherSummonerNames = new ArrayList<>();
+        this.otherProfileIconIds = new ArrayList<>();
+        for (RiotParticipantDTO p : participants) {
+            if (!puuid.equals(p.getPuuid())) {
+                this.otherSummonerNames.add(p.getSummonerName());
+                this.otherProfileIconIds.add(p.getProfileIconId());
+            }
+        }
     }
 
 

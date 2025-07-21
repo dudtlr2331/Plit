@@ -235,10 +235,9 @@ public class RiotApiServiceImpl implements RiotApiService{
         dto.setTeamPosition((String) p.get("teamPosition"));
         dto.setWin((Boolean) p.getOrDefault("win", false));
         dto.setTeamId(((Number) p.getOrDefault("teamId", 0)).intValue());
-        dto.setChampionLevel(((Number) p.getOrDefault("championLevel", 0)).intValue());
         dto.setSummoner1Id(((Number) p.getOrDefault("summoner1Id", 0)).intValue());
         dto.setSummoner2Id(((Number) p.getOrDefault("summoner2Id", 0)).intValue());
-        dto.setProfileIcon(((Number) p.getOrDefault("profileIcon", 0)).intValue());
+        dto.setProfileIconId(((Number) p.getOrDefault("profileIcon", 0)).intValue());
         dto.setTotalMinionsKilled(((Number) p.getOrDefault("totalMinionsKilled", 0)).intValue());
         dto.setNeutralMinionsKilled(((Number) p.getOrDefault("neutralMinionsKilled", 0)).intValue());
         dto.setPerkPrimaryStyle(((Number) p.getOrDefault("perks.styles.0.style", 0)).intValue()); // 주 룬
@@ -399,7 +398,6 @@ public class RiotApiServiceImpl implements RiotApiService{
                                 .win((Boolean) p.get("win"))
                                 .teamPosition((String) p.get("teamPosition"))
                                 .championName((String) p.get("championName"))
-                                .championLevel((int) p.get("champLevel"))
                                 .kills(kills)
                                 .deaths(deaths)
                                 .assists(assists)
@@ -422,8 +420,6 @@ public class RiotApiServiceImpl implements RiotApiService{
                                 .tier(tier)
                                 .tierImageUrl(tierImageUrl)
                                 .traitImageUrls(traitImageUrls)
-                                .otherSummonerNames(otherSummonerNames)
-                                .otherProfileIconUrls(otherProfileIconUrls)
                                 .build();
 
 
@@ -514,7 +510,7 @@ public class RiotApiServiceImpl implements RiotApiService{
 
             // CDN 기반 이미지 (DB에서 조회)
             dto.setChampionImageUrl(imageService.getImageUrl(p.getChampionName() + ".png", "champion"));
-            dto.setProfileIconUrl(imageService.getImageUrl(p.getProfileIcon() + ".png", "profile"));
+            dto.setProfileIconUrl(imageService.getImageUrl(p.getProfileIconId() + ".png", "profile"));
             dto.setMainRune1Url(imageService.getImageUrl(p.getPerkPrimaryStyle() + ".png", "rune"));
             dto.setMainRune2Url(imageService.getImageUrl(p.getPerkSubStyle() + ".png", "rune"));
 
@@ -575,7 +571,7 @@ public class RiotApiServiceImpl implements RiotApiService{
                 .atZone(ZoneId.of("Asia/Seoul"))
                 .toLocalDateTime();
 
-        return MatchDetailDTO.builder()
+        MatchDetailDTO dto = MatchDetailDTO.builder()
                 .matchId(matchId)
                 .gameMode(matchInfo.getGameMode() != null ? matchInfo.getGameMode() : "UNKNOWN")
                 .queueType(matchInfo.getQueueId())
@@ -586,6 +582,20 @@ public class RiotApiServiceImpl implements RiotApiService{
                 .redTeam(redTeam)
                 .blueWin(blueWin)
                 .build();
+
+        List<String> otherNames = new ArrayList<>();
+        List<Integer> otherIcons = new ArrayList<>();
+        for (RiotParticipantDTO p : participants) {
+            if (!puuid.equals(p.getPuuid())) {
+                otherNames.add(p.getSummonerName());
+                otherIcons.add(p.getProfileIconId());
+            }
+        }
+        dto.setOtherSummonerNames(otherNames);
+        dto.setOtherProfileIconIds(otherIcons);
+
+        return dto;
+
     }
 
 

@@ -236,11 +236,11 @@
                     <div class="kda-stat">
                         <div class="label">K/D/A</div>
                         <div>
-                            <strong th:text="${#numbers.formatDecimal(summary.avgKills, 1, 1)}">0.0</strong> /
-                            <span style="color:red;" th:text="${#numbers.formatDecimal(summary.avgDeaths, 1, 1)}">0.0</span> /
-                            <span th:text="${#numbers.formatDecimal(summary.avgAssists, 1, 1)}">0.0</span>
+                            <strong th:text="${#numbers.formatDecimal(summary.averageKills, 1, 1)}">0.0</strong> /
+                            <span style="color:red;" th:text="${#numbers.formatDecimal(summary.averageDeaths, 1, 1)}">0.0</span> /
+                            <span th:text="${#numbers.formatDecimal(summary.averageAssists, 1, 1)}">0.0</span>
                         </div>
-                        <div th:text="${#numbers.formatDecimal(summary.kdaRatio, 2, 2)} + ' : 1'">0.00 : 0</div>
+                        <div th:text="${#numbers.formatDecimal(summary.averageKda, 2, 2)} + ' : 1'">0.00 : 0</div>
                         <div style="color:red; font-size: 12px;"
                              th:text="|킬 관여 ${#numbers.formatDecimal(summary.killParticipation, 1, 1)}%|">
                             킬 관여
@@ -389,23 +389,6 @@
                                 </div>
                             </div>
 
-                            <!-- 같이 게임한 소환사 목록 -->
-                            <div class="other-summoners">
-                                <div class="summoner-columns">
-                                    <div class="summoner-column" th:each="col : ${#numbers.sequence(0,1)}">
-                                        <div class="summoner"
-                                             th:each="i : ${#numbers.sequence(col * 5, col * 5 + 4)}"
-                                             th:if="${i < match.otherSummonerNames.size()}">
-                                            <img th:src="@{${match.otherProfileIconUrls[i]}}"
-                                                 alt="프로필 아이콘"
-                                                 onerror="this.src='/images/default.png'" />
-                                            <span th:text="${match.otherSummonerNames[i]}">소환사명</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- 상세 전적 표시 영역 -->
                         <div class="match-detail" style="display: none;">
                             <table class="match-detail-table"></table>
@@ -438,7 +421,6 @@
                                 <div class="team-objectives right-objectives"></div>
                             </div>
                         </div>
-
                     </div>
 
                 </th:block>

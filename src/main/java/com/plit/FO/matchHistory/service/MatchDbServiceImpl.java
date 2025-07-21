@@ -2,10 +2,7 @@ package com.plit.FO.matchHistory.service;
 
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.plit.FO.matchHistory.dto.*;
-import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
-import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
-import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
-import com.plit.FO.matchHistory.dto.db.MatchPlayerDTO;
+import com.plit.FO.matchHistory.dto.db.*;
 import com.plit.FO.matchHistory.dto.riot.RiotMatchInfoDTO;
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import com.plit.FO.matchHistory.entity.*;
@@ -128,7 +125,6 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .tier(riotApiService.getTierByPuuid(puuid))
                     .gameEndTimestamp(endTime)
                     .gameMode(info.getGameMode())
-                    .championLevel(me.getChampionLevel())
                     .cs(me.getTotalMinionsKilled())
                     .itemIds("")
                     .createdAt(null)
@@ -154,7 +150,6 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                             .totalDamageDealtToChampions(p.getTotalDamageDealtToChampions())
                             .totalDamageTaken(p.getTotalDamageTaken())
                             .teamPosition(p.getTeamPosition())
-                            .tier(riotApiService.getTierByPuuid(p.getPuuid()))
                             .mainRune1(0) // 추후 룬 파싱 가능하면 반영
                             .mainRune2(0)
                             .statRune1(0)
@@ -189,6 +184,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
         // 요약 통계 계산
         MatchOverallSummaryDTO dto = MatchHelper.getOverallSummary(puuid, gameName, tagLine, matchList);
+        log.info("[updateOverallSummary] 요약 계산 결과 dto={}", dto);
 
         Optional<MatchOverallSummaryEntity> existing = matchOverallSummaryRepository.findByPuuid(puuid);
 
@@ -197,10 +193,14 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
         if (existing.isPresent()) {
             entity.setId(existing.get().getId());
+            log.info("[updateOverallSummary] 기존 엔티티 덮어씀, id={}", entity.getId());
+        } else {
+            log.info("[updateOverallSummary] 새로운 엔티티 저장");
         }
 
         // 저장
         matchOverallSummaryRepository.save(entity);
+        log.info("match_overall_summary 저장 완료 for puuid={}", puuid);
     }
 
     // 내부 계산 로직
@@ -301,8 +301,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 // null 또는 에러 시 skip
                 if (detail == null) continue;
 
+                String tier ="UNRANKED";
                 // DTO -> Entity 변환
-                MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detail, puuid);
+                MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detail, puuid, tier);
                 List<MatchPlayerEntity> players = detail.toPlayerEntities();
 
                 System.out.println("summary = " + summary);
@@ -410,7 +411,6 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .totalDamageDealtToChampions(p.getTotalDamageDealtToChampions())
                     .totalDamageTaken(p.getTotalDamageTaken())
                     .teamPosition(p.getTeamPosition())
-                    .tier(p.getTier())
                     .mainRune1(p.getMainRune1())
                     .mainRune2(p.getMainRune2())
                     .statRune1(p.getStatRune1())
@@ -537,8 +537,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
             // matchId 기반으로 Riot API로부터 상세 전적 받아오기
             MatchDetailDTO detail = getMatchDetailFromRiot(matchId, puuid);
 
+            String tier ="UNRANKED";
             // 요약 정보로 변환하여 저장
-            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detail, puuid);
+            MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(detail, puuid, tier);
             matchSummaryRepository.save(summary);
 
             // 참가자 정보 저장 // 내부 DTO( MatchPlayerDTO ) -> Entity 로 저장
@@ -567,8 +568,102 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     }
 
 
+//    public void saveOnlyOverallSummary(String gameName, String tagLine, String tier) {
+//        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+//
+//        Optional<RiotIdCacheEntity> riotIdOpt = riotIdCacheRepository.findByPuuid(puuid);
+//        if (riotIdOpt.isPresent()) {
+//            RiotIdCacheEntity riotId = riotIdOpt.get();
+//            updateOverallSummary(puuid, riotId.getGameName(), riotId.getTagLine());
+//        } else {
+//            log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
+//        }
+//    }
+
+    public void saveOnlyOverallSummary(String gameName, String tagLine, String tier) {
+        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+
+        updateOverallSummary(puuid, gameName, tagLine);
+    }
+
+
+    public void saveMatchSummaryAndPlayers(String gameName, String tagLine, String tier) {
+        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+        List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 20);
+
+        for (String matchId : matchIds) {
+            try {
+                MatchDetailDTO matchDetail = riotApiService.getMatchDetailFromRiot(matchId, puuid);
+                MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(matchDetail, puuid, tier);
+                if (summary == null) continue;
+                matchSummaryRepository.save(summary);
+
+                int durationSec = matchDetail.getGameDurationSeconds();
+                LocalDateTime endTime = matchDetail.getGameEndTimestamp();
+                String gameMode = matchDetail.getGameMode();
+                String queueType = matchDetail.getQueueType();
+
+                List<MatchPlayerDTO> playerList = MatchPlayerDTO.fromRiotParticipantList(
+                        matchDetail.getParticipants(), matchId, durationSec, endTime, gameMode, queueType);
+
+                for (MatchPlayerDTO player : playerList) {
+                    MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
+                    matchPlayerRepository.save(entity);
+                }
+            } catch (Exception e) {
+                log.error("매치 저장 오류 : " + matchId, e);
+            }
+        }
+    }
+
+    private List<MatchHistoryDTO> fetchFavoriteChampionMatches(String gameName, String tagLine) {
+        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+        List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 30);
+        List<MatchHistoryDTO> matchList = new ArrayList<>();
+
+        for (String matchId : matchIds) {
+            try {
+                RiotMatchInfoDTO matchInfo = riotApiService.getMatchInfo(matchId);
+                RiotParticipantDTO participant = matchInfo.getParticipantByPuuid(puuid);
+                if (participant == null) continue;
+
+                int cs = participant.getTotalMinionsKilled() + participant.getNeutralMinionsKilled();
+                double csPerMin = cs / (matchInfo.getGameDurationSeconds() / 60.0);
+                int teamId = participant.getTeamId();
+                int teamTotalKills = MatchHelper.getTeamTotalKills(matchInfo.getParticipants(), teamId);
+
+                MatchHistoryDTO dto = MatchHistoryDTO.builder()
+                        .matchId(matchId)
+                        .championName(participant.getChampionName())
+                        .kills(participant.getKills())
+                        .deaths(participant.getDeaths())
+                        .assists(participant.getAssists())
+                        .cs(cs)
+                        .csPerMin(csPerMin)
+                        .win(participant.isWin())
+                        .queueType(matchInfo.getQueueId())
+                        .gameEndTimestamp(
+                                Instant.ofEpochMilli(matchInfo.getGameEndTimestamp())
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDateTime())
+                        .killParticipation(MatchHelper.calculateKillParticipation(
+                                participant.getKills(), participant.getAssists(), teamTotalKills))
+                        .build();
+
+                matchList.add(dto);
+            } catch (Exception e) {
+                log.warn("[favorite] 매치 분석 실패: " + matchId);
+            }
+        }
+
+        return matchList;
+    }
+
+
+
+
     @Override
-    public void testSave(String gameName, String tagLine) {
+    public void testSave(String gameName, String tagLine, String tier) {
         // Riot API로 puuid 가져오기
         String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
 
@@ -583,7 +678,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 MatchDetailDTO matchDetail = riotApiService.getMatchDetailFromRiot(matchId, puuid);
 
                 // match_summary 저장
-                MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(matchDetail, puuid);
+                MatchSummaryEntity summary = MatchSummaryEntity.fromDetailDTO(matchDetail, puuid, tier);
                 if (summary == null) {
                     System.err.println("summary == null, puuid 못 찾음 - matchId: " + matchId);
                     continue;
@@ -602,35 +697,36 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
                 List<MatchPlayerDTO> playerList = MatchPlayerDTO.fromRiotParticipantList(matchDetail.getParticipants(), matchId,durationSec,
                         endTime, gameMode, queueType);
-                fillMissingTier(playerList);
 
                 for (MatchPlayerDTO player : playerList) {
                     MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
                     matchPlayerRepository.save(entity);
                 }
-
-                Thread.sleep(1200); // 키 제한..
             } catch (Exception e) {
                 log.error("매치 저장 오류 : " + matchId, e);
             }
         }
-        System.out.println("match 저장 끝남");
+        System.out.println("match-player 저장");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
-        List<MatchSummaryEntity> summaryList = matchSummaryRepository.findByPuuid(puuid);
+//        List<MatchSummaryEntity> summaryList = matchSummaryRepository.findByPuuid(puuid);
+//
+//        List<MatchHistoryDTO> matchList = summaryList.stream()
+//                .map(summary -> {
+//                    List<MatchPlayerEntity> players = matchPlayerRepository.findByMatchId(summary.getMatchId());
+//                    List<MatchPlayerDTO> playerDTOs = players.stream()
+//                            .map(MatchPlayerDTO::fromEntity)
+//                            .toList();
+//                    return MatchHistoryDTO.fromEntities(summary, playerDTOs, imageService);
+//                })
+//                .toList();
 
-        List<MatchHistoryDTO> matchList = summaryList.stream()
-                .map(summary -> {
-                    List<MatchPlayerEntity> players = matchPlayerRepository.findByMatchId(summary.getMatchId());
-                    List<MatchPlayerDTO> playerDTOs = players.stream()
-                            .map(MatchPlayerDTO::fromEntity)
-                            .toList();
-                    return MatchHistoryDTO.fromEntities(summary, playerDTOs, imageService);
-                })
-                .toList();
-
-        List<String> matchIdsForFavorite = riotApiService.getRecentMatchIds(puuid, 60);
+        List<String> matchIdsForFavorite = riotApiService.getRecentMatchIds(puuid, 30);
         List<MatchHistoryDTO> matchListForFavorite = new ArrayList<>();
-
 
         for (String matchId : matchIdsForFavorite) {
             try {
@@ -670,12 +766,22 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
             }
         }
 
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         System.out.println("calculateFavoriteChampions 호출 전");
         // favorite 챔피언 계산 및 저장
         List<FavoriteChampionDTO> dtoList = calculateFavoriteChampions(matchListForFavorite, "all", puuid);
         System.out.println("FavoriteChampionDTO 결과 dtoList = " + dtoList);
         saveFavoriteChampions(puuid, dtoList);
 
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         // overall summary 계산 및 저장
         Optional<RiotIdCacheEntity> riotIdOpt = riotIdCacheRepository.findByPuuid(puuid);
         if (riotIdOpt.isPresent()) {
@@ -684,8 +790,54 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         } else {
             log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
         }
-
-
+//        Optional<RiotIdCacheEntity> riotIdOpt = riotIdCacheRepository.findByPuuid(puuid);
+//        if (riotIdOpt.isPresent()) {
+//            RiotIdCacheEntity riotId = riotIdOpt.get();
+//            List<MatchSummaryEntity> summaries = matchSummaryRepository.findByPuuid(puuid);
+//
+//            int wins = 0;
+//            double kills = 0, deaths = 0, assists = 0;
+//            Map<String, Integer> positionMap = new HashMap<>();
+//
+//            for (MatchSummaryEntity summary : summaries) {
+//                if (summary.isWin()) wins++;
+//
+//                kills += summary.getKills();
+//                deaths += summary.getDeaths();
+//                assists += summary.getAssists();
+//
+//                String pos = summary.getTeamPosition();
+//                if (pos != null) {
+//                    positionMap.put(pos, positionMap.getOrDefault(pos, 0) + 1);
+//                }
+//            }
+//
+//            double winRate = summaries.isEmpty() ? 0.0 : wins * 100.0 / summaries.size();
+//            double kda = deaths == 0 ? kills + assists : (kills + assists) / deaths;
+//
+//            String preferredPosition = positionMap.entrySet().stream()
+//                    .max(Map.Entry.comparingByValue())
+//                    .map(Map.Entry::getKey)
+//                    .orElse("UNKNOWN");
+//
+//            MatchOverallSummaryEntity entity = MatchOverallSummaryEntity.builder()
+//                    .puuid(puuid)
+//                    .gameName(riotId.getGameName())
+//                    .tagLine(riotId.getTagLine())
+//                    .tier(tier)
+//                    .totalMatches(summaries.size())
+//                    .totalWins(wins)
+//                    .winRate(winRate)
+//                    .averageKda(kda)
+//                    .preferredPosition(preferredPosition)
+//                    .createdAt(LocalDateTime.now())
+//                    .build();
+//
+//            matchOverallSummaryRepository.save(entity);
+//
+//        } else {
+//            log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
+//        }
     }
 
     private void fillMissingTier(List<MatchPlayerDTO> playerList) {
@@ -696,21 +848,40 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
             if (visited.contains(puuid)) continue;
             visited.add(puuid);
-
-            if (player.getTier() == null || player.getTier().isBlank()) {
-                try {
-                    String tier = riotApiService.getTierByPuuid(puuid);
-                    player.setTier(tier);
-                    Thread.sleep(150); // 키...
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (Exception e) {
-                    log.warn("티어 조회 실패: {}", puuid, e);
-                }
-            }
+//
+//            if (player.getTier() == null || player.getTier().isBlank()) {
+//                try {
+//                    String tier = riotApiService.getTierByPuuid(puuid);
+//                    player.setTier(tier);
+//                    Thread.sleep(150); // 키...
+//                } catch (InterruptedException e) {
+//                    Thread.currentThread().interrupt();
+//                } catch (Exception e) {
+//                    log.warn("티어 조회 실패: {}", puuid, e);
+//                }
+//            }
         }
 
     }
+//
+//    @Override
+//    public void saveOnlyOverallSummary(String gameName, String tagLine, String tier) {
+//        // puuid 조회
+//        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+//
+//        updateOverallSummary(puuid, gameName, tagLine);
+//
+//        // RiotIdCacheEntity 조회
+//        Optional<MatchOverallSummaryEntity> optional = matchOverallSummaryRepository.findByPuuid(puuid);
+//        if (optional.isPresent()) {
+//            MatchOverallSummaryEntity entity = optional.get();
+//            entity.setTier(tier);
+//            matchOverallSummaryRepository.save(entity);
+//            log.info("match_overall_summary 저장 후 티어 수동 덮어쓰기 완료: {}#{} [{}]", gameName, tagLine, tier);
+//        } else {
+//            log.warn("match_overall_summary not found for puuid: {}", puuid);
+//        }
+//    }
 
 
     @Override
@@ -719,7 +890,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
         int totalMatches = matchList.size();
         int totalWins = (int) matchList.stream().filter(MatchHistoryDTO::isWin).count();
-        double winRate = round((double) totalWins / totalMatches * 100.0, 1);
+        double winRate = round((double) totalWins / totalMatches * 100.0, 0);
         double avgKills = matchList.stream().mapToInt(MatchHistoryDTO::getKills).average().orElse(0);
         double avgDeaths = matchList.stream().mapToInt(MatchHistoryDTO::getDeaths).average().orElse(0);
         double avgAssists = matchList.stream().mapToInt(MatchHistoryDTO::getAssists).average().orElse(0);
@@ -791,6 +962,24 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .collect(Collectors.toList());
         favoriteChampionRepository.saveAll(entities);
     }
+
+
+
+    @Override
+    public void overwriteTier(String gameName, String tagLine, String tier) {
+        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
+
+        Optional<MatchOverallSummaryEntity> opt = matchOverallSummaryRepository.findByPuuid(puuid);
+        if (opt.isPresent()) {
+            MatchOverallSummaryEntity entity = opt.get();
+            entity.setTier(tier);
+            matchOverallSummaryRepository.save(entity);
+            log.info("티어 덮어쓰기 완료: {}#{} → {}", gameName, tagLine, tier);
+        } else {
+            log.warn("match_overall_summary 없음: {}#{}", gameName, tagLine);
+        }
+    }
+
 
 
 }

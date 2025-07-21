@@ -16,6 +16,7 @@ public class MatchOverallSummaryDTO {
     private String puuid;
     private String gameName;
     private String tagLine;
+    private String tier;
     private int totalMatches;
     private int totalWins;
     private int winCount;
@@ -32,5 +33,15 @@ public class MatchOverallSummaryDTO {
     private Map<String, Integer> championTotalGames;
     private Map<String, Integer> favoritePositions;
     private LocalDateTime createdAt;
+    private int loseCount;
+    private double killParticipation;
+
+
+
+    public int getLoseCount() {
+        return totalMatches - winCount;
+    }
+
+
 
 }

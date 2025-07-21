@@ -6,7 +6,6 @@ import com.plit.FO.matchHistory.service.MatchHelper;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -21,7 +20,6 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
 
     private String matchId;
     private String championName;
-    private int championLevel;
     private String tier;
     private String teamPosition;
 
@@ -59,11 +57,6 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private List<String> traitIds;
     private List<String> traitImageUrls;
 
-    private List<String> otherSummonerNames;
-
-    private List<String> otherProfileIconUrls;
-
-
     // 걸린 시간 (분)
     public int getGameDurationMinutes() {
         return gameDurationSeconds / 60;
@@ -93,7 +86,6 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .win(summary.isWin())
 
                 .championName(summary.getChampionName())
-                .championLevel(summary.getChampionLevel())
                 .championImageUrl(imageService.getImageUrl(summary.getChampionName(), "champion"))
 
                 .tier(summary.getTier())
@@ -108,27 +100,12 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .kdaRatio(kdaRatio)
 
                 .cs(cs)
-                .csPerMin(csPerMin)
+                .csPerMin(MatchHelper.round(csPerMin, 1))
                 .damageDealt(summary.getDamageDealt())
                 .damageTaken(summary.getDamageTaken())
-                .killParticipation(summary.getKillParticipation())
-
                 .gameDurationSeconds(duration)
 
-                .spell1ImageUrl(imageService.getImageUrl(summary.getSpell1Id() + ".png", "spell"))
-                .spell2ImageUrl(imageService.getImageUrl(summary.getSpell2Id() + ".png", "spell"))
-
-                .mainRune1Url(imageService.getImageUrl(summary.getMainRune1Id() + ".png", "rune"))
-                .mainRune2Url(imageService.getImageUrl(summary.getMainRune2Id() + ".png", "rune"))
-
                 .itemImageUrls(imageService.getItemImageUrls(summary.getItemIds())) // List<String>
-
-                .traitIds(MatchHelper.splitString(summary.getTraitIds()))
-                .traitImageUrls(imageService.getTraitImageUrls(MatchHelper.splitString(summary.getTraitIds())))
-
-                .otherSummonerNames(MatchHelper.splitString(summary.getOtherSummonerNames()))
-                .otherProfileIconUrls(imageService.getProfileIconUrls(MatchHelper.splitString(summary.getOtherProfileIconIds())))
-
                 .matchPlayers(players)
                 .build();
     }
