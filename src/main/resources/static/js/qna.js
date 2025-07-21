@@ -68,7 +68,7 @@ function previewQnaFile(input) {
         reader.onload = function (e) {
             const img = document.createElement("img");
             img.src = e.target.result;
-            img.className = "qna-write-preview-image";
+            img.className = "qna-preview-image";
             preview.appendChild(img);
         };
         reader.readAsDataURL(file);

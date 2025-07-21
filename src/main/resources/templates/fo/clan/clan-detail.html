@@ -118,7 +118,10 @@
                      th:classappend="${member.memberId == currentUserId} ? ' current-user'">
                     <!-- 소환사명 + 리더 왕관 -->
                     <div class="member-cell name">
-                        <strong th:text="${member.nickname}">닉네임</strong>
+                        <strong>
+                            <span th:text="${#strings.substringBefore(member.nickname, '#')}"></span>
+                            <span class="tag" th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}"></span>
+                        </strong>
                         <span th:if="${member.role == 'LEADER'}" class="leader-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 64 64"
                                  class="crown-icon" aria-label="리더 왕관">
@@ -270,7 +273,10 @@
                 <div class="member-row" th:each="member : ${pendingMembers}">
                     <!-- 소환사명 -->
                     <div class="member-cell name">
-                        <strong th:text="${member.nickname}">닉네임</strong>
+                        <strong>
+                            <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
+                            <span class="tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
+                        </strong>
                     </div>
 
                     <!-- 티어 -->
@@ -443,7 +449,11 @@
 
         <div class="member-info">
             <div class="nickname">
-                <strong th:text="${editMember != null} ? ${editMember.nickname} : '소환사명'">소환사명</strong>
+                <strong th:if="${editMember != null}">
+                    <span th:text="${#strings.substringBefore(editMember.nickname, '#')}"></span>
+                    <span class="light-tag" th:text="'#' + ${#strings.substringAfter(editMember.nickname, '#')}"></span>
+                </strong>
+                <strong th:unless="${editMember != null}">소환사명</strong>
             </div>
         </div>
 
@@ -608,7 +618,20 @@
         <!-- 닉네임 표시 -->
         <div class="member-info">
             <div class="nickname">
-                <strong th:text="${nickname}">내 닉네임</strong>
+                <div class="nickname">
+                    <strong>
+                        <th:block th:if="${nickname != null and #strings.contains(nickname, '#')}">
+                            <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
+                            <span class="light-tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
+                        </th:block>
+                        <th:block th:if="${nickname != null and !#strings.contains(nickname, '#')}">
+                            <span th:text="${nickname}"></span>
+                        </th:block>
+                        <th:block th:if="${nickname == null}">
+                            <span>내 닉네임</span>
+                        </th:block>
+                    </strong>
+                </div>
             </div>
         </div>
 

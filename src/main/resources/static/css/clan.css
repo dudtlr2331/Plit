@@ -906,3 +906,17 @@ textarea#memberIntro:focus {
     font-size: 16px;
     font-weight: 500;
 }
+
+.tag {
+    color: #999;
+    font-weight: normal;
+    margin-left: 2px;
+    font-size: 13px;
+}
+
+.light-tag {
+    color: #bbb;
+    font-size: 16px;
+    font-weight: normal;
+    margin-left: 2px;
+}
