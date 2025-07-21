@@ -349,6 +349,8 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 `;
 
                 Promise.all(approved.map(async m => {
+                    if (m.status !== 'ACCEPTED') return '';
+
                     const encodedId = encodeURIComponent(m.userId);
                     const res = await fetch(`/api/users/${encodedId}/relation-status`);
                     const relation = await res.json();
@@ -362,13 +364,16 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     const leaveBtn = (!isOwner && isCurrentUser && m.userId !== createdBy)
                         ? `<button onclick="leaveParty(${seq})">나가기</button>` : '';
 
+                    // 현재 사용자가 파티에 accepted 인지 확인
+                    const canInteract = isOwner || joinStatus === 'ACCEPTED';
+
                     // 친구신청 버튼 (이미 친구면 출력 안함)
-                    const friendBtn = (!isCurrentUser && !relation.isFriend)
+                    const friendBtn = (canInteract && !isCurrentUser && !relation.isFriend)
                         ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>`
                         : '';
 
                     // 차단 버튼 (이미 차단이면 출력 안함)
-                    const blockBtn = (!isCurrentUser && !relation.isBlocked)
+                    const blockBtn = (canInteract && !isCurrentUser && !relation.isBlocked)
                         ? `<button onclick="blockMember('${m.userId}')">차단</button>`
                         : '';
 
