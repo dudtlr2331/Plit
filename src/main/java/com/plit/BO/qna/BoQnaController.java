@@ -46,7 +46,7 @@ public class BoQnaController {
             UserDTO loginUser = userService.findByUserId(user.getUsername());
             if (loginUser == null) throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
 
-            if (!"admin".equals(loginUser.getUserAuth()) && !"master".equals(loginUser.getUserAuth())) {
+            if (!"ADMIN".equals(loginUser.getUserAuth()) && !"MASTER".equals(loginUser.getUserAuth())) {
                 return "redirect:/401";
             }
 
@@ -87,7 +87,7 @@ public class BoQnaController {
             UserDTO loginUser = userService.findByUserId(user.getUsername());
             if (loginUser == null) throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
 
-            if (!"admin".equals(loginUser.getUserAuth()) && !"master".equals(loginUser.getUserAuth())) {
+            if (!"ADMIN".equals(loginUser.getUserAuth()) && !"MASTER".equals(loginUser.getUserAuth())) {
                 return "redirect:/401";
             }
 
@@ -118,7 +118,7 @@ public class BoQnaController {
             UserDTO loginUser = userService.findByUserId(user.getUsername());
             if (loginUser == null) throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
 
-            if (!"admin".equals(loginUser.getUserAuth()) && !"master".equals(loginUser.getUserAuth())) {
+            if (!"ADMIN".equals(loginUser.getUserAuth()) && !"MASTER".equals(loginUser.getUserAuth())) {
                 return "redirect:/401";
             }
 
@@ -149,7 +149,7 @@ public class BoQnaController {
             UserDTO loginUser = userService.findByUserId(user.getUsername());
             if (loginUser == null) throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
 
-            if (!"admin".equals(loginUser.getUserAuth()) && !"master".equals(loginUser.getUserAuth())) {
+            if (!"ADMIN".equals(loginUser.getUserAuth()) && !"MASTER".equals(loginUser.getUserAuth())) {
                 return "redirect:/401";
             }
 
@@ -181,7 +181,7 @@ public class BoQnaController {
             UserDTO loginUser = userService.findByUserId(user.getUsername());
             if (loginUser == null) throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
 
-            if (!"admin".equals(loginUser.getUserAuth()) && !"master".equals(loginUser.getUserAuth())) {
+            if (!"ADMIN".equals(loginUser.getUserAuth()) && !"MASTER".equals(loginUser.getUserAuth())) {
                 return "redirect:/401";
             }
 
@@ -211,7 +211,7 @@ public class BoQnaController {
             UserDTO loginUser = userService.findByUserId(user.getUsername());
             if (loginUser == null) throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
 
-            if (!"admin".equals(loginUser.getUserAuth()) && !"master".equals(loginUser.getUserAuth())) {
+            if (!"ADMIN".equals(loginUser.getUserAuth()) && !"MASTER".equals(loginUser.getUserAuth())) {
                 return "redirect:/401";
             }
 

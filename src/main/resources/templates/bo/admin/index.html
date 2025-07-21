@@ -28,9 +28,9 @@
                 </td>
                 <td>
                     <select th:id="'auth-select-' + ${admin.userSeq}" class="form-select">
-                        <option value="USER" th:selected="${admin.userAuth == 'USER'}">user</option>
-                        <option value="admin" th:selected="${admin.userAuth == 'admin'}">admin</option>
-                        <option value="master" th:selected="${admin.userAuth == 'master'}">master</option>
+                        <option value="USER" th:selected="${admin.userAuth == 'USER'}">USER</option>
+                        <option value="ADMIN" th:selected="${admin.userAuth == 'ADMIN'}">ADMIN</option>
+                        <option value="MASTER" th:selected="${admin.userAuth == 'MASTER'}">MASTER</option>
                     </select>
                 </td>
                 <td>
@@ -45,7 +45,7 @@
         <script th:inline="javascript">
             /*<![CDATA[*/
             const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
-            if (userAuth !== "admin" && userAuth !== "master") {
+            if (userAuth !== "ADMIN" && userAuth !== "MASTER") {
                 alert("접근 권한이 없습니다.");
                 location.href = "/main";
             }

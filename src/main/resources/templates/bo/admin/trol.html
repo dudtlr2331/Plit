@@ -149,7 +149,7 @@
 
     <script th:inline="javascript">
         const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
-        if (userAuth !== "admin" && userAuth !== "master") {
+        if (userAuth !== "ADMIN" && userAuth !== "MASTER") {
             alert("접근 권한이 없습니다.");
             location.href = "/main";
         }
