@@ -110,6 +110,49 @@
   </div>
 </div>
 
+<div id="scrimJoinPopup" class="recruit-popup" style="display: none;">
+  <h3>내전 팀 신청</h3>
+
+  <form id="scrimJoinForm">
+    <label>팀원 정보 (5명)</label><br><br>
+
+    <div id="scrimJoinTeamInputs">
+      <!-- 아래 JS에서 자동 생성 -->
+    </div>
+
+    <label>팀 소개 메시지</label><br>
+    <textarea name="message" rows="3" cols="40" placeholder="우리 팀을 소개해주세요"></textarea><br><br>
+
+    <div class="popup-buttons">
+      <button type="button" onclick="submitScrimJoinRequest()">팀 신청</button>
+      <button type="button" onclick="closeScrimJoinPopup()">취소</button>
+    </div>
+  </form>
+</div>
+
+<div id="scrimCreatePopup" class="recruit-popup" style="display: none;">
+  <h3>내전 팀 모집하기</h3>
+
+  <label>파티 이름</label><br>
+  <input type="text" id="scrimPartyName" placeholder="예: 5:5 팀 내전"><br><br>
+
+  <label>종료일자</label><br>
+  <input type="datetime-local" id="scrimPartyEndTime"><br><br>
+
+  <label>메모</label><br>
+  <textarea id="scrimPartyMemo" rows="3" cols="40" placeholder="설명 메모"></textarea><br><br>
+
+  <label>팀원 정보 (5명)</label>
+  <div id="scrimCreateTeamInputs">
+    <!-- JavaScript로 동적으로 생성 -->
+  </div>
+
+  <div class="popup-buttons">
+    <button onclick="submitScrimCreateForm()">모집 시작</button>
+    <button onclick="closeScrimCreatePopup()">닫기</button>
+  </div>
+</div>
+
 <!-- JS 분리 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>

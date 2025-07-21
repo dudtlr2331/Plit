@@ -41,6 +41,8 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-crypto:6.3.0' // 암호화 해싱
 	implementation 'org.springframework.boot:spring-boot-starter-mail' // 메일
 
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+
 	// AWS SDK BOM (버전 통합 관리용)
 	implementation platform("software.amazon.awssdk:bom:2.25.6")
 

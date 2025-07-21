@@ -11,16 +11,23 @@ function sendCode() {
             'Content-Type': 'application/x-www-form-urlencoded',
             ...(csrfHeader && { [csrfHeader]: csrfToken })
         },
-        body: new URLSearchParams({ email })
+        body: new URLSearchParams({
+            email,
+            purpose: 'RESET_PASSWORD'
+        })
     })
-        .then(res => res.ok ? res.text() : Promise.reject("인증번호 전송 실패"))
+        .then(res => {
+            if (!res.ok) return res.text().then(msg => { throw new Error(msg); });
+            return res.text();
+        })
         .then(() => {
             document.getElementById('emailFinal').value = email;
             switchStep(2);
             startCooldown();
         })
-        .catch(alert);
+        .catch(err => alert(err.message)); // 정확한 서버 메시지 표시
 }
+
 
 function resendCode() {
     const email = document.getElementById('emailFinal').value.trim();
@@ -32,14 +39,22 @@ function resendCode() {
             'Content-Type': 'application/x-www-form-urlencoded',
             ...(csrfHeader && { [csrfHeader]: csrfToken })
         },
-        body: new URLSearchParams({ email })
+        body: new URLSearchParams({
+            email,
+            purpose: 'RESET_PASSWORD'
+        })
     })
+        .then(res => {
+            if (!res.ok) return res.text().then(msg => { throw new Error(msg); });
+            return res.text();
+        })
         .then(() => {
             alert("인증번호가 재전송되었습니다.");
             startCooldown();
         })
-        .catch(alert);
+        .catch(err => alert(err.message));
 }
+
 
 function verifyCode() {
     const email = document.getElementById('emailFinal').value.trim();

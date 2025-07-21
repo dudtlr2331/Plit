@@ -4,59 +4,60 @@
 <head>
     <meta charset="UTF-8">
     <title>문의 상세 보기</title>
-    <link rel="stylesheet" href="/css/qna.css" />
+    <link rel="stylesheet" href="/css/qna.css"/>
 </head>
 
 <body>
 <div th:replace="bo/admin/admin_layout :: layout(~{::content})">
-<div th:fragment="content">
-    <div class="container-fluid px-4">
-        <h1 class="mt-4">QnA 답변 보기</h1>
+    <div th:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">QnA 답변 보기</h1>
 
-        <!-- 문의 내용 카드 -->
-        <div class="card mt-4 mb-4">
-            <div class="card-header bg-primary text-white">
-                <strong th:text="${qna.title}">제목</strong>
+            <!-- 문의 내용 카드 -->
+            <div class="card mt-4 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <strong th:text="${qna.title}">제목</strong>
+                </div>
+                <div class="card-body">
+                    <p><strong>작성자:</strong>
+                        <span th:text="${qna.user != null ? qna.user.userId : '탈퇴회원'}">아이디</span> /
+                        <span th:text="${qna.user != null ? qna.user.userNickname : '탈퇴회원'}">닉네임</span>
+                    </p>
+
+                    <p><strong>첨부파일:</strong>
+                        <span th:if="${qna.fileName != null}">
+                        📎
+                    <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
+                       th:text="${qna.fileName}">첨부파일</a>
+                    <br/>
+                    <img th:if="${#strings.endsWith(qna.fileName.toLowerCase(), '.png') or
+                                  #strings.endsWith(qna.fileName.toLowerCase(), '.jpg') or
+                                  #strings.endsWith(qna.fileName.toLowerCase(), '.jpeg') or
+                                  #strings.endsWith(qna.fileName.toLowerCase(), '.gif')}"
+                         th:src="@{'/upload/qna/' + ${qna.fileName}}"
+                         alt="첨부 이미지 미리보기"
+                         class="qna-admin-preview-image"/>
+                    </span>
+                        <span th:if="${qna.fileName == null}">없음</span>
+                    </p>
+
+                    <p><strong>문의 내용:</strong></p>
+                    <p th:text="${qna.content}">내용</p>
+                </div>
             </div>
-            <div class="card-body">
-                <p><strong>작성자:</strong>
-                    <span th:text="${qna.user != null ? qna.user.userId : '탈퇴회원'}">아이디</span> /
-                    <span th:text="${qna.user != null ? qna.user.userNickname : '탈퇴회원'}">닉네임</span>
-                </p>
 
-                <p><strong>첨부파일:</strong>
-                    <span th:if="${qna.fileName != null}">
-        📎
-        <a th:href="@{/bo/admin/qna/download/{file}(file=${qna.fileName})}"
-           th:text="${qna.fileName}">첨부파일</a>
-        <br />
-        <img th:if="${#strings.endsWith(qna.fileName.toLowerCase(), '.png') or
-                     #strings.endsWith(qna.fileName.toLowerCase(), '.jpg') or
-                     #strings.endsWith(qna.fileName.toLowerCase(), '.jpeg') or
-                     #strings.endsWith(qna.fileName.toLowerCase(), '.gif')}"
-             th:src="@{'/upload/qna/' + ${qna.fileName}}"
-             alt="첨부 이미지 미리보기"
-             class="qna-admin-preview-image" />
-    </span>
-                    <span th:if="${qna.fileName == null}">없음</span>
-                </p>
-
-                <p><strong>문의 내용:</strong></p>
-                <p th:text="${qna.content}">내용</p>
+            <!-- 답변 내용 카드 -->
+            <div class="card mt-4 mb-4">
+                <div class="card-header bg-success text-white">
+                    <strong>답변 내용</strong>
+                </div>
+                <div class="card-body">
+                    <p th:text="${qna.answer != null ? qna.answer : '아직 답변이 작성되지 않았습니다.'}">답변 내용</p>
+                </div>
             </div>
+
+            <a th:href="@{/bo/admin/qna/list}" class="btn btn-secondary">목록으로</a>
         </div>
-
-        <!-- 답변 내용 카드 -->
-        <div class="card mt-4 mb-4">
-            <div class="card-header bg-success text-white">
-                <strong>답변 내용</strong>
-            </div>
-            <div class="card-body">
-                <p th:text="${qna.answer != null ? qna.answer : '아직 답변이 작성되지 않았습니다.'}">답변 내용</p>
-            </div>
-        </div>
-
-        <a th:href="@{/bo/admin/qna/list}" class="btn btn-secondary">목록으로</a>
     </div>
 </div>
 </body>

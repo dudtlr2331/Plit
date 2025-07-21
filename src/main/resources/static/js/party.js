@@ -192,7 +192,7 @@ function renderParties(data) {
             : party.positions.split(',').map(p => getPositionIconHTML(p.trim(), true)).join(' ');
 
         item.innerHTML = `
-            <span>${party.partySeq}</span>
+            <span>${party.partyType.toUpperCase()}</span>
             <span>
                 <a href="javascript:void(0)" class="party-detail-link"
                     data-seq="${party.partySeq}"
@@ -314,10 +314,14 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
             if (status === 'WAITING') {
                 if (currentUserId === createdBy) {
                     joinBtnHtml = `<p style="color: gray;"><strong>파티장은 참가 신청할 수 없습니다.</strong></p>`;
-                } else if (headcount >= max) {
+                } else if ((type === 'scrim' && headcount >= 10) || (type !== 'scrim' && headcount >= max)) {
                     joinBtnHtml = `<p style="color: red;"><strong>파티 인원이 모두 찼습니다.</strong></p>`;
                 } else if (joinStatus === 'NONE') {
-                    joinBtnHtml = `<button onclick="openJoinPopup(${seq})">참가하기</button>`;
+                    if (type === 'scrim') {
+                        joinBtnHtml = `<button onclick="openScrimJoinPopup(${seq})">팀 신청</button>`;
+                    } else {
+                        joinBtnHtml = `<button onclick="openJoinPopup(${seq})">참가하기</button>`;
+                    }
                 } else if (joinStatus === 'PENDING') {
                     joinBtnHtml = `<p style="color: orange;"><strong>참가 신청 중입니다.</strong></p>`;
                 } else if (joinStatus === 'ACCEPTED') {
@@ -376,14 +380,29 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                         : '<p>참가 멤버 없음</p>';
 
                     // pendingHtml은 기존처럼 바로 작성
-                    const pendingHtml = pending.length > 0
-                        ? `<ul>${pending.map(m => {
-                            const actions = isOwner ? `
-                    <button onclick="approveMember(${seq}, ${m.id})">수락</button>
-                    <button onclick="rejectMember(${seq}, ${m.id})">거절</button>` : '';
-                            return `<li>${m.userId} - ${m.message || ''} ${actions}</li>`;
-                        }).join('')}</ul>`
-                        : '<p>대기 중인 멤버 없음</p>';
+                    const grouped = {};  // message 기준으로 그룹핑
+                    pending.forEach(m => {
+                        const key = m.message || '기타';
+                        if (!grouped[key]) grouped[key] = [];
+                        grouped[key].push(m);
+                    });
+
+                    const pendingHtml = Object.entries(grouped).map(([message, members]) => {
+                        const ids = members.map(m => m.id); // 팀 멤버 ID들
+
+                        const memberList = members.map(m => `${m.userId}`).join(', ');
+                        const buttons = isOwner ? (
+                            type === 'scrim'
+                                ? `<button onclick="approveTeam(${seq}, [${ids.join(',')}])">수락</button>
+                           <button onclick="rejectTeam(${seq}, [${ids.join(',')}])">거절</button>`
+                                                : members.map(m => `
+                           <button onclick="approveMember(${seq}, ${m.id})">수락</button>
+                           <button onclick="rejectMember(${seq}, ${m.id})">거절</button>
+                        `).join('')
+                        ) : '';
+
+                        return `<li><strong>${message}</strong>: ${memberList} ${buttons}</li>`;
+                    }).join('');
 
                     // 파티장이면 수정/삭제 버튼
                     const ownerButtons = isOwner ? `
@@ -615,7 +634,17 @@ function closePartyDetail() {
 }
 
 function toggleRecruitPopup() {
-    openPartyFormPopup();
+    const activeTab = document.querySelector('.tab.active').id;
+
+    const partyType = activeTab === 'freeTab' ? 'team'
+        : activeTab === 'scrimTab' ? 'scrim'
+            : 'solo';
+
+    if (partyType === 'scrim') {
+        openScrimCreatePopup(); // 내전 전용 팝업 호출
+    } else {
+        openPartyFormPopup();   // 기존 솔로/자유랭크 팝업 호출
+    }
 }
 
 function handleEditFromDetail(partyJson) {
@@ -632,6 +661,11 @@ function openPartyFormPopup(party = null) {
     const popup = document.getElementById('recruitPopup');
     const isEdit = party !== null;
 
+    const activeTab = document.querySelector('.tab.active')?.id;
+    const fixedType = activeTab === 'freeTab' ? 'team'
+        : activeTab === 'scrimTab' ? 'scrim'
+            : 'solo'; // 기본값: solo
+
     popup.innerHTML = `
       <h3>${isEdit ? '파티 수정하기' : '새 파티 등록하기'}</h3>
       <div class="party-form">
@@ -640,12 +674,40 @@ function openPartyFormPopup(party = null) {
 
         <label>파티 이름: <input type="text" name="partyName" value="${party?.partyName ?? ''}" required></label><br>
 
-        <label>타입:
-          <select name="partyType" required>
-            <option value="solo" ${party?.partyType === 'solo' ? 'selected' : ''}>솔로랭크</option>
-            <option value="team" ${party?.partyType === 'team' ? 'selected' : ''}>자유랭크</option>
-          </select>
-        </label><br>
+        <div class="position-type-row">
+          <div class="party-type-selector">
+            <label>타입</label>
+            <div class="fixed-party-type" style="margin-top: 6px; font-weight: bold; color: black;">
+              ${party?.partyType === 'team' ? '자유랭크'
+                    : party?.partyType === 'scrim' ? '내전찾기'
+                        : party?.partyType === 'solo' ? '솔로랭크'
+                            : fixedType === 'team' ? '자유랭크'
+                                : fixedType === 'scrim' ? '내전찾기'
+                                    : '솔로랭크'}
+            </div>
+            <input type="hidden" name="partyType" value="${party?.partyType ?? fixedType}">
+          </div>
+        
+          <div class="main-position-selector-wrapper">
+            <label>주 포지션</label>
+            <div class="main-position-selector" id="mainPositionGroup">
+              ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].map(pos => {
+                const selected = party?.mainPosition === pos ? 'selected' : '';
+                return `
+                  <label class="${selected}" data-value="${pos}">
+                    ${getIcon(pos, true)}
+                    <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} />
+                  </label>
+                `;
+            }).join('')}
+            </div>
+          </div>
+        
+          <div class="position-group-wrapper">
+            <label>모집 포지션</label>
+            <div class="position-group" id="recruitPositionGroup"></div>
+          </div>
+        </div>
 
         ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
 
@@ -667,24 +729,6 @@ function openPartyFormPopup(party = null) {
     }
 
         <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
-
-        <label>주 포지션:<br/>
-          <div class="main-position-selector" id="mainPositionGroup">
-            ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].map(pos => {
-        const selected = party?.mainPosition === pos ? 'selected' : '';
-        return `
-                <label class="${selected}" data-value="${pos}">
-                  ${getIcon(pos, true)}
-                  <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} />
-                </label>
-              `;
-    }).join('')}
-          </div>
-        </label><br/>
-
-        <label>모집 포지션:<br/>
-          <div class="position-group" id="recruitPositionGroup"></div>
-        </label><br>
 
         <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
         <button type="button" onclick="closePartyPopup()">닫기</button>
@@ -764,6 +808,43 @@ function openPartyFormPopup(party = null) {
         });
     });
 
+    // 주 포지션을 바꿀 때 모집 포지션 중 동일 포지션은 선택 못하게 막기
+    mainGroup.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const selected = radio.value;
+
+            popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
+                if (chk.value === selected) {
+                    chk.checked = false;
+                    chk.disabled = true;
+                    chk.closest('label')?.classList.remove('selected');
+                } else {
+                    chk.disabled = false;
+                }
+            });
+        });
+    });
+
+// 모집 포지션 체크 시, 주 포지션과 동일하면 막기
+    popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', () => {
+            const selectedMain = popup.querySelector('.main-position-selector label.selected input')?.value;
+            if (chk.checked && chk.value === selectedMain) {
+                alert("주 포지션과 같은 포지션은 모집할 수 없습니다.");
+                chk.checked = false;
+            }
+        });
+    });
+
+    const mainSelected = popup.querySelector('.main-position-selector label.selected input')?.value;
+    popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
+        if (chk.value === mainSelected) {
+            chk.checked = false;
+            chk.disabled = true;
+            chk.closest('label')?.classList.remove('selected');
+        }
+    });
+
     setMinEndTime();
     updatePartyHeadcountFromSelection(popup);
 }
@@ -819,6 +900,12 @@ function submitPartyForm() {
 
     if (positions.length === 0) {
         alert("모집 포지션을 하나 이상 선택해주세요.");
+        return;
+    }
+
+    // 주 포지션과 모집 포지션이 겹치면 막기
+    if (positions.includes(mainPosition)) {
+        alert("주 포지션과 같은 포지션은 모집할 수 없습니다.");
         return;
     }
 
@@ -951,5 +1038,183 @@ function blockMember(targetUserId) {
         .then(res => {
             if (res.ok) alert("차단되었습니다.");
             else alert("차단에 실패했습니다.");
+        });
+}
+
+/* 내전찾기 팀 수락 */
+function approveTeam(partyId, memberIds) {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${partyId}/members/approve-team`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({ memberIds })
+    })
+        .then(res => {
+            if (res.ok) {
+                alert('팀 수락 완료');
+                closePartyDetail();
+                loadParties('scrim');
+            } else {
+                res.text().then(msg => alert('수락 실패: ' + msg));
+            }
+        });
+}
+
+/* 내전 팀 찾기 */
+function openScrimJoinPopup(partyId) {
+    selectedPartyId = partyId;
+    const popup = document.getElementById('scrimJoinPopup');
+    const container = document.getElementById('scrimJoinTeamInputs');
+    container.innerHTML = '';
+
+    const positions = ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'];
+    for (let i = 0; i < 5; i++) {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" name="nickname" placeholder="닉네임 ${i + 1}" required>
+            <select name="position">
+                ${positions.map(pos => `<option value="${pos}">${pos}</option>`).join('')}
+            </select><br><br>
+        `;
+        container.appendChild(div);
+    }
+
+    popup.style.display = 'block';
+}
+
+function closeScrimJoinPopup() {
+    document.getElementById('scrimJoinPopup').style.display = 'none';
+}
+
+
+/* 내전 팀 신청 요청 */
+function submitScrimJoinRequest() {
+    const form = document.getElementById('scrimJoinForm');
+    const nicknames = form.querySelectorAll('input[name="nickname"]');
+    const positions = form.querySelectorAll('select[name="position"]');
+    const message = form.querySelector('textarea[name="message"]').value.trim();
+
+    const teamMembers = [];
+
+    for (let i = 0; i < 5; i++) {
+        const userId = nicknames[i].value.trim();
+        const position = positions[i].value;
+
+        if (!userId) {
+            alert(`닉네임 ${i + 1}을 입력해주세요.`);
+            return;
+        }
+
+        teamMembers.push({ userId, position });
+    }
+
+    const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
+    fetch(`/api/parties/${selectedPartyId}/scrim-join`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({ message, teamMembers })
+    })
+        .then(res => res.text())
+        .then(text => {
+            if (text === 'OK') {
+                alert('신청 완료!');
+                closeScrimJoinPopup();
+                closePartyDetail();
+                loadParties('scrim');
+            } else {
+                alert("신청 실패: " + text);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("신청 중 오류 발생");
+        });
+}
+
+function openScrimCreatePopup() {
+    const popup = document.getElementById('scrimCreatePopup');
+    const container = document.getElementById('scrimCreateTeamInputs');
+    container.innerHTML = ''; // 초기화
+
+    const positions = ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'];
+
+    for (let i = 0; i < 5; i++) {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="text" name="nickname" placeholder="닉네임 ${i + 1}" required>
+            <select name="position">
+                ${positions.map(pos => `<option value="${pos}">${pos}</option>`).join('')}
+            </select><br><br>
+        `;
+        container.appendChild(div);
+    }
+
+    popup.style.display = 'block';
+}
+
+function closeScrimCreatePopup() {
+    document.getElementById('scrimCreatePopup').style.display = 'none';
+}
+
+function submitScrimCreateForm() {
+    const name = document.getElementById('scrimPartyName').value.trim();
+    const endTime = document.getElementById('scrimPartyEndTime').value;
+    const memo = document.getElementById('scrimPartyMemo').value.trim();
+
+    const nicknames = document.querySelectorAll('#scrimCreateTeamInputs input[name="nickname"]');
+    const positions = document.querySelectorAll('#scrimCreateTeamInputs select[name="position"]');
+
+    if (!name) return alert("파티 이름을 입력해주세요.");
+    if (!endTime) return alert("종료일자를 입력해주세요.");
+
+    const teamMembers = [];
+    for (let i = 0; i < 5; i++) {
+        const userId = nicknames[i].value.trim();
+        const position = positions[i].value;
+
+        if (!userId) return alert(`${i + 1}번 팀원의 닉네임을 입력해주세요.`);
+
+        teamMembers.push({ userId, position });
+    }
+
+    const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
+    fetch('/api/parties/scrim-create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({
+            partyName: name,
+            partyEndTime: endTime,
+            memo,
+            teamMembers
+        })
+    })
+        .then(res => res.text())
+        .then(text => {
+            if (text === 'OK') {
+                alert('내전 파티가 성공적으로 생성되었습니다!');
+                closeScrimCreatePopup();
+                loadParties('scrim');
+            } else {
+                alert('생성 실패: ' + text);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('서버 오류로 생성 실패');
         });
 }

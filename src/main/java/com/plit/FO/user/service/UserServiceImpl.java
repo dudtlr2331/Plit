@@ -3,6 +3,7 @@ package com.plit.FO.user.service;
 import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.enums.EmailVerificationPurpose;
 import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -37,30 +40,43 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     private String riotApiKey;
 
     private final RestTemplate restTemplate;
-    private final JavaMailSender   mailSender;
-    private final UserRepository   userRepository;
-    private final PasswordEncoder  passwordEncoder;
-    private final Map<String, Long>   emailSendTimeMap = new ConcurrentHashMap<>();
-    private final Map<String, String> emailCodeMap     = new ConcurrentHashMap<>();
+    private final JavaMailSender mailSender;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final Map<String, String> emailCodeMap = new ConcurrentHashMap<>();
+    private final Map<String, Long> emailSendTimeMap = new ConcurrentHashMap<>();
+    private final Set<String> verifiedSignupEmails = ConcurrentHashMap.newKeySet();
 
     /* ---------- 인증 ---------- */
 
-    @Override
-    public String sendEmailCode(String email) {
-        long now      = System.currentTimeMillis();
-        long lastTime = emailSendTimeMap.getOrDefault(email, 0L);
+    private String getKey(String email, EmailVerificationPurpose purpose) {
+        return email + ":" + purpose.name();
+    }
 
+    @Override
+    public String sendEmailCode(String email, EmailVerificationPurpose purpose) {
+        String key = getKey(email, purpose);
+        long now = System.currentTimeMillis();
+        long lastTime = emailSendTimeMap.getOrDefault(key, 0L);
+
+        // ✅ 인증번호 요청 제한 (3분)
         if (now - lastTime < 3 * 60 * 1000) {
             throw new IllegalStateException("인증번호는 3분 후에 다시 요청할 수 있습니다.");
         }
 
+        // ✅ RESET_PASSWORD 요청 시 가입 여부 확인
+        if (purpose == EmailVerificationPurpose.RESET_PASSWORD &&
+                !userRepository.existsByUserId(email)) {
+            throw new IllegalArgumentException("가입되지 않은 이메일입니다.");
+        }
+
         String code = generateCode();
-        emailCodeMap.put(email, code);
-        emailSendTimeMap.put(email, now);
+        emailCodeMap.put(key, code);
+        emailSendTimeMap.put(key, now);
 
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(email);
-        msg.setSubject("회원가입 인증번호");
+        msg.setSubject("[" + purpose.name() + "] 인증번호");
         msg.setText("인증번호: " + code + "\n\n(유효시간 3분)");
         msg.setFrom("noreply@fo.com");
 
@@ -68,13 +84,22 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return code;
     }
 
+
     @Override
-    public boolean verifyEmailCode(String email, String inputCode) {
-        String saved  = emailCodeMap.get(email);
-        Long   sentAt = emailSendTimeMap.get(email);
+    public boolean verifyEmailCode(String email, String inputCode, EmailVerificationPurpose purpose) {
+        String key = getKey(email, purpose);
+        String saved = emailCodeMap.get(key);
+        Long sentAt = emailSendTimeMap.get(key);
+
         if (saved == null || sentAt == null) return false;
         if (System.currentTimeMillis() - sentAt > 3 * 60 * 1000) return false;
-        return saved.equals(inputCode);
+
+        boolean matched = saved.equals(inputCode);
+        if (matched && purpose == EmailVerificationPurpose.SIGNUP) {
+            verifiedSignupEmails.add(email);
+        }
+
+        return matched;
     }
 
     /* ---------- 로그인 / 가입 ---------- */
@@ -90,6 +115,10 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Override
     @Transactional
     public UserDTO registerUser(UserDTO dto) {
+        if (!verifiedSignupEmails.contains(dto.getUserId())) {
+            throw new IllegalArgumentException("회원가입을 위해 이메일 인증을 먼저 완료해주세요.");
+        }
+
         if (userRepository.existsByUserId(dto.getUserId()))
             throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
 
@@ -100,13 +129,15 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         do { nickname = generateRandomNickname(); }
         while (userRepository.existsByUserNickname(nickname));
 
+        verifiedSignupEmails.remove(dto.getUserId());
+
         UserEntity saved = userRepository.save(UserEntity.builder()
                 .userId(dto.getUserId())
                 .userPwd(passwordEncoder.encode(dto.getUserPwd()))
                 .userNickname(nickname)
                 .useYn("Y")
                 .isBanned(false)
-                .userAuth("user")
+                .userAuth("USER")
                 .userCreateDate(LocalDate.now())
                 .build());
 
@@ -148,7 +179,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return userRepository.findByUserId(userId).map(this::toDTO);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Optional<UserDTO> getUserBySeq(Integer userSeq) {
@@ -164,7 +194,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     public UserDTO findByUserSeq(Integer userSeq) {
         return userRepository.findByUserSeq(userSeq)
-                .map(UserEntity::toDTO)  // UserEntity에 toDTO 메서드가 있다면 바로 변환
+                .map(UserEntity::toDTO)
                 .orElse(null);
     }
 
@@ -221,7 +251,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         user.setUserModiDate(LocalDate.now());
         userRepository.save(user);
     }
-
 
     @Override
     public void updateUserStatus(Integer userSeq, String action) {
@@ -280,9 +309,8 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         UserEntity user = userOpt.get();
         String encoded = passwordEncoder.encode(newPwd);
         user.setUserPwd(encoded);
-        userRepository.save(user); // JPA가 update 처리
+        userRepository.save(user);
     }
-
 
     /* ---------- 검색 ---------- */
 
@@ -296,7 +324,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     /* ---------- 내부 유틸 ---------- */
 
-    /** 비밀번호 규칙 검사 */
     private boolean isValid(String pw, String email) {
         if (pw.length() < 8) return false;
         int score = (pw.matches(".*[a-zA-Z].*") ? 1 : 0)
@@ -306,7 +333,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return score >= 2 && !pw.contains(idPart);
     }
 
-    /** 닉네임 자동 생성 */
     private String generateRandomNickname() {
         String[] adj  = {"암흑의","불꽃의","서리 내린","고요한","광기의","신속한","잊혀진","밤하늘의","차원의","황혼의"};
         String[] noun = {"탈리아","야스오","제드","아리","이렐리아","카타리나","아칼리","모르가나","카직스","에코","브랜드","릴리아","세라핀","샤코","피들스틱"};
@@ -314,12 +340,10 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return adj[r.nextInt(adj.length)] + noun[r.nextInt(noun.length)] + r.nextInt(1000, 10000);
     }
 
-    /** 인증번호 6자리 생성 */
     private String generateCode() {
         return "%06d".formatted(ThreadLocalRandom.current().nextInt(1_000_000));
     }
 
-    /** Entity → DTO */
     private UserDTO toDTO(UserEntity e) {
         return UserDTO.builder()
                 .userSeq(e.getUserSeq())
@@ -335,40 +359,88 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                 .build();
     }
 
-    /// 카카오 로그인
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String provider = userRequest.getClientRegistration().getRegistrationId(); // "kakao"
+        String provider = userRequest.getClientRegistration().getRegistrationId();
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         if ("kakao".equals(provider)) {
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
 
-            String email = (String) kakaoAccount.get("email"); // ← 여기서 email 추출
+            String email = (String) kakaoAccount.get("email");
             String nickname = (String) profile.get("nickname");
 
             if (email == null) {
                 throw new OAuth2AuthenticationException("카카오 계정에 이메일이 존재하지 않습니다.");
             }
 
-            // DB 저장 (신규 유저인 경우만)
             processOAuthPostLogin(email, nickname);
 
-            // attributes에 email을 명시적으로 추가
             Map<String, Object> enrichedAttributes = new HashMap<>(attributes);
             enrichedAttributes.put("email", email);
 
             return new DefaultOAuth2User(
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                     enrichedAttributes,
-                    "email" // 이제 여기서 email key가 확실히 존재
+                    "email"
             );
         }
 
         throw new OAuth2AuthenticationException("지원하지 않는 OAuth2 공급자입니다: " + provider);
+    }
+
+    private void processOAuthPostLogin(String email, String unusedNicknameFromKakao) {
+        userRepository.findByUserId(email)
+                .orElseGet(() -> {
+                    String nickname;
+                    do {
+                        nickname = generateRandomNickname();
+                    } while (userRepository.existsByUserNickname(nickname));
+
+                    return userRepository.save(
+                            UserEntity.builder()
+                                    .userId(email)
+                                    .userPwd(passwordEncoder.encode(UUID.randomUUID().toString()))
+                                    .userNickname(nickname)
+                                    .useYn("Y")
+                                    .isBanned(false)
+                                    .userAuth("USER")
+                                    .userCreateDate(LocalDate.now())
+                                    .build()
+                    );
+                });
+    }
+
+    @Override
+    @Transactional
+    public boolean verifyAndSaveSummoner(String userId, String summonerName, String tagLine) {
+        RiotAccountResponse response = getAccountByRiotId(summonerName, tagLine);
+        if (response == null) return false;
+
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        String gameName = response.getGameName();
+        String tag = response.getTagLine();
+        String nicknameCandidate = gameName + "#" + tag;
+
+        boolean nicknameUpdated = false;
+
+        if (!userRepository.existsByUserNickname(nicknameCandidate)) {
+            user.setUserNickname(nicknameCandidate);
+            nicknameUpdated = true;
+        }
+
+        user.setRiotGameName(gameName);
+        user.setRiotTagLine(tag);
+        user.setPuuid(response.getPuuid());
+        user.setUserModiDate(LocalDate.now());
+
+        userRepository.save(user);
+        return nicknameUpdated;
     }
 
     @Override
@@ -400,58 +472,26 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     }
 
 
-    /** OAuth2 로그인 후 신규 사용자 처리 */
-    private void processOAuthPostLogin(String email, String unusedNicknameFromKakao) {
-        userRepository.findByUserId(email)
-                .orElseGet(() -> {
-                    String nickname;
-                    do {
-                        nickname = generateRandomNickname();
-                    } while (userRepository.existsByUserNickname(nickname));
-
-                    return userRepository.save(
-                            UserEntity.builder()
-                                    .userId(email)
-                                    .userPwd(passwordEncoder.encode(UUID.randomUUID().toString()))
-                                    .userNickname(nickname)
-                                    .useYn("Y")
-                                    .isBanned(false)
-                                    .userAuth("user")
-                                    .userCreateDate(LocalDate.now())
-                                    .build()
-                    );
-                });
-    }
-
-    @Override
-    @Transactional
-    public boolean verifyAndSaveSummoner(String userId, String summonerName, String tagLine) {
-        RiotAccountResponse response = getAccountByRiotId(summonerName, tagLine);
-        if (response == null) return false;
-
-        UserEntity user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        user.setRiotGameName(response.getGameName());
-        user.setRiotTagLine(response.getTagLine());
-        user.setPuuid(response.getPuuid());
-        user.setUserModiDate(LocalDate.now());
-
-        userRepository.save(user);
-        return true;
-    }
-
     @Override
     @Transactional
     public void deleteSummonerInfo(String userId) {
         UserEntity user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
         user.setRiotGameName(null);
         user.setRiotTagLine(null);
         user.setPuuid(null);
+
+        // ✅ 랜덤 닉네임 재부여
+        String newNickname;
+        do {
+            newNickname = generateRandomNickname();
+        } while (userRepository.existsByUserNickname(newNickname));
+
+        user.setUserNickname(newNickname);
         user.setUserModiDate(LocalDate.now());
+
         userRepository.save(user);
     }
-
 
 }

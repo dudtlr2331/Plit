@@ -3,6 +3,7 @@ package com.plit.FO.user.service;
 import com.plit.FO.matchHistory.dto.riot.RiotAccountResponse;
 import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.entity.UserEntity;
+import com.plit.FO.user.enums.EmailVerificationPurpose;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,8 +11,9 @@ import java.util.Optional;
 public interface UserService {
 
     /* ---------- 인증 ---------- */
-    String sendEmailCode(String email);
-    boolean verifyEmailCode(String email, String inputCode);
+    String sendEmailCode(String email, EmailVerificationPurpose purpose);
+    boolean verifyEmailCode(String email, String inputCode, EmailVerificationPurpose purpose);
+
 
     /* ---------- 로그인 / 가입 ---------- */
     Optional<UserDTO> loginUser(String userId, String rawPassword);
