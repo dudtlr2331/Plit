@@ -20,6 +20,7 @@ public class PartyMemberDTO {
     private MemberStatus status;
     private String position;
     private Integer userSeq;
+    private String userNickname;
 
     public PartyMemberDTO(PartyMemberEntity entity, Integer userSeq) {
         this.id = entity.getId();
@@ -30,5 +31,17 @@ public class PartyMemberDTO {
         this.status = entity.getStatus();
         this.position = entity.getPosition();
         this.userSeq = userSeq;
+    }
+
+    public PartyMemberDTO(PartyMemberEntity entity, Integer userSeq, String userNickname) {
+        this.id = entity.getId();
+        this.userId = entity.getUserId();
+        this.joinTime = entity.getJoinTime();
+        this.role = entity.getRole();
+        this.message = entity.getMessage();
+        this.status = entity.getStatus();
+        this.position = entity.getPosition();
+        this.userSeq = userSeq;
+        this.userNickname = userNickname;
     }
 }

@@ -361,10 +361,12 @@ public class PartyServiceImpl implements PartyService {
 
         return partyMemberRepository.findByParty(party).stream()
                 .map(member -> {
-                    Integer userSeq = userRepository.findByUserNickname(member.getUserId())
-                            .map(user -> user.getUserSeq())
-                            .orElse(null); // 없으면 null로 설정
-                    return new PartyMemberDTO(member, userSeq);
+                    Optional<UserEntity> userOpt = userRepository.findByUserId(member.getUserId());
+
+                    Integer userSeq = userOpt.map(UserEntity::getUserSeq).orElse(null);
+                    String nickname = userOpt.map(UserEntity::getUserNickname).orElse("알 수 없음");
+
+                    return new PartyMemberDTO(member, userSeq, nickname);
                 })
                 .collect(Collectors.toList());
     }

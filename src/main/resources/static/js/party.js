@@ -182,16 +182,32 @@ function renderParties(data) {
         return;
     }
 
-    data.forEach(party => {
-        const item = document.createElement('div');
-        item.className = 'recruit-item';
+    // 각 파티의 join-status를 모두 요청
+    const statusPromises = data.map(party =>
+        fetch(`/api/parties/${party.partySeq}/join-status`)
+            .then(res => res.ok ? res.text() : 'NONE') // 실패하면 기본값
+            .catch(() => 'NONE')
+    );
 
-        const mainIcon = getPositionIconHTML(party.mainPosition, true);
-        const recruitIcons = Array.isArray(party.positions)
-            ? party.positions.map(p => getPositionIconHTML(p, true)).join(' ')
-            : party.positions.split(',').map(p => getPositionIconHTML(p.trim(), true)).join(' ');
+    Promise.all(statusPromises).then(statusList => {
+        data.forEach((party, idx) => {
+            const joinStatus = statusList[idx];
+            const canChat = (joinStatus === 'ACCEPTED');
 
-        item.innerHTML = `
+            const item = document.createElement('div');
+            item.className = 'recruit-item';
+
+            const mainIcon = getPositionIconHTML(party.mainPosition, true);
+            const recruitIcons = Array.isArray(party.positions)
+                ? party.positions.map(p => getPositionIconHTML(p, true)).join(' ')
+                : party.positions.split(',').map(p => getPositionIconHTML(p.trim(), true)).join(' ');
+
+            // chat-icon 부분을 조건부로 처리
+            const chatIconHtml = canChat
+                ? `<span class="chat-icon" onclick="openPartyChat(${party.partySeq})">💬</span>`
+                : '';
+
+            item.innerHTML = `
             <span>${party.partyType.toUpperCase()}</span>
             <span>
                 <a href="javascript:void(0)" class="party-detail-link"
@@ -212,28 +228,29 @@ function renderParties(data) {
             <span>${translateStatus(party.partyStatus)}</span>
             <span title="주 포지션">${mainIcon}</span>
             <span title="모집 포지션">${recruitIcons}</span>
-            <span class="chat-icon" onclick="openPartyChat(${party.partySeq})">💬</span>
+            <span>${chatIconHtml}</span>
         `;
 
-        list.appendChild(item);
-    });
+            list.appendChild(item);
+        });
 
-    document.querySelectorAll('.party-detail-link').forEach(el => {
-        el.addEventListener('click', () => {
-            showPartyDetail(
-                el.dataset.seq,
-                el.dataset.name,
-                el.dataset.type,
-                el.dataset.created,
-                el.dataset.end,
-                el.dataset.status,
-                el.dataset.headcount,
-                el.dataset.max,
-                el.dataset.memo,
-                el.dataset.main,
-                el.dataset.positions,
-                el.dataset.createdby
-            );
+        document.querySelectorAll('.party-detail-link').forEach(el => {
+            el.addEventListener('click', () => {
+                showPartyDetail(
+                    el.dataset.seq,
+                    el.dataset.name,
+                    el.dataset.type,
+                    el.dataset.created,
+                    el.dataset.end,
+                    el.dataset.status,
+                    el.dataset.headcount,
+                    el.dataset.max,
+                    el.dataset.memo,
+                    el.dataset.main,
+                    el.dataset.positions,
+                    el.dataset.createdby
+                );
+            });
         });
     });
 }
@@ -368,7 +385,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     const canInteract = isOwner || joinStatus === 'ACCEPTED';
 
                     // 친구신청 버튼 (이미 친구면 출력 안함)
-                    const friendBtn = (canInteract && !isCurrentUser && !relation.isFriend)
+                    const friendBtn = (canInteract && !isCurrentUser && !relation.isFriend && !relation.isBlocked)
                         ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>`
                         : '';
 
@@ -377,7 +394,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                         ? `<button onclick="blockMember('${m.userId}')">차단</button>`
                         : '';
 
-                    return `<li>${m.userId} - ${m.message || ''} ${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</li>`;
+                    return `<li>${m.userNickname} (${m.userId}) - ${m.message || ''} ${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</li>`;
                 })).then(listItems => {
                     // Promise.all 결과로 approvedHtml 구성
                     const approvedHtml = listItems.length > 0
@@ -677,7 +694,30 @@ function openPartyFormPopup(party = null) {
         <input type="hidden" name="${csrfParam}" value="${csrfToken}" />
         ${isEdit ? `<input type="hidden" name="partySeq" value="${party.partySeq}">` : ''}
 
-        <label>파티 이름: <input type="text" name="partyName" value="${party?.partyName ?? ''}" required></label><br>
+        <div class="party-row">
+          <div class="field-group">
+            <label>파티 이름</label>
+            <input type="text" name="partyName" value="${party?.partyName ?? ''}" required>
+          </div>
+          <div class="field-group">
+            <label>종료일자</label>
+            <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required>
+          </div>
+          ${isEdit ? `
+            <div class="field-group">
+              <label>상태</label>
+              <select name="partyStatus" required>
+                ${[
+                { value: 'WAITING', label: '모집 중' },
+                { value: 'FULL', label: '인원 꽉참' },
+                { value: 'CLOSED', label: '모집 마감' }
+            ].map(opt => `
+                  <option value="${opt.value}" ${party?.partyStatus === opt.value ? 'selected' : ''}>${opt.label}</option>
+                `).join('')}
+              </select>
+            </div>
+          ` : `<input type="hidden" name="partyStatus" value="WAITING">`}
+        </div>
 
         <div class="position-type-row">
           <div class="party-type-selector">
@@ -708,7 +748,7 @@ function openPartyFormPopup(party = null) {
             </div>
           </div>
         
-          <div class="position-group-wrapper">
+        <div class="position-group-wrapper">
             <label>모집 포지션</label>
             <div class="position-group" id="recruitPositionGroup"></div>
           </div>
@@ -716,24 +756,7 @@ function openPartyFormPopup(party = null) {
 
         ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
 
-        <label>종료일자: <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required></label><br>
-
-        ${isEdit
-        ? `<label>상태:
-                <select name="partyStatus" required>
-                  ${[
-            { value: 'WAITING', label: '모집 중' },
-            { value: 'FULL', label: '인원 꽉참' },
-            { value: 'CLOSED', label: '모집 마감' }
-        ].map(opt => `
-                    <option value="${opt.value}" ${party?.partyStatus === opt.value ? 'selected' : ''}>${opt.label}</option>
-                  `).join('')}
-                </select>
-              </label><br>`
-        : `<input type="hidden" name="partyStatus" value="WAITING">`
-    }
-
-        <label>메모:<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
+        <label>메모 (선택)<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
 
         <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
         <button type="button" onclick="closePartyPopup()">닫기</button>
@@ -880,7 +903,7 @@ function submitPartyForm() {
 
     const partySeq = popup.querySelector('input[name="partySeq"]')?.value;
     const partyName = popup.querySelector('input[name="partyName"]').value.trim();
-    const partyType = popup.querySelector('select[name="partyType"]').value;
+    const partyType = popup.querySelector('[name="partyType"]').value;
     const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
     const partyStatus = popup.querySelector('[name="partyStatus"]')?.value ?? 'WAITING';
     const memo = popup.querySelector('textarea[name="memo"]').value.trim();
@@ -1029,20 +1052,34 @@ function openFriendMemoPopup(nickname) {
 
 // 차단
 function blockMember(targetUserId) {
-    if (!confirm("정말로 이 사용자를 차단하시겠습니까?")) return;
-    const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
-    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
-    fetch(`/api/blocks/direct`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            [csrfHeader]: csrfToken
-        },
-        body: JSON.stringify({ blockedUserId: targetUserId })
-    })
-        .then(res => {
-            if (res.ok) alert("차단되었습니다.");
-            else alert("차단에 실패했습니다.");
+    // 친구 여부 확인
+    fetch(`/api/friends/check?targetUserId=${encodeURIComponent(targetUserId)}`)
+        .then(res => res.json())
+        .then(isFriend => {
+            let proceed = true;
+            if (isFriend) {
+                proceed = confirm("이 사용자는 친구입니다. 차단하면 친구 목록에서도 삭제됩니다. 계속하시겠습니까?");
+            } else {
+                proceed = confirm("정말로 이 사용자를 차단하시겠습니까?");
+            }
+
+            if (!proceed) return;
+
+            // 차단 진행
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+            fetch(`/api/blocks/direct`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({ blockedUserId: targetUserId })
+            })
+                .then(res => {
+                    if (res.ok) alert("차단되었습니다.");
+                    else alert("차단에 실패했습니다.");
+                });
         });
 }
 
