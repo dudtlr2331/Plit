@@ -96,18 +96,5 @@ public class FriendRestController {
         return ResponseEntity.ok().build();
     }
 
-    // 친구 여부 확인
-    @GetMapping("/check")
-    public ResponseEntity<Boolean> isFriend(
-            @AuthenticationPrincipal User user,
-            @RequestParam("targetUserId") String targetUserNickname) {
-
-        UserDTO me = userService.findByUserId(user.getUsername());
-        UserDTO target = userService.findByUserId(targetUserNickname);
-        if (me == null || target == null) return ResponseEntity.ok(false);
-
-        boolean result = friendService.isFriend(me.getUserSeq(), target.getUserSeq());
-        return ResponseEntity.ok(result);
-    }
 
 }

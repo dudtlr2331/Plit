@@ -3,13 +3,10 @@ package com.plit.FO.block.service;
 import com.plit.FO.block.dto.BlockDTO;
 import com.plit.FO.block.entity.BlockEntity;
 import com.plit.FO.block.repository.BlockRepository;
-import com.plit.FO.friend.entity.FriendEntity;
-import com.plit.FO.friend.repository.FriendRepository;
 import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,8 +18,6 @@ public class BlockServiceImpl implements BlockService {
 
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
-    private final FriendRepository friendRepository;
-
 
     public List<BlockDTO> getBlockedUsersByBlockerId(Integer currentUserId) {
         List<BlockEntity> blocks = blockRepository.findAllByBlockerIdAndIsReleasedFalse(currentUserId);
@@ -66,29 +61,4 @@ public class BlockServiceImpl implements BlockService {
         return blockRepository.existsByBlockerIdAndBlockedUserIdAndIsReleased(mySeq, targetSeq, false);
     }
 
-    @Transactional
-    public void blockUserAndFriend(Integer blockerId, Integer blockedUserId) {
-        // 1. 먼저 block 테이블에 차단 여부 확인 후 insert
-        if (!blockRepository.existsByBlockerIdAndBlockedUserIdAndIsReleasedFalse(blockerId, blockedUserId)) {
-            BlockEntity block = BlockEntity.builder()
-                    .blockerId(blockerId)
-                    .blockedUserId(blockedUserId)
-                    .blockedAt(LocalDateTime.now())
-                    .isReleased(false)
-                    .build();
-            blockRepository.save(block);
-        }
-
-        // 2. friend 테이블에서 두 유저가 친구 상태인지 확인
-        if (friendRepository.existsByUsersAndStatus(blockerId, blockedUserId, "ACCEPTED")) {
-            FriendEntity friend = friendRepository
-                    .findByFromUserIdAndToUserIdAndStatus(blockerId, blockedUserId, "ACCEPTED")
-                    .orElse(friendRepository.findByFromUserIdAndToUserIdAndStatus(blockedUserId, blockerId, "ACCEPTED")
-                            .orElse(null));
-            if (friend != null) {
-                friend.setStatus("BLOCKED");
-                friendRepository.save(friend);
-            }
-        }
-    }
 }

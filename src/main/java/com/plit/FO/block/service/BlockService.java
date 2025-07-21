@@ -9,5 +9,4 @@ public interface BlockService {
     void releaseBlock(Integer blockNo);
     void blockUser(Integer blockerId, Integer blockedUserId);
     boolean isBlocked(Integer mySeq, Integer targetSeq);
-    void blockUserAndFriend(Integer blockerId, Integer blockedUserId);
 }

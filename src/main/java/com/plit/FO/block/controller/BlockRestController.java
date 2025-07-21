@@ -37,7 +37,7 @@ public class BlockRestController {
         String targetUserId = request.get("blockedUserId"); // 실제로는 nickname
         Integer blockedUserId = userService.findByUserId(targetUserId).getUserSeq();
 
-        blockService.blockUserAndFriend(blockerId, blockedUserId);
+        blockService.blockUser(blockerId, blockedUserId);
         return ResponseEntity.ok().build();
     }
 

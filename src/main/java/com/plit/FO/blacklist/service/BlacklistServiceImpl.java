@@ -68,7 +68,6 @@ public class BlacklistServiceImpl implements BlacklistService {
     // 트롤 신고 관리 데이터
     public List<BlacklistDTO> getAllReportsWithCount(Integer currentUserSeq) {
         List<BlacklistEntity> entities = blacklistRepository.findAllByOrderByReportedAtDesc();
-        List<Integer> reportedUserIdsByMe = blacklistRepository.findReportedUserIdsByReporterId(currentUserSeq);
 
         return entities.stream().map(entity -> {
             BlacklistDTO dto = new BlacklistDTO();
@@ -130,7 +129,7 @@ public class BlacklistServiceImpl implements BlacklistService {
 
 
             // 동일 인물을 신고했는지 여부
-            boolean alreadyReported = reportedUserIdsByMe.contains(entity.getReportedUserId());
+            boolean alreadyReported = entity.getReporterId().equals(currentUserSeq);
             dto.setAlreadyReportedByCurrentUser(alreadyReported);
 
             return dto;
