@@ -89,13 +89,8 @@
                         </form>
                     </div>
                 </div>
-
-<<<<<<< HEAD
                 <!-- ✅ 항상 렌더링하고 인증 상태에 따라 숨김 -->
-=======
-
                 <!-- 항상 렌더링하고 인증 상태에 따라 숨김 -->
->>>>>>> ebd8602a201e6c8646fc2d41c92e4eb652291fa2
                 <form th:action="@{/mypage/verify-summoner}" method="post" id="summonerForm"
                       th:style="${loginUser != null and loginUser.riotGameName != null} ? 'display:none;' : 'display:flex;'"
                       style="flex: 1; justify-content: space-between; align-items: center; gap: 10px;">
