@@ -57,7 +57,7 @@
                 <form th:action="@{/mypage/change-nickname}" method="post"
                       style="flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    <input type="text" name="newNickname" id="newNicknameInput" placeholder="새 닉네임 입력" required style="flex: 1;" />
+                    <input type="text" name="newNickname" id="newNicknameInput" placeholder="새 닉네임 입력" required style="flex: 1;" oninput="sanitizeNickname(this)"/>
                     <div style="display: flex; gap: 6px;">
                         <button type="submit">저장</button>
                         <button type="button" onclick="cancelNicknameEdit()" style="background: #ccc; color: black;">취소</button>
@@ -88,7 +88,6 @@
                     </div>
                 </div>
 
-
                 <!-- ✅ 항상 렌더링하고 인증 상태에 따라 숨김 -->
                 <form th:action="@{/mypage/verify-summoner}" method="post" id="summonerForm"
                       th:style="${loginUser != null and loginUser.riotGameName != null} ? 'display:none;' : 'display:flex;'"
@@ -105,8 +104,6 @@
                 <p style="color: green;">[[${summonerMessage}]]</p>
                 <p style="color: red;">[[${summonerError}]]</p>
             </div>
-
-
 
             <!-- 비밀번호 변경 -->
             <div class="info-group" style="margin-top: 40px;" th:if="${not #strings.contains(loginUser.userId, '@kakao.com')}">
@@ -143,7 +140,7 @@
             <div class="info-group" style="margin-top: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="font-size: 18px; font-weight: bold; margin: 0;">회원 탈퇴</h3>
-                    <button type="submit" form="withdrawForm" class="password-change-btn" style="background-color: #7c4798;">회원 탈퇴</button>
+                    <button type="submit" form="withdrawForm" class="password-change-btn" style="background-color: #6570b4;">회원 탈퇴</button>
                 </div>
                 <hr style="margin: 10px 0;" />
                 <form th:action="@{/user/delete}" method="post" id="withdrawForm" onsubmit="return confirmWithdrawal()">
@@ -227,6 +224,10 @@
             form.style.display = "flex";
             displayDiv.style.display = "none";
         }
+    }
+
+    function sanitizeNickname(input) {
+        input.value = input.value.replace(/#/g, '');
     }
 
 </script>

@@ -241,6 +241,10 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Override
     @Transactional
     public void updateNickname(String userId, String newNickname) {
+        if (newNickname.contains("#")) {
+            throw new IllegalArgumentException("닉네임에 '#' 문자를 포함할 수 없습니다.");
+        }
+
         if (userRepository.existsByUserNickname(newNickname)) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
@@ -418,30 +422,40 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Transactional
     public boolean verifyAndSaveSummoner(String userId, String summonerName, String tagLine) {
         RiotAccountResponse response = getAccountByRiotId(summonerName, tagLine);
-        if (response == null) return false;
 
-        UserEntity user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        if (response == null) {
+            throw new IllegalArgumentException("존재하지 않는 소환사명입니다. 소환사명을 다시 확인해주세요.");
+        }
 
         String gameName = response.getGameName();
         String tag = response.getTagLine();
         String nicknameCandidate = gameName + "#" + tag;
 
-        boolean nicknameUpdated = false;
-
-        if (!userRepository.existsByUserNickname(nicknameCandidate)) {
-            user.setUserNickname(nicknameCandidate);
-            nicknameUpdated = true;
+        Optional<UserEntity> existing = userRepository.findByUserNickname(nicknameCandidate);
+        if (existing.isPresent() && !existing.get().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("해당 소환사명은 이미 다른 사용자에 의해 인증되어 닉네임으로 사용 중입니다.");
         }
+
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         user.setRiotGameName(gameName);
         user.setRiotTagLine(tag);
         user.setPuuid(response.getPuuid());
         user.setUserModiDate(LocalDate.now());
 
+        boolean nicknameUpdated = false;
+
+        if (!nicknameCandidate.equals(user.getUserNickname())) {
+            user.setUserNickname(nicknameCandidate);
+            nicknameUpdated = true;
+        }
+
         userRepository.save(user);
         return nicknameUpdated;
     }
+
+
 
     @Override
     public RiotAccountResponse getAccountByRiotId(String gameName, String tagLine) {
