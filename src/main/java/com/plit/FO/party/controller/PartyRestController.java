@@ -1,8 +1,6 @@
 package com.plit.FO.party.controller;
 
-import com.plit.FO.party.dto.JoinRequestDTO;
-import com.plit.FO.party.dto.PartyDTO;
-import com.plit.FO.party.dto.PartyMemberDTO;
+import com.plit.FO.party.dto.*;
 import com.plit.FO.party.enums.MemberStatus;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.service.PartyService;
@@ -152,5 +150,45 @@ public class PartyRestController {
                                              @AuthenticationPrincipal(expression = "username") String userId) {
         partyService.leaveParty(partyId, userId);
         return ResponseEntity.ok("LEAVED");
+    }
+
+    @PostMapping("/{partyId}/scrim-join")
+    public ResponseEntity<String> joinScrimTeam(
+            @PathVariable Long partyId,
+            @RequestBody ScrimJoinRequestDTO request) {
+
+        try {
+            partyService.joinScrimTeam(partyId, request);
+            return ResponseEntity.ok("OK");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("실패: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/scrim-create")
+    public ResponseEntity<String> createScrimParty(@RequestBody ScrimCreateRequestDTO request,
+                                                   @AuthenticationPrincipal UserDetails user) {
+        try {
+            partyService.createScrimParty(request, user.getUsername());
+            return ResponseEntity.ok("OK");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("생성 실패: " + e.getMessage());
+        }
+    }
+
+    /* 내전찾기 팀 수락 거절*/
+    @PostMapping("/{partyId}/members/approve-team")
+    public ResponseEntity<?> approveTeam(@PathVariable Long partyId,
+                                         @RequestBody TeamApprovalRequestDTO request) {
+        partyService.approveTeam(partyId, request.getMemberIds());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{partyId}/members/reject-team")
+    public ResponseEntity<?> rejectTeam(@PathVariable Long partyId,
+                                        @RequestBody TeamApprovalRequestDTO request) {
+        partyService.rejectTeam(partyId, request.getMemberIds());
+        return ResponseEntity.ok().build();
     }
 }

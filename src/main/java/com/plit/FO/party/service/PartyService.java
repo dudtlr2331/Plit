@@ -2,6 +2,8 @@ package com.plit.FO.party.service;
 
 import com.plit.FO.party.dto.PartyDTO;
 import com.plit.FO.party.dto.PartyMemberDTO;
+import com.plit.FO.party.dto.ScrimCreateRequestDTO;
+import com.plit.FO.party.dto.ScrimJoinRequestDTO;
 import com.plit.FO.party.enums.MemberStatus;
 
 import java.util.List;
@@ -23,4 +25,9 @@ public interface PartyService {
     boolean existsByParty_PartySeqAndStatusAndPosition(Long partyId, String status, String position);
     void kickMember(Long partyId, Long memberId, String requesterId);
     void leaveParty(Long partyId, String userId);
+    void joinScrimTeam(Long partyId, ScrimJoinRequestDTO request);
+    void createScrimParty(ScrimCreateRequestDTO request, String createdBy);
+
+    void approveTeam(Long partyId, List<Long> memberIds);
+    void rejectTeam(Long partyId, List<Long> memberIds);
 }

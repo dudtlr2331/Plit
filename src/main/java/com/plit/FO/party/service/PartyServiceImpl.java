@@ -4,17 +4,17 @@ import com.plit.FO.chat.entity.ChatRoomEntity;
 import com.plit.FO.chat.entity.ChatRoomUserEntity;
 import com.plit.FO.chat.repository.ChatRoomRepository;
 import com.plit.FO.chat.repository.ChatRoomUserRepository;
-import com.plit.FO.party.dto.PartyMemberDTO;
+import com.plit.FO.party.dto.*;
 import com.plit.FO.party.enums.MemberStatus;
 import com.plit.FO.party.enums.PartyStatus;
 import com.plit.FO.party.enums.PositionEnum;
-import com.plit.FO.party.dto.PartyDTO;
 import com.plit.FO.party.entity.PartyEntity;
 import com.plit.FO.party.entity.PartyFindPositionEntity;
 import com.plit.FO.party.entity.PartyMemberEntity;
 import com.plit.FO.party.repository.PartyFindPositionRepository;
 import com.plit.FO.party.repository.PartyMemberRepository;
 import com.plit.FO.party.repository.PartyRepository;
+import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -294,7 +294,7 @@ public class PartyServiceImpl implements PartyService {
     @Transactional
     public void acceptMember(Long partyId, Long memberId) {
         PartyMemberEntity member = partyMemberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("멤버가 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다. ID=" + memberId));
 
         PartyEntity party = member.getParty();
 
@@ -302,15 +302,14 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalArgumentException("파티 불일치");
         }
 
-        // 최대 인원 수 제한
         if (party.getPartyHeadcount() >= party.getPartyMax()) {
             throw new IllegalStateException("최대 인원을 초과할 수 없습니다.");
         }
 
-        // 포지션 중복 수락 제한 (단, ALL은 중복 허용)
         List<PartyMemberEntity> acceptedMembers = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED);
         boolean isAllPosition = "ALL".equalsIgnoreCase(member.getPosition());
 
+        // 일반 파티, 내전 모두에서 포지션 중복 체크 필요할 경우 유지
         if (!isAllPosition) {
             boolean positionTaken = acceptedMembers.stream()
                     .anyMatch(m -> m.getPosition().equalsIgnoreCase(member.getPosition()));
@@ -319,29 +318,33 @@ public class PartyServiceImpl implements PartyService {
             }
         }
 
+        // 상태 업데이트
         member.setStatus(MemberStatus.ACCEPTED);
         party.setPartyHeadcount(party.getPartyHeadcount() + 1);
 
         partyMemberRepository.save(member);
         partyRepository.save(party);
 
-        // 파티 참여 시 채팅방 참가
-        ChatRoomEntity room = chatRoomRepository.findAll().stream()
-                .filter(r -> "party".equals(r.getChatRoomType()) && r.getChatRoomName().equals(party.getPartyName()))
-                .findFirst()
-                .orElseThrow();
+        // partyId로 채팅방 조회 (중복 방지)
+        ChatRoomEntity room = chatRoomRepository.findByPartyId(party.getPartySeq())
+                .orElseThrow(() -> new NoSuchElementException("채팅방 없음"));
 
+        // userId → user_seq 조회 (userId는 닉네임으로 저장돼 있음)
+        Long userSeq = userRepository.findByUserId(member.getUserId())
+                .orElseThrow(() -> new NoSuchElementException("유저 없음: " + member.getUserId()))
+                .getUserSeq().longValue();
+
+        // 채팅방 입장 등록
         ChatRoomUserEntity newUser = ChatRoomUserEntity.builder()
                 .chatRoom(room)
-                .userId(userRepository.findByUserNickname(member.getUserId()).get().getUserSeq().longValue())
+                .userId(userSeq)
                 .joinedAt(LocalDateTime.now())
                 .build();
         chatRoomUserRepository.save(newUser);
 
-        // 채팅방 인원수 증가
+        // 채팅방 인원수 갱신
         room.setChatRoomHeadcount(room.getChatRoomHeadcount() + 1);
         chatRoomRepository.save(room);
-
     }
 
     @Transactional
@@ -422,5 +425,227 @@ public class PartyServiceImpl implements PartyService {
         PartyEntity party = member.getParty();
         party.setPartyHeadcount(party.getPartyHeadcount() - 1);
         partyRepository.save(party);
+    }
+
+    /* 내전 찾기*/
+    @Override
+    @Transactional
+    public void joinScrimTeam(Long partyId, ScrimJoinRequestDTO request) {
+        PartyEntity party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new NoSuchElementException("파티 없음"));
+
+        if (!"scrim".equals(party.getPartyType())) {
+            throw new IllegalArgumentException("스크림 전용 파티가 아닙니다.");
+        }
+
+        List<ScrimMemberDTO> team = request.getTeamMembers();
+        if (team == null || team.size() != 5) {
+            throw new IllegalArgumentException("5명의 팀원 정보를 입력해야 합니다.");
+        }
+
+        int acceptedCount = partyMemberRepository.countByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED);
+        int max = party.getPartyMax();
+
+        if (acceptedCount + team.size() > max) {
+            throw new IllegalStateException("파티 정원이 초과됩니다.");
+        }
+
+        // 중복 유저 체크
+        Set<String> existingUserIds = partyMemberRepository.findByParty_PartySeq(partyId).stream()
+                .map(PartyMemberEntity::getUserId)
+                .collect(Collectors.toSet());
+
+        for (ScrimMemberDTO dto : team) {
+            if (existingUserIds.contains(dto.getUserId())) {
+                throw new IllegalArgumentException("이미 참가한 유저가 있습니다: " + dto.getUserId());
+            }
+        }
+
+        Set<String> positionsInRequest = new HashSet<>();
+        for (ScrimMemberDTO dto : team) {
+            if (!positionsInRequest.add(dto.getPosition())) {
+                throw new IllegalArgumentException("팀 내 중복 포지션입니다: " + dto.getPosition());
+            }
+        }
+
+        // 채팅방 정보 미리 조회 (한 번만)
+        ChatRoomEntity room = chatRoomRepository.findByPartyId(party.getPartySeq())
+                .orElseThrow(() -> new NoSuchElementException("채팅방 없음"));
+
+        for (ScrimMemberDTO dto : team) {
+            UserEntity user = userRepository.findByUserNickname(dto.getUserId())
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + dto.getUserId()));
+
+            PartyMemberEntity member = PartyMemberEntity.builder()
+                    .userId(dto.getUserId())
+                    .party(party)
+                    .position(dto.getPosition())
+                    .status(MemberStatus.PENDING)
+                    .message(request.getMessage())
+                    .build();
+            partyMemberRepository.save(member);
+        }
+
+        room.setChatRoomHeadcount(room.getChatRoomHeadcount() + team.size());
+        chatRoomRepository.save(room);
+    }
+
+    @Override
+    @Transactional
+    public void createScrimParty(ScrimCreateRequestDTO request, String creatorId) {
+        if (request.getTeamMembers() == null || request.getTeamMembers().size() != 5) {
+            throw new IllegalArgumentException("5명의 팀원 정보를 입력해야 합니다.");
+        }
+
+        PartyEntity party = PartyEntity.builder()
+                .partyName(request.getPartyName())
+                .partyType("scrim")
+                .partyCreateDate(LocalDateTime.now())
+                .partyEndTime(request.getPartyEndTime())
+                .partyStatus(PartyStatus.WAITING)
+                .partyHeadcount(5)
+                .partyMax(10) // 총 인원은 10명으로 고정
+                .memo(request.getMemo())
+                .mainPosition("ALL")
+                .createdBy(creatorId)
+                .build();
+
+        Set<String> usedPositions = new HashSet<>();
+        for (ScrimMemberDTO dto : request.getTeamMembers()) {
+            if (!usedPositions.add(dto.getPosition())) {
+                throw new IllegalArgumentException("중복된 포지션입니다: " + dto.getPosition());
+            }
+        }
+
+        partyRepository.save(party);
+
+        // 5명 멤버 등록
+        for (ScrimMemberDTO dto : request.getTeamMembers()) {
+            UserEntity user = userRepository.findByUserNickname(dto.getUserId())
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + dto.getUserId()));
+
+            PartyMemberEntity member = PartyMemberEntity.builder()
+                    .userId(dto.getUserId())
+                    .party(party)
+                    .position(dto.getPosition())
+                    .status(MemberStatus.ACCEPTED)
+                    .message("내전 팀 등록")
+                    .build();
+
+            partyMemberRepository.save(member);
+        }
+
+        // 채팅방 생성
+        ChatRoomEntity chatRoom = ChatRoomEntity.builder()
+                .chatRoomType("party")
+                .chatRoomName(party.getPartyName())
+                .chatRoomMax(10)
+                .chatRoomHeadcount(5)
+                .chatRoomCreatedAt(LocalDateTime.now())
+                .partyId(party.getPartySeq())
+                .build();
+
+        chatRoomRepository.save(chatRoom);
+
+        // 5명 모두 채팅방에 등록
+        for (ScrimMemberDTO dto : request.getTeamMembers()) {
+            UserEntity user = userRepository.findByUserNickname(dto.getUserId())
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + dto.getUserId()));
+
+            ChatRoomUserEntity chatUser = ChatRoomUserEntity.builder()
+                    .chatRoom(chatRoom)
+                    .userId(user.getUserSeq().longValue())
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+
+            chatRoomUserRepository.save(chatUser);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void approveTeam(Long partyId, List<Long> memberIds) {
+        PartyEntity party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new NoSuchElementException("파티 없음"));
+
+        if (!"scrim".equals(party.getPartyType())) {
+            throw new IllegalStateException("팀 수락은 내전(scrim) 파티에서만 가능합니다.");
+        }
+
+        // 채팅방 조회
+        ChatRoomEntity room = chatRoomRepository.findByPartyId(partyId)
+                .orElseThrow(() -> new NoSuchElementException("채팅방 없음"));
+
+        // 1. 현재 수락된 멤버들의 포지션별 인원 수 계산
+        Map<String, Long> positionCounts = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        m -> m.getPosition().toUpperCase(),
+                        Collectors.counting()
+                ));
+
+        for (Long memberId : memberIds) {
+            PartyMemberEntity member = partyMemberRepository.findById(memberId)
+                    .orElseThrow(() -> new NoSuchElementException("멤버 없음: " + memberId));
+
+            if (!partyId.equals(member.getParty().getPartySeq())) {
+                throw new IllegalArgumentException("멤버 파티 불일치: " + memberId);
+            }
+
+            String position = member.getPosition().toUpperCase();
+            long currentCount = positionCounts.getOrDefault(position, 0L);
+
+            // "ALL" 포지션 제외하고 각 포지션 최대 2명까지 허용
+            if (!"ALL".equals(position) && currentCount >= 2) {
+                throw new IllegalStateException("포지션 '" + position + "'은 이미 2명이 수락되었습니다.");
+            }
+
+            // 상태 변경
+            member.setStatus(MemberStatus.ACCEPTED);
+            partyMemberRepository.save(member);
+
+            // 포지션 카운트 증가
+            positionCounts.put(position, currentCount + 1);
+
+            // 채팅방 입장 처리
+            Long userSeq = userRepository.findByUserNickname(member.getUserId())
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + member.getUserId()))
+                    .getUserSeq().longValue();
+
+            ChatRoomUserEntity chatUser = ChatRoomUserEntity.builder()
+                    .chatRoom(room)
+                    .userId(userSeq)
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+
+            chatRoomUserRepository.save(chatUser);
+        }
+
+        // headcount 및 상태 갱신
+        party.setPartyHeadcount(party.getPartyHeadcount() + memberIds.size());
+        if (party.getPartyHeadcount() >= party.getPartyMax()) {
+            party.setPartyStatus(PartyStatus.FULL);
+        }
+
+        partyRepository.save(party);
+
+        // 채팅방 인원 갱신
+        room.setChatRoomHeadcount(room.getChatRoomHeadcount() + memberIds.size());
+        chatRoomRepository.save(room);
+    }
+
+    @Override
+    @Transactional
+    public void rejectTeam(Long partyId, List<Long> memberIds) {
+        PartyEntity party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new NoSuchElementException("파티 없음"));
+
+        if (!"scrim".equals(party.getPartyType())) {
+            throw new IllegalStateException("팀 거절은 내전(scrim) 파티에서만 가능합니다.");
+        }
+
+        for (Long id : memberIds) {
+            rejectMember(partyId, id); // 기존 거절 메서드 호출
+        }
     }
 }
