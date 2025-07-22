@@ -178,6 +178,7 @@ header nav a {
     transition: all 0.2s ease;
 }
 
+.btn-admin,
 .btn-mypage,
 .btn-logout,
 .btn-login {
