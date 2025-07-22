@@ -39,7 +39,7 @@
 .qna-table th:nth-child(2), .qna-table td:nth-child(2) { width: 200px; text-align: left; }
 .qna-table th:nth-child(3), .qna-table td:nth-child(3) { width: 60px; }
 .qna-table th:nth-child(4), .qna-table td:nth-child(4) { width: 80px; }
-.qna-table th:nth-child(5), .qna-table td:nth-child(5) { width: 140px; font-family: 'Courier New', monospace; }
+.qna-table th:nth-child(5), .qna-table td:nth-child(5) { width: 140px; /* font-family: 'Courier New', monospace; */ }
 .qna-table th:nth-child(6), .qna-table td:nth-child(6) { width: 60px; }
 
 /* 상태 뱃지 */
