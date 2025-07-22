@@ -20,6 +20,7 @@ public class UserDTO {
     private LocalDate userModiDate;
     private LocalDate userCreateDate;
     private String userAuth;
+    private Integer profileIconId;
 
     private Boolean isFriend;
     private Boolean isBlocked;

@@ -56,6 +56,14 @@ function toggleChatList() {
 
 // 클랜 리스트 페이지 함수
 function openModal() {
+    const isVerifiedMeta = document.querySelector('meta[name="isVerified"]');
+    const isVerified = isVerifiedMeta ? isVerifiedMeta.getAttribute('content') : null;
+
+    if (!isVerified || isVerified !== 'true') {
+        alert("소환사 인증을 완료해야 클랜 등록이 가능합니다. 마이페이지에서 인증해주세요!");
+        return;
+    }
+
     const modal = document.getElementById("clanModal");
     if (!modal) {
         console.warn("clanModal 요소를 찾을 수 없습니다.");
@@ -739,4 +747,11 @@ function updateSearchTier(tier) {
 document.addEventListener('DOMContentLoaded', () => {
     const tierValue = document.querySelector("select[name='tier']")?.value;
     if (tierValue) updateSearchTier(tierValue);
+
+    const isVerifiedMeta = document.querySelector('meta[name="isVerified"]');
+    if (isVerifiedMeta) {
+        console.log('isVerified:', isVerifiedMeta.getAttribute('content'));
+    } else {
+        console.warn('isVerified 메타 태그를 찾을 수 없습니다.');
+    }
 });

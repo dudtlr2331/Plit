@@ -5,6 +5,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="isVerified" th:content="${isVerified}"/>
     <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}">
     <meta name="login-user-nickname" th:if="${loginUser != null}" th:content="${loginUser.userNickname}">
     <title>클랜 찾기</title>
@@ -48,7 +49,8 @@
 
         <div class="clan-register-box">
             <a href="javascript:void(0);" class="clan-btn" sec:authorize="isAuthenticated()"
-               onclick="openModal()">클랜등록</a>
+               id="clanRegisterBtn"
+            onclick="openModal()">클랜등록</a>
             <a href="/login" class="clan-btn" sec:authorize="isAnonymous()">클랜등록</a>
         </div>
 

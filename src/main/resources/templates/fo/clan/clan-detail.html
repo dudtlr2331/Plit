@@ -85,9 +85,9 @@
 
                     <span th:if="${clan.minTier != 'NONE'}" style="display: flex; align-items: center;">
                         <img th:src="@{/images/tier/{t}.png(t=${clan.minTier})}"
-                            th:alt="${clan.minTier + ' 아이콘'}"
-                            width="30" height="30"
-                            style="margin-right: 6px;" />
+                             th:alt="${clan.minTier + ' 아이콘'}"
+                             width="30" height="30"
+                             style="margin-right: 6px;"/>
                         <span class="tier-label">
                             <span th:text="${clan.minTier}">PLATINUM</span>
                             <span th:if="${clan.minTier != 'CHALLENGER'}"> 이상</span>
@@ -102,10 +102,10 @@
 
             <div class="member-table">
                 <div class="member-row header-row">
-                    <div class="member-cell name">소환사명</div>
+                    <div class="member-cell name">소환사 이름</div>
                     <div class="member-cell">티어</div>
                     <div class="member-cell">주포지션</div>
-                    <div class="member-cell">최근 챔피언</div>
+                    <div class="member-cell">최근 선호 챔피언</div>
                     <div class="member-cell">승률</div>
                     <div class="member-cell">KDA</div>
                     <div class="member-cell">소개</div>
@@ -116,31 +116,56 @@
                 <div class="member-row"
                      th:each="member : ${members}"
                      th:classappend="${member.memberId == currentUserId} ? ' current-user'">
-                    <!-- 소환사명 + 리더 왕관 -->
+                    <!-- 소환사 이름 + 리더 왕관 -->
                     <div class="member-cell name">
-                        <strong>
-                            <th:block th:if="${member.nickname != null and #strings.contains(member.nickname, '#')}">
-                                <span th:text="${#strings.substringBefore(member.nickname, '#')}"></span>
-                                <span class="tag" th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}"></span>
-                            </th:block>
-                            <th:block th:if="${member.nickname != null and !#strings.contains(member.nickname, '#')}">
-                                <span th:text="${member.nickname}"></span>
-                            </th:block>
-                            <th:block th:if="${member.nickname == null}">
-                                <span>알 수 없음</span>
-                            </th:block>
-                        </strong>
-                        <span th:if="${member.role == 'LEADER'}" class="leader-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 64 64"
-                                 class="crown-icon" aria-label="리더 왕관">
-                                <path fill="#f1c40f" d="M2 20l10 10 10-20 10 20 10-20 10 20 10-10v34H2z"/>
-                                <rect x="2" y="48" width="60" height="10" fill="#f39c12"/>
-                            </svg>
-                        </span>
+                        <div class="member-info">
+                            <!-- 아이콘 -->
+                            <img th:src="${member.profileIconUrl != null
+                                ? member.profileIconUrl
+                                : '/images/clan/clan_default.png'}"
+                                 alt="소환사 아이콘"
+                                 class="profile-icon"/>
+
+                            <!-- 닉네임 + 태그 -->
+                            <div class="name-tag-wrapper">
+                                <div class="name-line">
+                                    <span th:if="${member.nickname != null}"
+                                          th:text="${#strings.contains(member.nickname, '#') ? #strings.substringBefore(member.nickname, '#') : member.nickname}">
+                                    </span>
+                                    <span th:if="${member.role == 'LEADER'}" class="leader-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                             viewBox="0 0 64 64" class="crown-icon" aria-label="리더 왕관">
+                                            <path fill="#f1c40f" d="M2 20l10 10 10-20 10 20 10-20 10 20 10-10v34H2z"/>
+                                            <rect x="2" y="48" width="60" height="10" fill="#f39c12"/>
+                                        </svg>
+                                    </span>
+                                </div>
+
+                                <div class="tag-line"
+                                     th:if="${member.nickname != null and #strings.contains(member.nickname, '#')}"
+                                     th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}">
+                                </div>
+
+                                <div th:if="${member.nickname == null}">
+                                    <span>알 수 없음</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 티어 -->
-                    <div class="member-cell" th:text="${member.tier} ?: 'Unranked'">Unranked</div>
+                    <div class="member-tier-display">
+                        <th:block th:if="${member.tierImageUrl != null}">
+                            <!-- 티어 이미지 -->
+                            <img th:src="@{${member.tierImageUrl}}" class="member-tier-icon" alt="티어 아이콘" />
+                            <!-- 티어 약어 -->
+                            <span class="member-tier-label" th:text="${member.tierShort}">D1</span>
+                        </th:block>
+
+                        <th:block th:if="${member.tierImageUrl == null}">
+                            <span class="member-tier-label">Unranked</span>
+                        </th:block>
+                    </div>
 
                     <!-- 주 포지션 -->
                     <div class="member-cell">
@@ -199,16 +224,68 @@
                         </div>
                     </div>
 
-                    <!-- 최근 챔피언 -->
+                    <!-- 최근 선호 챔피언 -->
                     <div class="member-cell champions">
-                        <!-- 추후 api -->
+                        <th:block th:if="${member.championImageUrls != null and !member.championImageUrls.isEmpty()}">
+                            <div class="champ-circle-container" th:each="imgUrl : ${member.championImageUrls}">
+                                <div class="champ-circle">
+                                    <img th:src="@{${imgUrl}}" alt="champ"/>
+                                </div>
+                            </div>
+                        </th:block>
+                        <th:block th:if="${member.championImageUrls == null or member.championImageUrls.isEmpty()}">
+                            <span class="champ-name">-</span>
+                        </th:block>
                     </div>
 
                     <!-- 승률 -->
-                    <div class="member-cell">--%</div>
+                    <div class="member-cell stats-box">
+                        <th:block th:if="${member.winRate != null}">
+                            <!-- 승패 바 -->
+                            <div class="record-bar">
+                                <div class="wins" th:style="'width:' + ${member.winRate} + '%'">
+                                    [[${member.totalWins}]]승
+                                </div>
+                                <div class="losses" th:style="'width:' + ${100 - member.winRate} + '%'">
+                                    [[${member.totalLosses}]]패
+                                </div>
+                            </div>
+                            <div class="win-rate">[[${member.winRate}]]%</div>
+                        </th:block>
+                        <th:block th:if="${member.winRate == null}">
+                            <div class="win-rate">-</div>
+                        </th:block>
+                    </div>
 
-                    <!-- KDA -->
-                    <div class="member-cell">-- / -- / --</div>
+                    <!-- K/D/A -->
+                    <div class="member-cell kda-cell">
+                        <!-- KDA 값이 있을 때 -->
+                        <th:block
+                                th:if="${member.averageKills != null and member.averageDeaths != null and member.averageAssists != null and member.averageKda != null}">
+                            <th:block
+                                    th:if="${member.averageKills != null and member.averageDeaths != null and member.averageAssists != null and member.averageKda != null}">
+                                <div class="kda-line"
+                                     th:text="
+                                     (${member.averageKills % 1 == 0} ? ${member.averageKills.intValue()} : ${member.averageKills}) + ' / ' +
+                                     (${member.averageDeaths % 1 == 0} ? ${member.averageDeaths.intValue()} : ${member.averageDeaths}) + ' / ' +
+                                     (${member.averageAssists % 1 == 0} ? ${member.averageAssists.intValue()} : ${member.averageAssists})">
+                                </div>
+                            </th:block>
+
+                            <!-- 점수에 따라 class 다르게 설정 -->
+                            <div class="kda-value"
+                                 th:classappend=" ${member.averageKda >= 5} ? 'kda-great' :
+                             (${member.averageKda >= 4} ? 'kda-good' :
+                             (${member.averageKda >= 3} ? 'kda-mid' : 'kda-low'))"
+                                 th:text="${member.averageKda}"></div>
+                        </th:block>
+
+                        <!-- KDA 값이 없을 때 -->
+                        <th:block
+                                th:if="${member.averageKills == null or member.averageDeaths == null or member.averageAssists == null or member.averageKda == null}">
+                            <div class="kda-line">-</div>
+                        </th:block>
+                    </div>
 
                     <!-- 소개글 -->
                     <div class="member-cell intro"
@@ -260,10 +337,10 @@
         <div class="tab-section hidden" id="pending">
             <div class="member-table">
                 <div class="member-row header-row">
-                    <div class="member-cell name">소환사명</div>
+                    <div class="member-cell name">소환사 이름</div>
                     <div class="member-cell">티어</div>
                     <div class="member-cell">주포지션</div>
-                    <div class="member-cell">최근 챔피언</div>
+                    <div class="member-cell">최근 선호 챔피언</div>
                     <div class="member-cell">승률</div>
                     <div class="member-cell">KDA</div>
                     <div class="member-cell">소개</div>
@@ -279,28 +356,51 @@
                 </div>
 
                 <div class="member-row" th:each="member : ${pendingMembers}">
-                    <!-- 소환사명 -->
+                    <!-- 소환사 이름 -->
                     <div class="member-cell name">
-                        <strong>
-                            <th:block th:if="${member.nickname != null and #strings.contains(member.nickname, '#')}">
-                                <span th:text="${#strings.substringBefore(member.nickname, '#')}"></span>
-                                <span class="tag" th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}"></span>
-                            </th:block>
-                            <th:block th:if="${member.nickname != null and !#strings.contains(member.nickname, '#')}">
-                                <span th:text="${member.nickname}"></span>
-                            </th:block>
-                            <th:block th:if="${member.nickname == null}">
-                                <span>알 수 없음</span>
-                            </th:block>
-                        </strong>
+                        <div class="member-info">
+                            <!-- 프로필 아이콘 -->
+                            <img th:src="${#strings.isEmpty(member.profileIconUrl)
+                                  ? '/images/clan/clan_default.png'
+                                  : member.profileIconUrl}"
+                                 alt="소환사 아이콘"
+                                 class="profile-icon"/>
+
+                            <!-- 닉네임 & 태그 -->
+                            <div class="name-tag-wrapper">
+                                <div class="name-line">
+                                    <span th:if="${member.nickname != null}"
+                                          th:text="${#strings.contains(member.nickname, '#') ? #strings.substringBefore(member.nickname, '#') : member.nickname}">
+                                    </span>
+                                </div>
+                                <div class="tag-line"
+                                     th:if="${member.nickname != null and #strings.contains(member.nickname, '#')}"
+                                     th:text="'#' + ${#strings.substringAfter(member.nickname, '#')}">
+                                </div>
+                                <div th:if="${member.nickname == null}">
+                                    <span>알 수 없음</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 티어 -->
-                    <div class="member-cell" th:text="${member.tier} ?: 'Unranked'">Unranked</div>
+                    <div class="member-tier-display">
+                        <th:block th:if="${member.tierImageUrl != null}">
+                            <!-- 티어 이미지 -->
+                            <img th:src="@{${member.tierImageUrl}}" class="member-tier-icon" alt="티어 아이콘" />
+                            <!-- 약어 tierShort -->
+                            <span class="member-tier-label" th:text="${member.tierShort}">D1</span>
+                        </th:block>
+
+                        <th:block th:if="${member.tierImageUrl == null}">
+                            <span class="member-tier-label">Unranked</span>
+                        </th:block>
+                    </div>
 
                     <!-- 주포지션 -->
                     <div class="member-cell">
-                        <div class="position-icon" th:switch="${member.position}">
+                        <div class="position-icon" th:switch="${member.position.name()}">
                             <svg th:case="'TOP'" width="24" height="24" viewBox="0 0 24 24"
                                  xmlns="http://www.w3.org/2000/svg" aria-label="탑">
                                 <path d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
@@ -350,20 +450,58 @@
                                 <path class="fill-area"
                                       d="M16.2928076,17.0307921 C16.6549683,17.6584306 16.4399705,18.4608135 15.8125108,18.8232841 C15.1844161,19.1872046 14.3817451,18.9719172 14.0194579,18.3440595 L11.8751153,14.6269842 L9.73077279,18.3440595 C9.36848556,18.9719172 8.56581451,19.1872046 7.93795682,18.8249174 C7.31026014,18.4608135 7.09526232,17.6584306 7.45742309,17.0307921 L9.60202464,13.3132678 L5.31251922,13.3132678 C4.58763487,13.3132678 4,12.7256329 4,12.0007486 C4,11.2743674 4.58763487,10.6867325 5.31251922,10.6867325 L9.60202464,10.6867325 L7.45742309,6.96920825 C7.09526232,6.34156972 7.31026014,5.53918682 7.93771981,5.17671625 C8.56581451,4.8127957 9.36848556,5.0280831 9.73077279,5.65594079 L11.8751153,9.37301611 L14.0194579,5.65594079 C14.3817451,5.0280831 15.1844161,4.8127957 15.8122738,5.17508293 C16.4399705,5.53918682 16.6549683,6.34156972 16.2928076,6.96920825 L14.148206,10.6867325 L18.4377114,10.6867325 C19.1625958,10.6867325 19.7502307,11.2743674 19.7502307,11.9992518 C19.7502307,12.7256329 19.1625958,13.3132678 18.4377114,13.3132678 L14.148206,13.3132678 L16.2928076,17.0307921 Z"/>
                             </svg>
-
                         </div>
                     </div>
 
-                    <!-- 최근 챔피언 -->
+                    <!-- 최근 선호 챔피언 -->
                     <div class="member-cell champions">
-                        <!-- 추후 api로 교체 -->
+                        <th:block th:if="${member.championImageUrls != null and !member.championImageUrls.isEmpty()}">
+                            <div class="champ-circle-container" th:each="imgUrl : ${member.championImageUrls}">
+                                <div class="champ-circle">
+                                    <img th:src="@{${imgUrl}}" alt="champ"/>
+                                </div>
+                            </div>
+                        </th:block>
+                        <th:block th:if="${member.championImageUrls == null or member.championImageUrls.isEmpty()}">
+                            <span class="champ-name">-</span>
+                        </th:block>
                     </div>
 
                     <!-- 승률 -->
-                    <div class="member-cell">--%</div>
+                    <div class="member-cell stats-box" th:if="${member.winRate != null}">
+                        <div class="record-bar">
+                            <div class="wins" th:style="'width:' + ${member.winRate} + '%'">
+                                [[${member.totalWins}]]승
+                            </div>
+                            <div class="losses" th:style="'width:' + ${100 - member.winRate} + '%'">
+                                [[${member.totalLosses}]]패
+                            </div>
+                        </div>
+                        <span class="win-rate">[[${member.winRate}]]%</span>
+                    </div>
+                    <div class="member-cell" th:if="${member.winRate == null}">
+                        -
+                    </div>
 
-                    <!-- KDA -->
-                    <div class="member-cell">-- / -- / --</div>
+                    <!-- K/D/A -->
+                    <div class="member-cell kda-cell">
+                        <th:block
+                                th:if="${member.averageKills != null and member.averageDeaths != null and member.averageAssists != null and member.averageKda != null}">
+                            <div class="kda-line"
+                                 th:text="${member.averageKills} + ' / ' + ${member.averageDeaths} + ' / ' + ${member.averageAssists}"></div>
+
+                            <div class="kda-value"
+                                 th:classappend=" ${member.averageKda >= 5} ? 'kda-great' :
+                              (${member.averageKda >= 4} ? 'kda-good' :
+                              (${member.averageKda >= 3} ? 'kda-mid' : 'kda-low'))"
+                                 th:text="${member.averageKda}"></div>
+                        </th:block>
+
+                        <th:block
+                                th:if="${member.averageKills == null or member.averageDeaths == null or member.averageAssists == null or member.averageKda == null}">
+                            <div class="kda-line">-</div>
+                        </th:block>
+                    </div>
 
                     <!-- 소개 -->
                     <div class="member-cell intro"
@@ -464,12 +602,18 @@
         <h2>소환사 수정하기</h2>
 
         <div class="member-info">
-            <div class="nickname">
-                <strong th:if="${editMember != null}">
-                    <span th:text="${#strings.substringBefore(editMember.nickname, '#')}"></span>
-                    <span class="light-tag" th:text="'#' + ${#strings.substringAfter(editMember.nickname, '#')}"></span>
-                </strong>
-                <strong th:unless="${editMember != null}">소환사명</strong>
+            <div class="nickname" style="display: flex; align-items: center; gap: 10px;">
+                <img th:if="${editMember != null}"
+                     th:src="@{${editMember.profileIconUrl}}"
+                     alt="소환사 아이콘"
+                     class="member-profile-icon" />
+                <div>
+                    <strong th:if="${editMember != null}">
+                        <span th:text="${#strings.substringBefore(editMember.nickname, '#')}"></span>
+                        <span class="light-tag" th:text="'#' + ${#strings.substringAfter(editMember.nickname, '#')}"></span>
+                    </strong>
+                    <strong th:unless="${editMember != null}">소환사 이름</strong>
+                </div>
             </div>
         </div>
 
@@ -478,68 +622,71 @@
 
             <!-- 올라운더 -->
             <span class="edit-position-btn position-btn" data-position="ALL" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ALL">
-        <path class="fill-area emphasis"
-              d="M16.2928,17.0307c0.3621,0.6276 0.1471,1.43 -0.4803,1.7924c-0.6281,0.363 -1.4307,0.1477 -1.7929,-0.48l-2.1443,-3.7171l-2.1443,3.7171c-0.3623,0.6278 -1.1649,0.8431 -1.7929,0.48c-0.6277,-0.3631 -0.8427,-1.1655 -0.4803,-1.7924l2.1446,-3.7172h-4.2896c-0.7249,0 -1.3126,-0.5876 -1.3126,-1.3126c0,-0.7263 0.5876,-1.3137 1.3126,-1.3137h4.2896l-2.1446,-3.7172c-0.3624,-0.6277 -0.1474,-1.43 0.4803,-1.7924c0.6279,-0.3633 1.4306,-0.148 1.7929,0.48l2.1443,3.7172l2.1443,-3.7172c0.3624,-0.6277 1.1649,-0.843 1.7929,-0.48c0.6281,0.3633 0.8431,1.1647 0.4803,1.7924l-2.1446,3.7172h4.2896c0.7249,0 1.3126,0.5876 1.3126,1.3126c0,0.725 -0.5877,1.3131 -1.3126,1.3131h-4.2896l2.1446,3.7172z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ALL">
+                    <path class="fill-area emphasis"
+                          d="M16.2928,17.0307c0.3621,0.6276 0.1471,1.43 -0.4803,1.7924c-0.6281,0.363 -1.4307,0.1477 -1.7929,-0.48l-2.1443,-3.7171l-2.1443,3.7171c-0.3623,0.6278 -1.1649,0.8431 -1.7929,0.48c-0.6277,-0.3631 -0.8427,-1.1655 -0.4803,-1.7924l2.1446,-3.7172h-4.2896c-0.7249,0 -1.3126,-0.5876 -1.3126,-1.3126c0,-0.7263 0.5876,-1.3137 1.3126,-1.3137h4.2896l-2.1446,-3.7172c-0.3624,-0.6277 -0.1474,-1.43 0.4803,-1.7924c0.6279,-0.3633 1.4306,-0.148 1.7929,0.48l2.1443,3.7172l2.1443,-3.7172c0.3624,-0.6277 1.1649,-0.843 1.7929,-0.48c0.6281,0.3633 0.8431,1.1647 0.4803,1.7924l-2.1446,3.7172h4.2896c0.7249,0 1.3126,0.5876 1.3126,1.3126c0,0.725 -0.5877,1.3131 -1.3126,1.3131h-4.2896l2.1446,3.7172z"/>
+                    </svg>
+                </div>
+            </span>
 
             <!-- 탑 -->
             <span class="edit-position-btn position-btn" data-position="TOP" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TOP">
-        <path class="fill-area emphasis" d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
-        <path class="fill-area" d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TOP">
+                        <path class="fill-area emphasis" d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
+                        <path class="fill-area" d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z"/>
+                    </svg>
+                </div>
+            </span>
 
             <!-- 정글  -->
             <span class="edit-position-btn position-btn" data-position="JUNGLE" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="JUNGLE">
-        <path class="fill-area emphasis"
-              d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                         aria-label="JUNGLE">
+                        <path class="fill-area emphasis"
+                              d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"/>
+                    </svg>
+                </div>
+            </span>
 
             <!-- 미드 -->
             <span class="edit-position-btn position-btn" data-position="MID" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="MID">
-        <path class="fill-area emphasis" d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z"/>
-        <path class="fill-area " d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="MID">
+                        <path class="fill-area emphasis" d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z"/>
+                        <path class="fill-area "
+                              d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z"/>
+                    </svg>
+                </div>
+            </span>
 
             <!-- 원딜 -->
             <span class="edit-position-btn position-btn" data-position="ADC" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ADC">
-        <path class="fill-area emphasis" d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" stroke="none"/>
-        <path class="fill-area " d="M2 2h17.172l-3 3H5v11.172l-3 3V2zM9 9h6v6H9V9z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ADC">
+                        <path class="fill-area emphasis" d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" stroke="none"/>
+                        <path class="fill-area " d="M2 2h17.172l-3 3H5v11.172l-3 3V2zM9 9h6v6H9V9z"/>
+                    </svg>
+                </div>
+            </span>
 
             <!-- 서포터 -->
             <span class="edit-position-btn position-btn" data-position="SUPPORT" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="SUPPORT">
-        <path class="fill-area emphasis"
-              d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237z"/>
-        <path class="fill-area emphasis" d="M14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255z"/>
-        <path class="fill-area emphasis"
-              d="M10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237z"/>
-        <path class="fill-area emphasis" d="M9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255z"/>
-        <path class="fill-area emphasis" d="M9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                         aria-label="SUPPORT">
+                        <path class="fill-area emphasis"
+                              d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237z"/>
+                        <path class="fill-area emphasis" d="M14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255z"/>
+                        <path class="fill-area emphasis"
+                              d="M10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237z"/>
+                        <path class="fill-area emphasis" d="M9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255z"/>
+                        <path class="fill-area emphasis" d="M9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"/>
+                    </svg>
+                </div>
+            </span>
 
         </div>
 
@@ -551,8 +698,7 @@
                   placeholder="나를 소개해주세요. 최대 15자까지 가능합니다."
                   th:if="${editMember != null}"
                   th:text="${#strings.isEmpty(editMember.intro) ? '' : editMember.intro}">
-</textarea>
-
+        </textarea>
 
         <input type="hidden" id="clanId" th:value="${clan.id}"/>
         <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
@@ -633,7 +779,9 @@
 
         <!-- 닉네임 표시 -->
         <div class="member-info">
-            <div class="nickname">
+            <div class="nickname" style="display: flex; align-items: center; gap: 10px;">
+                <img th:src="@{${profileIconUrl}}" class="member-profile-icon" alt="소환사 아이콘" />
+
                 <strong>
                     <th:block th:if="${nickname != null and #strings.contains(nickname, '#')}">
                         <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
@@ -655,68 +803,71 @@
 
             <!-- 올라운더 -->
             <span class="edit-position-btn position-btn" data-position="ALL" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ALL">
-        <path class="fill-area emphasis"
-              d="M16.2928,17.0307c0.3621,0.6276 0.1471,1.43 -0.4803,1.7924c-0.6281,0.363 -1.4307,0.1477 -1.7929,-0.48l-2.1443,-3.7171l-2.1443,3.7171c-0.3623,0.6278 -1.1649,0.8431 -1.7929,0.48c-0.6277,-0.3631 -0.8427,-1.1655 -0.4803,-1.7924l2.1446,-3.7172h-4.2896c-0.7249,0 -1.3126,-0.5876 -1.3126,-1.3126c0,-0.7263 0.5876,-1.3137 1.3126,-1.3137h4.2896l-2.1446,-3.7172c-0.3624,-0.6277 -0.1474,-1.43 0.4803,-1.7924c0.6279,-0.3633 1.4306,-0.148 1.7929,0.48l2.1443,3.7172l2.1443,-3.7172c0.3624,-0.6277 1.1649,-0.843 1.7929,-0.48c0.6281,0.3633 0.8431,1.1647 0.4803,1.7924l-2.1446,3.7172h4.2896c0.7249,0 1.3126,0.5876 1.3126,1.3126c0,0.725 -0.5877,1.3131 -1.3126,1.3131h-4.2896l2.1446,3.7172z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ALL">
+                        <path class="fill-area emphasis"
+                              d="M16.2928,17.0307c0.3621,0.6276 0.1471,1.43 -0.4803,1.7924c-0.6281,0.363 -1.4307,0.1477 -1.7929,-0.48l-2.1443,-3.7171l-2.1443,3.7171c-0.3623,0.6278 -1.1649,0.8431 -1.7929,0.48c-0.6277,-0.3631 -0.8427,-1.1655 -0.4803,-1.7924l2.1446,-3.7172h-4.2896c-0.7249,0 -1.3126,-0.5876 -1.3126,-1.3126c0,-0.7263 0.5876,-1.3137 1.3126,-1.3137h4.2896l-2.1446,-3.7172c-0.3624,-0.6277 -0.1474,-1.43 0.4803,-1.7924c0.6279,-0.3633 1.4306,-0.148 1.7929,0.48l2.1443,3.7172l2.1443,-3.7172c0.3624,-0.6277 1.1649,-0.843 1.7929,-0.48c0.6281,0.3633 0.8431,1.1647 0.4803,1.7924l-2.1446,3.7172h4.2896c0.7249,0 1.3126,0.5876 1.3126,1.3126c0,0.725 -0.5877,1.3131 -1.3126,1.3131h-4.2896l2.1446,3.7172z"/>
+                    </svg>
+                </div>
+            </span>
 
             <!-- 탑 -->
             <span class="edit-position-btn position-btn" data-position="TOP" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TOP">
-        <path class="fill-area emphasis" d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
-        <path class="fill-area" d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TOP">
+                    <path class="fill-area emphasis" d="M16.172 5H5v11.172l-3 3V2h17.172l-3 3z" stroke="none"/>
+                    <path class="fill-area" d="M22 22H4.828l3-3H19V7.828l3-3V22zM15 9H9v6h6V9z"/>
+                  </svg>
+                </div>
+            </span>
 
             <!-- 정글 -->
             <span class="edit-position-btn position-btn" data-position="JUNGLE" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="JUNGLE">
-        <path class="fill-area emphasis"
-              d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                       aria-label="JUNGLE">
+                    <path class="fill-area emphasis"
+                          d="M5.094 0c9.247 11.173 8.508 20.655 6.983 24-3.853-4.623-6.261-6.368-6.983-6.662C4.708 10.788 2.204 7.652 1 6.903c4.752 1.734 6.903 5.512 7.385 7.184C9.09 8.532 6.485 2.381 5.094 0zM15.569 18.22v2.57l3.451-3.452c0-5.651 2.622-9.311 3.933-10.435-4.816 2.312-6.93 8.508-7.384 11.318zM15.569 12.04l-.803 2.248C14.509 12.49 13.482 10.38 13 9.552 14.605 5.763 17.522 1.605 18.78 0c-2.505 5.137-3.185 10.167-3.211 12.04z"/>
+                  </svg>
+                </div>
+            </span>
 
             <!-- 미드 -->
             <span class="edit-position-btn position-btn" data-position="MID" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="MID">
-        <path class="fill-area emphasis" d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z"/>
-        <path class="fill-area " d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="MID">
+                    <path class="fill-area emphasis" d="M22 2h-2.906L2 19.094V22h3.063L22 5.062V2z"/>
+                    <path class="fill-area "
+                          d="M5 13.478l-3 3V2h14.478l-3 3H5v8.478zM19 10.819l3-3V22H7.82l3-3H19v-8.181z"/>
+                  </svg>
+                </div>
+             </span>
 
             <!-- 원딜 -->
             <span class="edit-position-btn position-btn" data-position="ADC" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ADC">
-        <path class="fill-area emphasis" d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" stroke="none"/>
-        <path class="fill-area " d="M2 2h17.172l-3 3H5v11.172l-3 3V2zM9 9h6v6H9V9z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="ADC">
+                    <path class="fill-area emphasis" d="M7.828 19H19V7.828l3-3V22H4.828l3-3z" stroke="none"/>
+                    <path class="fill-area " d="M2 2h17.172l-3 3H5v11.172l-3 3V2zM9 9h6v6H9V9z"/>
+                  </svg>
+                </div>
+            </span>
 
             <!-- 서포터 -->
             <span class="edit-position-btn position-btn" data-position="SUPPORT" onclick="selectPosition(this)">
-    <div class="position-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="SUPPORT">
-        <path class="fill-area emphasis"
-              d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237z"/>
-        <path class="fill-area emphasis" d="M14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255z"/>
-        <path class="fill-area emphasis"
-              d="M10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237z"/>
-        <path class="fill-area emphasis" d="M9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255z"/>
-        <path class="fill-area emphasis" d="M9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"/>
-      </svg>
-    </div>
-  </span>
+                <div class="position-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+                       aria-label="SUPPORT">
+                    <path class="fill-area emphasis"
+                          d="M13.991 8.327l2.248-2.036H24c-2.553 2.327-4.69 2.86-5.44 2.836h-1.45l2.03 2.91-3.553 1.527-1.596-5.237z"/>
+                    <path class="fill-area emphasis" d="M14.644 19.745L12.758 9.127l-.798.946V22l2.684-2.255z"/>
+                    <path class="fill-area emphasis"
+                          d="M10.009 8.327L7.76 6.291H0c2.553 2.327 4.69 2.86 5.44 2.836h1.45l-2.03 2.91 3.553 1.527 1.596-5.237z"/>
+                    <path class="fill-area emphasis" d="M9.277 19.745l1.886-10.618.797.946V22l-2.683-2.255z"/>
+                    <path class="fill-area emphasis" d="M9.048 2L8.25 3.382 11.876 7.6l3.627-4.218L14.56 2H9.048z"/>
+                  </svg>
+                </div>
+            </span>
 
         </div>
 
@@ -724,7 +875,7 @@
         <textarea id="joinIntro"
                   name="intro"
                   maxlength="14"
-                  placeholder="나를 소개해주세요. 최대 14자까지 가능합니다."></textarea>
+                  placeholder="나를 소개해주세요. 최대 15자까지 가능합니다."></textarea>
 
         <input type="hidden" id="joinClanId" th:value="${clan.id}"/>
 

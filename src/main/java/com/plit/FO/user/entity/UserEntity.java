@@ -56,6 +56,9 @@ public class UserEntity {
     @Column(name = "puuid")
     private String puuid;
 
+    @Column(name = "profile_icon_id")
+    private Integer profileIconId;
+
     public UserDTO toDTO() {
         return UserDTO.builder()
                 .userSeq(this.userSeq)

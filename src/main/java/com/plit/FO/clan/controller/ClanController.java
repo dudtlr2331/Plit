@@ -7,17 +7,13 @@ import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.service.ClanJoinRequestService;
 import com.plit.FO.clan.service.ClanMemberService;
 import com.plit.FO.clan.service.ClanService;
-import com.plit.FO.user.entity.UserEntity;
 import com.plit.FO.user.repository.UserRepository;
 import com.plit.FO.user.service.UserService;
 import com.plit.FO.user.dto.UserDTO;
-
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +24,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.File;
 import java.io.IOException;
 import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -77,10 +72,26 @@ public class ClanController {
             if (principal != null) {
                 String userId = principal.getName();
                 Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
-                optionalUser.ifPresent(user -> model.addAttribute("nickname", user.getUserNickname()));
+
+                if (optionalUser.isPresent()) {
+                    UserDTO user = optionalUser.get();
+                    model.addAttribute("nickname", user.getUserNickname());
+
+                    // 소환사 인증 여부 확인
+                    boolean isVerified = user.getPuuid() != null && !user.getPuuid().isEmpty();
+                    System.out.println("puuid: " + user.getPuuid());
+                    System.out.println("isVerified: " + isVerified);
+                    model.addAttribute("isVerified", isVerified);
+
+                } else {
+                    model.addAttribute("isVerified", false);
+                }
+            } else {
+                model.addAttribute("isVerified", false);
             }
 
             return "fo/clan/clan-list";
+
         } catch (Exception e) {
             model.addAttribute("errorMessage", "클랜 목록을 불러오는 중 문제가 발생했습니다.");
             return "error/common-error";
@@ -107,6 +118,13 @@ public class ClanController {
             }
 
             UserDTO loginUser = optionalUser.get();
+
+            if (loginUser.getPuuid() == null || loginUser.getPuuid().isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "소환사 인증이 완료된 사용자만 클랜 생성이 가능합니다.");
+                return "redirect:/clan/register";  // 클랜 생성 폼 페이지 경로로 돌려보냄
+            }
+
+
             clan.setLeaderId(loginUser.getUserSeq().longValue());
 
             if (imageFile != null && !imageFile.isEmpty()) {
@@ -171,6 +189,14 @@ public class ClanController {
                 userService.getUserByUserId(userIdStr).ifPresent(userDTO -> {
                     Long userSeq = userDTO.getUserSeq().longValue();
                     model.addAttribute("nickname", userDTO.getUserNickname());
+
+                    String profileIconUrl = (userDTO.getProfileIconId() != null)
+                            ? "/images/profile-icon/" + userDTO.getProfileIconId() + ".png"
+                            : null;
+                    model.addAttribute("profileIconUrl", profileIconUrl);
+
+                    boolean isVerified = userDTO.getPuuid() != null && !userDTO.getPuuid().isEmpty();
+                    model.addAttribute("isVerified", isVerified);
 
                     boolean isAdmin = "MASTER".equalsIgnoreCase(userDTO.getUserAuth()) || "ADMIN".equalsIgnoreCase(userDTO.getUserAuth());
                     model.addAttribute("isAdmin", isAdmin);

@@ -368,7 +368,7 @@ label {
     font-size: 14px;
     display: flex;
     justify-content: flex-start;
-    padding-left: 12px;
+    padding-left: 2px;
     padding-right: 20px;
     padding-top: 10px;
     padding-bottom: 10px;
@@ -502,7 +502,7 @@ label {
 
 /* 클랜 멤버 목록 */
 .member-table {
-    padding-left: 8px;
+    /*padding-left: 8px;*/
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -510,26 +510,34 @@ label {
 
 .member-row {
     display: grid;
-    /*
-    칸 구성:
-    [소환사명 | 티어 | 주포지션 | 최근 챔피언 | 승률 | KDA | 소개 | 가입일 | 관리]
-    */
     grid-template-columns:
-        2.2fr   /* 소환사명: 닉네임 + #태그 + 왕관까지 보여야 하니 넉넉하게 */
-        1fr     /* 티어 */
-        1fr     /* 주포지션 */
-        2fr     /* 최근 챔피언 이미지 공간 */
-        1fr     /* 승률 */
-        1.6fr   /* KDA: 여백이 부족해서 오른쪽으로 밀리던 현상 방지 (기존 1.2fr → 넓힘) */
-        2.5fr   /* 소개글: 짧은 문장들 들어갈 공간 */
-        1fr     /* 가입일 */
-        1.2fr;  /* 관리 버튼 2개 (위임, 추방) 들어갈 공간 */
+    minmax(100px, 2.2fr)   /* 소환사명 */
+    minmax(80px, 1fr)      /* 티어 */
+    minmax(60px, 1fr)      /* 포지션 */
+    minmax(100px, 2fr)     /* 최근 챔피언 */
+    minmax(60px, 1.6fr)    /* 승률 */
+    minmax(100px, 1.6fr)   /* ✅ KDA */
+    minmax(160px, 2.5fr)   /* 소개 */
+    minmax(80px, 1.2fr)    /* 신청일 */
+    minmax(120px, 1.6fr);  /* 관리 */
     padding: 12px;
     border-bottom: 1px solid #ddd;
-    align-items: center;
+    align-items: stretch;
     font-size: 14px;
     text-align: center;
+    min-height: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
+
+.member-row,
+.pending-row {
+    min-height: 50px;
+    align-items: center;
+}
+
 
 .member-row.header-row {
     background-color: #e9e1f9;
@@ -538,17 +546,20 @@ label {
 }
 
 .member-cell {
-    padding: 4px 8px;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+    min-height: 100%;
 }
 
 /* 소환사명만 왼쪽 정렬 */
 .member-cell.name {
     justify-content: flex-start;
     text-align: left;
+    padding-left: 20px;
 }
 
 .member-row.header-row .member-cell {
@@ -572,85 +583,14 @@ label {
     max-width: 100%;
 }
 
-/*수락 대기 탭*/
-
-.pending-table {
-    padding-left: 8px;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.pending-row {
-    display: grid;
-    /*
-    칸 구성:
-    멤버탭이랑 동일
-    */
-    grid-template-columns:
-        2.2fr   /* 소환사명: 닉네임 + #태그 + 왕관까지 보여야 하니 넉넉하게 */
-        1fr     /* 티어 */
-        1fr     /* 주포지션 */
-        2fr     /* 최근 챔피언 이미지 공간 */
-        1fr     /* 승률 */
-        1.6fr   /* KDA: 여백이 부족해서 오른쪽으로 밀리던 현상 방지 (기존 1.2fr → 넓힘) */
-        2.5fr   /* 소개글: 짧은 문장들 들어갈 공간 */
-        1fr     /* 가입일 */
-        1.2fr;  /* 관리 버튼 2개 (위임, 추방) 들어갈 공간 */
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
-    align-items: center;
-    font-size: 14px;
-    text-align: center;
-}
-
-.pending-row.header-row {
-    background-color: #e9e1f9;
-    color: #4B2D88;
-    font-weight: 800;
-}
-
-.pending-cell {
-    padding: 4px 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    white-space: nowrap;
-}
-
-/* 소환사명만 왼쪽 정렬 */
-.pending-cell.name {
-    justify-content: flex-start;
-    text-align: left;
-}
-
-.pending-row.header-row .pending-cell {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.pending-row.header-row .pending-cell.name {
-    display: flex;
-    justify-content: flex-start;
-    text-align: left;
-}
-
-.pending-cell.intro {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-}
-
 /* 포지션 아이콘 (Position Icons) */
 /* 기본 SVG 크기 및 정렬 */
 .member-cell .position-icon svg {
     width: 24px;
     height: 24px;
     vertical-align: middle;
-    margin-right: 4px;
+    display: block;
+    margin: 0 auto;
 }
 
 /* 기본 아이콘 색상 (연한 회색) */
@@ -732,6 +672,14 @@ label {
     color: #333;
 }
 
+.modal .nickname {
+    display: block;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
 .close {
     position: absolute;
     top: 14px;
@@ -761,14 +709,46 @@ label {
 }
 
 
-/* 멤버 수정 모달 관련 */
-.member-info .nickname {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    color: #333;
+.nickname-wrapper {
     text-align: center;
+    margin-bottom: 24px;
 }
+
+.nickname-label {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.nickname-content {
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.nickname-name {
+    color: #222;
+}
+
+.nickname-tag {
+    font-size: 16px;
+    color: #bbb;
+    font-weight: 500;
+}
+
+/*!* 멤버 수정 모달 관련 *!*/
+/*.member-info .nickname {*/
+/*    font-size: 20px;*/
+/*    font-weight: 700;*/
+/*    margin-bottom: 12px;*/
+/*    color: #333;*/
+/*    text-align: center;*/
+/*}*/
 
 .position-select {
     display: flex;
@@ -919,4 +899,166 @@ textarea#memberIntro:focus {
     font-size: 16px;
     font-weight: normal;
     margin-left: 2px;
+}
+
+.champ-circle-container {
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.champ-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #3a3a3a;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.champ-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.stats-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.record-bar {
+    display: flex;
+    width: 120px;
+    height: 16px;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 16px;
+    margin-bottom: 2px;
+}
+.wins {
+    background-color: #5b9eff;
+    color: white;
+}
+.losses {
+    background-color: #ff5c5c;
+    color: white;
+}
+
+.win-rate {
+    margin-top: 2px;
+    font-weight: bold;
+    color: #2ecc71;
+    font-size: 14px;
+}
+
+.kda-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+}
+
+.kda-line {
+    font-size: 13px;
+    font-weight: 500;
+    color: black;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.kda-value {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.kda-low {
+    color: #333333;
+}
+
+.kda-mid {
+    color: #2ecc71;
+}
+
+.kda-good {
+    color: #3498db;
+}
+
+.kda-great {
+    color: orange;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #000;
+    object-fit: cover;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.name-tag-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.name-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.tag-line {
+    font-size: 12px;
+    color: gray;
+    margin-top: -2px;
+}
+
+.member-tier-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.member-tier-icon {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+}
+
+.member-tier-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.member-profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
 }
