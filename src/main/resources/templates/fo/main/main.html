@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <link rel="stylesheet" href="/css/common/header.css">
-    <link rel="stylesheet" href="/css/main.css">
-<!--    <link rel="stylesheet" href="/css/clan.css">-->
     <meta charset="UTF-8">
     <title>플레이어 매칭 UI</title>
 
+    <link rel="stylesheet" href="/css/common/header.css">
+    <link rel="stylesheet" href="/css/common/footer.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <!--    <link rel="stylesheet" href="/css/clan.css">-->
+
     <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}">
     <meta name="login-user-nickname" th:if="${loginUser != null}" th:content="${loginUser.userNickname}">
+
     <!-- 로그인 필요 팝업 스크립트 -->
     <script th:if="${popup}" defer>
         window.addEventListener('DOMContentLoaded', () => {
@@ -18,39 +21,42 @@
 </head>
 <body>
 
+<!-- 헤더 영역 -->
 <div th:replace="~{fo/common/header :: header}"></div>
 
+<!-- 메인 콘텐츠 영역 -->
 <div class="main-container">
 
-<div class="search-box">
-    <input type="text" id="searchInput" placeholder="플레이어 이름 (플레이어#KR1)">
-
-    <button id="searchButton" class="search-button" aria-label="검색">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-    </button>
-
-    <div id="autocompleteList" class="autocomplete-box"></div>
-</div>
-
-<div class="player-list">
-    <div class="player-item">
-        <span>플레이어1</span>
-        <button onclick="toggleChatPopup()">💬</button>
+    <!-- 검색 박스 -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="플레이어 이름 (플레이어#KR1)">
+        <button id="searchButton" class="search-button" aria-label="검색">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </button>
+        <div id="autocompleteList" class="autocomplete-box"></div>
     </div>
-    <div class="player-item">
-        <span>플레이어2</span>
-        <button onclick="toggleChatPopup()">💬</button>
-    </div>
-    <div class="player-item">
-        <span>플레이어3</span>
-        <button onclick="toggleChatPopup()">💬</button>
-    </div>
-    <button class="more-button">더보기</button>
-</div>
 
+    <!-- 플레이어 리스트 -->
+    <div class="player-list">
+        <div class="player-item">
+            <span>플레이어1</span>
+            <button onclick="toggleChatPopup()">💬</button>
+        </div>
+        <div class="player-item">
+            <span>플레이어2</span>
+            <button onclick="toggleChatPopup()">💬</button>
+        </div>
+        <div class="player-item">
+            <span>플레이어3</span>
+            <button onclick="toggleChatPopup()">💬</button>
+        </div>
+        <button class="more-button">더보기</button>
+    </div>
+
+    <!-- 클랜 영역 -->
     <div class="clan-section">
         <div class="main-clan-title" onclick="location.href='/clan'">클랜찾기 ></div>
 
@@ -82,58 +88,59 @@
                             width="30" height="30" />
 
                     <span style="flex-shrink:0;" th:switch="${clan.minTier}">
-        <span th:case="'CHALLENGER'">CHALLENGER</span>
-        <span th:case="'NONE'">티어 제한 없음</span>
-        <span th:case="*" th:text="${clan.minTier} + ' 이상'"></span>
-      </span>
+                        <span th:case="'CHALLENGER'">CHALLENGER</span>
+                        <span th:case="'NONE'">티어 제한 없음</span>
+                        <span th:case="*" th:text="${clan.minTier} + ' 이상'"></span>
+                    </span>
 
                     <div style="flex-grow:1;"></div>
 
                     <span class="clan-links" style="padding-right: -0.25rem; display: flex; gap: 4px;">
-        <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
-           th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
-          <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
-        </a>
-        <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
-           th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
-          <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
-        </a>
-      </span>
+                        <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+                           th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+                            <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon" />
+                        </a>
+                        <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+                           th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+                            <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon" />
+                        </a>
+                    </span>
                 </small>
-
             </div>
         </div>
+    </div>
 
-
-
-<!-- 팝업 메시지 -->
-<div th:if="${popup}">
-    <script>
-        alert([[${popup}]]);
-    </script>
+    <!-- 팝업 메시지 -->
+    <div th:if="${popup}">
+        <script>
+            alert([[${popup}]]);
+        </script>
+    </div>
 </div>
 
+<!-- 푸터 영역 -->
+<div th:replace="~{fo/common/footer :: footer}"></div>
 
+<!-- 채팅 & 오토컴플릿 JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script src="/js/chatPopup.js"></script>
 
 <script>
-
     const searchInput = document.getElementById("searchInput");
     const autocompleteList = document.getElementById("autocompleteList");
     const searchButton = document.getElementById("searchButton");
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const userSeqMeta = document.querySelector('meta[name="login-user-seq"]');
         if (userSeqMeta) {
             const userSeq = userSeqMeta.getAttribute("content");
             if (userSeq) {
-                // 여기서 initChatFeature 호출
                 initChatFeature(userSeq);
             }
         }
     });
+
     searchInput.addEventListener("input", async function () {
         const keyword = searchInput.value.trim();
         if (keyword.length < 2) {
@@ -145,21 +152,18 @@
         const suggestions = await res.json();
 
         autocompleteList.innerHTML = suggestions.map(s => `
-        <div class="autocomplete-item" onclick="selectRiotId('${s}')">${s}</div>
-    `).join("");
+            <div class="autocomplete-item" onclick="selectRiotId('${s}')">${s}</div>
+        `).join("");
     });
 
-    // Enter 키 검색
     searchInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
             executeSearch();
         }
     });
 
-    // 돋보기 버튼 클릭 검색
     searchButton.addEventListener("click", executeSearch);
 
-    // 검색 실행 함수
     function executeSearch() {
         const inputValue = searchInput.value.trim();
         const [gameName, tagLine] = inputValue.split("#");
@@ -172,12 +176,10 @@
         window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
     }
 
-
     function selectRiotId(riotId) {
         const [gameName, tagLine] = riotId.split("#");
         window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
     }
-
 </script>
 
 </body>
