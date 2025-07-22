@@ -17,12 +17,17 @@
 
         <!-- 우측 사용자 -->
         <div class="header-user-area" style="display: flex; align-items: center; gap: 10px; z-index: 1;">
-            <div class="chat-icon">💬</div>
+            <div class="chat-icon" sec:authorize="isAuthenticated()">💬</div>
 
             <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" class="auth-area">
                 <span th:if="${loginUser != null}" th:text="${loginUser.userNickname}">닉네임</span>
                 <span th:if="${loginUser == null}">비회원</span>
+
+                <button th:if="${loginUser != null and (loginUser.userAuth == 'MASTER' or loginUser.userAuth == 'ADMIN')}"
+                        class="btn btn-admin" onclick="location.href='/index'">
+                    관리자 페이지
+                </button>
 
                 <button class="btn btn-mypage" onclick="location.href='/mypage'">마이페이지</button>
 
