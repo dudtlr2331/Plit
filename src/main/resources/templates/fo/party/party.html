@@ -6,7 +6,8 @@
   <meta name="_csrf" th:content="${_csrf.token}">
   <meta name="_csrf_parameter" th:content="${_csrf.parameterName}">
   <meta name="_csrf_header" th:content="${_csrf.headerName}">
-  <meta name="user-id" th:content="${#authentication.name}">
+<!--  <meta name="user-id" th:content="${#authentication.name}">-->
+  <meta name="user-id" th:if="${loginUser != null}" th:content="${loginUser.userId}">
   <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}">
   <meta name="login-user-nickname" th:if="${loginUser != null}" th:content="${loginUser.userNickname}">
   <link rel="stylesheet" href="/css/party-popup.css">

@@ -1,6 +1,7 @@
 package com.plit.FO.party.dto;
 
 import com.plit.FO.party.entity.PartyEntity;
+import com.plit.FO.user.entity.UserEntity;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -45,10 +46,6 @@ public class PartyDTO {
 
         this.positions = entity.getPartyFindPositions().stream()
                 .map(p -> p.getPosition().name())
-                .collect(Collectors.toList());
-
-        this.members = entity.getPartyMembers().stream()
-                .map(member -> new PartyMemberDTO(member, null))
                 .collect(Collectors.toList());
     }
 }

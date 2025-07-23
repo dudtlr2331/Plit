@@ -4,6 +4,8 @@ import com.plit.FO.chat.entity.ChatRoomEntity;
 import com.plit.FO.chat.entity.ChatRoomUserEntity;
 import com.plit.FO.chat.repository.ChatRoomRepository;
 import com.plit.FO.chat.repository.ChatRoomUserRepository;
+import com.plit.FO.matchHistory.entity.ImageEntity;
+import com.plit.FO.matchHistory.repository.ImageRepository;
 import com.plit.FO.matchHistory.repository.MatchOverallSummaryRepository;
 import com.plit.FO.party.dto.*;
 import com.plit.FO.party.enums.MemberStatus;
@@ -34,6 +36,9 @@ public class PartyServiceImpl implements PartyService {
     private final PartyFindPositionRepository partyFindPositionRepository;
     private final PartyMemberRepository partyMemberRepository;
     private final UserRepository userRepository;
+
+    @Autowired
+    private ImageRepository imageRepository;
 
     @Autowired
     private MatchOverallSummaryRepository summaryRepository;
@@ -109,10 +114,12 @@ public class PartyServiceImpl implements PartyService {
                     .toList();
             partyFindPositionRepository.saveAll(positionEntities);
         }
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("유저 없음"));
 
         PartyMemberEntity leader = PartyMemberEntity.builder()
                 .party(party)
-                .userId(userId)
+                .user(user)
                 .position(dto.getMainPosition())
                 .status(MemberStatus.ACCEPTED)
                 .message("파티장")
@@ -232,7 +239,7 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalStateException("마감된 파티에는 참가할 수 없습니다.");
         }
 
-        if (partyMemberRepository.existsByParty_PartySeqAndUserId(partySeq, userId)) {
+        if (partyMemberRepository.existsByParty_PartySeqAndUser_UserId(partySeq, userId)) {
             throw new IllegalStateException("이미 참가한 파티입니다.");
         }
 
@@ -242,10 +249,13 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalStateException("파티 인원이 가득 찼습니다.");
         }
 
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("유저 없음"));
+
         // PENDING 상태로 저장
         PartyMemberEntity member = PartyMemberEntity.builder()
                 .party(party)
-                .userId(userId)
+                .user(user)
                 .role("MEMBER")
                 .message(message)
                 .status(MemberStatus.PENDING)
@@ -264,15 +274,18 @@ public class PartyServiceImpl implements PartyService {
         if (!"team".equals(party.getPartyType())) return "자유랭크 파티만 참가할 수 있습니다.";
         if (party.getPartyStatus() == PartyStatus.FULL || party.getPartyStatus() == PartyStatus.CLOSED)
             return "마감된 파티에는 참가할 수 없습니다.";
-        if (partyMemberRepository.existsByParty_PartySeqAndUserId(partySeq, userId))
+        if (partyMemberRepository.existsByParty_PartySeqAndUser_UserId(partySeq, userId))
             return "이미 참가한 파티입니다.";
         if (party.getPartyHeadcount() >= party.getPartyMax())
             return "파티 인원이 가득 찼습니다.";
 
+        UserEntity user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("유저 없음"));
+
         // 등록
         PartyMemberEntity member = PartyMemberEntity.builder()
                 .party(party)
-                .userId(userId)
+                .user(user)
                 .role("MEMBER")
                 .build();
         partyMemberRepository.save(member);
@@ -290,7 +303,7 @@ public class PartyServiceImpl implements PartyService {
     @Override
     public List<String> getPartyMembers(Long partySeq) {
         return partyMemberRepository.findByParty_PartySeqAndStatus(partySeq, MemberStatus.ACCEPTED).stream()
-                .map(PartyMemberEntity::getUserId)
+                .map(m -> m.getUser().getUserNickname())
                 .collect(Collectors.toList());
     }
 
@@ -299,6 +312,13 @@ public class PartyServiceImpl implements PartyService {
     public void acceptMember(Long partyId, Long memberId) {
         PartyMemberEntity member = partyMemberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchElementException("해당 멤버를 찾을 수 없습니다. ID=" + memberId));
+
+        String rawNickname = member.getUser().getUserNickname(); // ex: "어리고 싶다#KR1"
+        String normalizedNickname = rawNickname.replaceAll("\\s+", ""); // 공백 제거
+
+        Long userSeq = userRepository.findByNormalizedNickname(normalizedNickname)
+                .orElseThrow(() -> new NoSuchElementException("유저 없음 또는 중복 발생: " + rawNickname))
+                .getUserSeq().longValue();
 
         PartyEntity party = member.getParty();
 
@@ -333,10 +353,6 @@ public class PartyServiceImpl implements PartyService {
         ChatRoomEntity room = chatRoomRepository.findByPartyId(party.getPartySeq())
                 .orElseThrow(() -> new NoSuchElementException("채팅방 없음"));
 
-        // userId → user_seq 조회 (userId는 닉네임으로 저장돼 있음)
-        Long userSeq = userRepository.findByUserId(member.getUserId())
-                .orElseThrow(() -> new NoSuchElementException("유저 없음: " + member.getUserId()))
-                .getUserSeq().longValue();
 
         // 채팅방 입장 등록
         ChatRoomUserEntity newUser = ChatRoomUserEntity.builder()
@@ -361,28 +377,53 @@ public class PartyServiceImpl implements PartyService {
 
     @Override
     public List<PartyMemberDTO> getPartyMemberDTOs(Long partyId) {
+        PartyEntity party = partyRepository.findById(partyId)
+                .orElseThrow(() -> new NoSuchElementException("파티 없음"));
+
         List<PartyMemberEntity> members = partyMemberRepository.findByParty_PartySeq(partyId);
         List<PartyMemberDTO> result = new ArrayList<>();
 
         for (PartyMemberEntity m : members) {
-            UserEntity user = userRepository.findByUserId(m.getUserId()).orElse(null);
+            UserEntity user = m.getUser();
             if (user == null) continue;
 
             PartyMemberDTO dto = new PartyMemberDTO(m, user.getUserSeq(), user.getUserNickname());
+            dto.setUserId(user.getUserId());
 
-            // Riot 통계 추가
             if (user.getPuuid() != null) {
                 summaryRepository.findByPuuid(user.getPuuid()).ifPresent(summary -> {
-                    dto.setTier("Unranked"); // 현재 등급 시스템 없으므로 임시
+                    dto.setTier("Unranked");
                     dto.setWinRate(summary.getWinRate());
                     dto.setAverageKda(summary.getAverageKda());
 
+                    // 선호 챔피언 이미지 처리
                     String champions = summary.getPreferredChampions();
-                    if (champions != null) {
-                        dto.setPreferredChampions(Arrays.stream(champions.split(","))
+                    if (champions != null && !champions.isBlank()) {
+                        List<String> championList = Arrays.stream(champions.split(","))
                                 .map(String::trim)
                                 .limit(3)
-                                .toList());
+                                .toList();
+
+                        dto.setPreferredChampions(championList);
+
+                        List<String> championImageUrls = championList.stream()
+                                .map(name -> imageRepository.findByNameAndType(name + ".png", "champion")
+                                        .map(ImageEntity::getImageUrl)
+                                        .orElse("https://d23maxd9bm8c6o.cloudfront.net/img/champion/default.png")) // S3 기본값
+                                .toList();
+                        dto.setChampionImageUrls(championImageUrls);
+                    }
+
+                    // 티어 이미지 처리
+                    String tier = summary.getTier();
+                    if (tier != null && !tier.isBlank()) {
+                        String baseTier = tier.replaceAll("[^A-Za-z]", "").toUpperCase(); // 예: GOLD4 → GOLD
+
+                        // 티어 이미지 URL (정적 경로 기준)
+                        String tierImageUrl = "/images/tier/" + baseTier + ".png";
+
+                        dto.setTier(tier);
+                        dto.setTierImageUrl(tierImageUrl);
                     }
                 });
             }
@@ -395,7 +436,7 @@ public class PartyServiceImpl implements PartyService {
 
     @Override
     public MemberStatus getJoinStatus(Long partyId, String userId) {
-        return partyMemberRepository.findByParty_PartySeqAndUserId(partyId, userId)
+        return partyMemberRepository.findByParty_PartySeqAndUser_UserId(partyId, userId)
                 .map(PartyMemberEntity::getStatus)
                 .orElse(null); // 또는 Optional<MemberStatus>로 감싸도 OK
     }
@@ -437,7 +478,7 @@ public class PartyServiceImpl implements PartyService {
     @Transactional
     public void leaveParty(Long partyId, String userId) {
         PartyMemberEntity member = partyMemberRepository
-                .findByParty_PartySeqAndUserId(partyId, userId)
+                .findByParty_PartySeqAndUser_UserId(partyId, userId)
                 .orElseThrow(() -> new IllegalStateException("파티 참가 기록이 없습니다."));
 
         if (member.getStatus() != MemberStatus.ACCEPTED) {
@@ -467,24 +508,32 @@ public class PartyServiceImpl implements PartyService {
             throw new IllegalArgumentException("5명의 팀원 정보를 입력해야 합니다.");
         }
 
-        int acceptedCount = partyMemberRepository.countByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED);
-        int max = party.getPartyMax();
-
-        if (acceptedCount + team.size() > max) {
-            throw new IllegalStateException("파티 정원이 초과됩니다.");
-        }
-
-        // 중복 유저 체크
-        Set<String> existingUserIds = partyMemberRepository.findByParty_PartySeq(partyId).stream()
-                .map(PartyMemberEntity::getUserId)
-                .collect(Collectors.toSet());
-
+        // 닉네임 중복 체크
+        Set<String> nicknameSet = new HashSet<>();
         for (ScrimMemberDTO dto : team) {
-            if (existingUserIds.contains(dto.getUserId())) {
-                throw new IllegalArgumentException("이미 참가한 유저가 있습니다: " + dto.getUserId());
+            if (!nicknameSet.add(dto.getUserNickname())) {
+                throw new IllegalArgumentException("중복된 닉네임이 있습니다: " + dto.getUserNickname());
             }
         }
 
+        // 인원 수 체크
+        int acceptedCount = partyMemberRepository.countByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED);
+        if (acceptedCount + team.size() > party.getPartyMax()) {
+            throw new IllegalStateException("파티 정원이 초과됩니다.");
+        }
+
+        // 기존 멤버 중복 확인
+        Set<String> existingNicknames = partyMemberRepository.findByParty_PartySeq(partyId).stream()
+                .map(m -> m.getUser().getUserNickname())
+                .collect(Collectors.toSet());
+
+        for (ScrimMemberDTO dto : team) {
+            if (existingNicknames.contains(dto.getUserNickname())) {
+                throw new IllegalArgumentException("이미 참가한 유저가 있습니다: " + dto.getUserNickname());
+            }
+        }
+
+        // 포지션 중복 체크
         Set<String> positionsInRequest = new HashSet<>();
         for (ScrimMemberDTO dto : team) {
             if (!positionsInRequest.add(dto.getPosition())) {
@@ -492,21 +541,27 @@ public class PartyServiceImpl implements PartyService {
             }
         }
 
-        // 채팅방 정보 미리 조회 (한 번만)
+        // 채팅방 조회
         ChatRoomEntity room = chatRoomRepository.findByPartyId(party.getPartySeq())
                 .orElseThrow(() -> new NoSuchElementException("채팅방 없음"));
 
+        // 팀 멤버 등록
         for (ScrimMemberDTO dto : team) {
-            UserEntity user = userRepository.findByUserNickname(dto.getUserId())
-                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + dto.getUserId()));
+            String rawNickname = dto.getUserNickname(); // ex: "96년생티모장인#9202"
+            String normalizedNickname = rawNickname.replaceAll("\\s+", ""); // 공백 제거
+
+            UserEntity user = userRepository.findByNormalizedNickname(normalizedNickname)
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음 또는 중복 발생: " + rawNickname));
 
             PartyMemberEntity member = PartyMemberEntity.builder()
-                    .userId(dto.getUserId())
+                    .user(user)
                     .party(party)
                     .position(dto.getPosition())
                     .status(MemberStatus.PENDING)
                     .message(request.getMessage())
+                    .role("B")
                     .build();
+
             partyMemberRepository.save(member);
         }
 
@@ -545,15 +600,19 @@ public class PartyServiceImpl implements PartyService {
 
         // 5명 멤버 등록
         for (ScrimMemberDTO dto : request.getTeamMembers()) {
-            UserEntity user = userRepository.findByUserNickname(dto.getUserId())
-                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + dto.getUserId()));
+            String rawNickname = dto.getUserNickname();
+            String normalizedNickname = rawNickname.replaceAll("\\s+", "");
+
+            UserEntity user = userRepository.findByNormalizedNickname(normalizedNickname)
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음 또는 중복 발생: " + rawNickname));
 
             PartyMemberEntity member = PartyMemberEntity.builder()
-                    .userId(dto.getUserId())
+                    .user(user)
                     .party(party)
                     .position(dto.getPosition())
                     .status(MemberStatus.ACCEPTED)
                     .message("내전 팀 등록")
+                    .role("A")
                     .build();
 
             partyMemberRepository.save(member);
@@ -573,8 +632,11 @@ public class PartyServiceImpl implements PartyService {
 
         // 5명 모두 채팅방에 등록
         for (ScrimMemberDTO dto : request.getTeamMembers()) {
-            UserEntity user = userRepository.findByUserNickname(dto.getUserId())
-                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + dto.getUserId()));
+            String rawNickname = dto.getUserNickname();
+            String normalizedNickname = rawNickname.replaceAll("\\s+", "");
+
+            UserEntity user = userRepository.findByNormalizedNickname(normalizedNickname)
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + rawNickname));
 
             ChatRoomUserEntity chatUser = ChatRoomUserEntity.builder()
                     .chatRoom(chatRoom)
@@ -632,8 +694,8 @@ public class PartyServiceImpl implements PartyService {
             positionCounts.put(position, currentCount + 1);
 
             // 채팅방 입장 처리
-            Long userSeq = userRepository.findByUserNickname(member.getUserId())
-                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + member.getUserId()))
+            Long userSeq = userRepository.findByUserNickname(member.getUser().getUserNickname())
+                    .orElseThrow(() -> new NoSuchElementException("유저 없음: " + member.getUser().getUserNickname()))
                     .getUserSeq().longValue();
 
             ChatRoomUserEntity chatUser = ChatRoomUserEntity.builder()

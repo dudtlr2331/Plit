@@ -321,6 +321,8 @@ function addPositionCheckboxBehavior(popup) {
 function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions, createdBy) {
     const popup = document.getElementById('partyDetailPopup');
     const currentUserId = document.querySelector('meta[name="user-id"]')?.getAttribute('content');
+    const currentUserSeq = Number(document.querySelector('meta[name="login-user-seq"]')?.getAttribute('content'));
+    const currentUserNickname = document.querySelector('meta[name="login-user-nickname"]')?.getAttribute('content');
     const isOwner = currentUserId && currentUserId === createdBy;
 
     fetch(`/api/parties/${seq}/join-status`)
@@ -350,14 +352,6 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 const approved = members.filter(m => m.status === 'ACCEPTED');
                 const pending = members.filter(m => m.status === 'PENDING');
 
-                const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
-
-                approved.sort((a, b) => {
-                    const aPos = positionOrder[a.position] ?? 99;
-                    const bPos = positionOrder[b.position] ?? 99;
-                    return aPos - bPos;
-                });
-
                 const detailHtml = `
                     <p><strong>이름:</strong> ${name}</p>
                     <p><strong>타입:</strong> ${type}</p>
@@ -371,43 +365,127 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     <p><strong>모집 포지션:</strong> ${positions}</p>
                 `;
 
-                Promise.all(approved.map(async m => {
-                    const encodedId = encodeURIComponent(m.userId);
-                    const res = await fetch(`/api/users/${encodedId}/relation-status`);
-                    const relation = await res.json();
+                const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
 
-                    const icon = getPositionIconHTML(m.position, true);
-                    const isCurrentUser = m.userId === currentUserId;
-                    const canInteract = isOwner || joinStatus === 'ACCEPTED';
+                const renderScrimVsLayout = (members) => {
+                    const teamA = members.filter(m => m.role === 'A');
+                    const teamB = members.filter(m => m.role === 'B');
 
-                    const nicknameHtml = m.userId === createdBy
-                        ? `<span class="leader-icon" style="margin-left:4px;">👑</span><strong>${m.userNickname}</strong>`
-                        : m.userNickname;
-
-                    const kickBtn = (isOwner && !isCurrentUser) ? `<button onclick="kickMember(${seq}, ${m.id})">내보내기</button>` : '';
-                    const leaveBtn = (!isOwner && isCurrentUser) ? `<button onclick="leaveParty(${seq})">나가기</button>` : '';
-                    const friendBtn = (canInteract && !isCurrentUser && !relation.isFriend && !relation.isBlocked)
-                        ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>` : '';
-                    const blockBtn = (canInteract && !isCurrentUser && !relation.isBlocked)
-                        ? `<button onclick="blockMember('${m.userId}')">차단</button>` : '';
+                    const buildTable = (team) => `
+                        <table class="member-table">
+                            <thead>
+                                <tr>
+                                    <th>닉네임</th>
+                                    <th>포지션</th>
+                                    <th>티어</th>
+                                    <th>선호 챔피언</th>
+                                    <th>승률</th>
+                                    <th>KDA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${team.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]).map(m => {
+                                            const kda = m.averageKda || 0;
+                                            let kdaClass = 'kda-low';
+                                            if (kda >= 5) kdaClass = 'kda-great';
+                                            else if (kda >= 4) kdaClass = 'kda-good';
+                                            else if (kda >= 3) kdaClass = 'kda-mid';
+                    
+                                            return `
+                                        <tr>
+                                            <td>${
+                                                m.userId === createdBy
+                                                    ? `<span class="leader-icon">👑</span><strong>${m.userNickname}</strong>`
+                                                    : m.userNickname }
+                                            </td>
+                                            <td>${getPositionIconHTML(m.position, true)}</td>
+                                            <td>
+                                                ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
+                                                <span class="tier-text">${m.tier || 'Unranked'}</span>
+                                            </td>
+                                            <td>
+                                                ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24">`).join('')}
+                                            </td>
+                                            <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
+                                            <td class="${kdaClass}">${kda.toFixed(2)}</td>
+                                        </tr>
+                                    `;
+                                        }).join('')}
+                            </tbody>
+                        </table>
+                    `;
 
                     return `
-                        <tr>
-                            <td>${nicknameHtml}</td>
-                            <td>${icon}</td>
-                            <td>${m.tier || 'Unranked'}</td>
-                            <td>
-                              ${(m.preferredChampions || []).map(c => `
-                                <img src="/img/champion/${c}.png" width="24" />
-                              `).join('')}
-                            </td>
-                            <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
-                            <td>${m.averageKda != null ? m.averageKda.toFixed(2) : '0 / 0 / 0'}</td>
-                            <td>${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</td>
-                        </tr>
+                        <div class="scrim-vs-layout">
+                            <div class="team-table">
+                                <h4>A 팀</h4>
+                                ${buildTable(teamA)}
+                            </div>
+                            <div class="vs-text">VS</div>
+                            <div class="team-table">
+                                <h4>B 팀</h4>
+                                ${buildTable(teamB)}
+                            </div>
+                        </div>
                     `;
-                })).then(rows => {
-                    const approvedHtml = `
+                };
+
+                const renderDefaultTable = async () => {
+                    const rows = await Promise.all(approved.map(async m => {
+                        const res = await fetch(`/api/users/${encodeURIComponent(m.userId)}/relation-status`);
+                        const relation = await res.json();
+
+                        const isLoggedIn = !!currentUserId;
+                        const isCurrentUser = m.userNickname === currentUserNickname; // 닉네임으로 본인 여부 판단
+                        const isLeader = m.userSeq === currentUserSeq && isOwner;
+                        const canInteract = isOwner || joinStatus === 'ACCEPTED';
+
+                        const icon = getPositionIconHTML(m.position, true);
+
+                        // 👑 왕관 표시
+                        const nicknameHtml = m.userId === createdBy
+                            ? `<span class="leader-icon">👑</span><strong>${m.userNickname}</strong>`
+                            : m.userNickname;
+
+                        // 버튼들 조건 분기
+                        const kickBtn = (isOwner && !isCurrentUser)
+                            ? `<button onclick="kickMember(${seq}, ${m.id})">내보내기</button>` : '';
+
+                        const leaveBtn = (isLoggedIn && !isOwner && isCurrentUser)
+                            ? `<button onclick="leaveParty(${seq})">나가기</button>` : '';
+
+                        const friendBtn = (isLoggedIn && canInteract && !isCurrentUser && !isLeader && !relation.isFriend && !relation.isBlocked)
+                            ? `<button onclick="openFriendMemoPopup('${m.userId}')">친구신청</button>` : '';
+
+                        const blockBtn = (isLoggedIn && canInteract && !isCurrentUser && !isLeader && !relation.isBlocked)
+                            ? `<button onclick="blockMember('${m.userId}')">차단</button>` : '';
+
+                        // KDA 색상 클래스
+                        const kda = m.averageKda || 0;
+                        let kdaClass = 'kda-low';
+                        if (kda >= 5) kdaClass = 'kda-great';
+                        else if (kda >= 4) kdaClass = 'kda-good';
+                        else if (kda >= 3) kdaClass = 'kda-mid';
+
+                        return `
+                            <tr>
+                                <td>${nicknameHtml}</td>
+                                <td>${icon}</td>
+                                <td>
+                                    ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
+                                    <span class="tier-text">${m.tier || 'Unranked'}</span>
+                                </td>
+                                <td>
+                                    ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24" />`).join('')}
+                                </td>
+                                <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
+                                <td class="${kdaClass}">${kda.toFixed(2)}</td>
+                                <td>${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</td>
+                            </tr>
+                        `;
+                                    }));
+
+                                    return `
                         <table class="member-table">
                             <thead>
                                 <tr>
@@ -420,42 +498,30 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                                     <th>관리</th>
                                 </tr>
                             </thead>
-                            <tbody>${rows.join('')}</tbody>
+                            <tbody>
+                                ${rows.join('')}
+                            </tbody>
                         </table>
                     `;
+                };
 
-                    const grouped = {};
-                    pending.forEach(m => {
-                        const key = m.message || '기타';
-                        if (!grouped[key]) grouped[key] = [];
-                        grouped[key].push(m);
-                    });
-
-                    const pendingHtml = Object.entries(grouped).map(([message, members]) => {
-                        const ids = members.map(m => m.id);
-                        const memberList = members.map(m => m.userId).join(', ');
-                        const buttons = isOwner
-                            ? (type === 'scrim'
-                                ? `<button onclick="approveTeam(${seq}, [${ids.join(',')}])">수락</button>
-                                   <button onclick="rejectTeam(${seq}, [${ids.join(',')}])">거절</button>`
-                                : members.map(m => `
-                                   <button onclick="approveMember(${seq}, ${m.id})">수락</button>
-                                   <button onclick="rejectMember(${seq}, ${m.id})">거절</button>
-                                `).join(''))
-                            : '';
-
-                        return `<li><strong>${message}</strong>: ${memberList} ${buttons}</li>`;
-                    }).join('');
-
-                    const ownerButtons = isOwner ? `
-                        <button onclick="handleEditFromDetail('${encodeURIComponent(JSON.stringify({
-                        partySeq: seq, partyName: name, partyType: type, partyCreateDate: createDate,
-                        partyEndTime: endDate, partyStatus: status, partyHeadcount: headcount,
-                        partyMax: max, memo: memo, mainPosition: mainPosition,
-                        positions: positions.split(',').map(p => p.trim())
-                    }))}')">수정</button>
-                        <button onclick="deleteParty(${seq})">삭제</button>
-                    ` : '';
+                (type === 'scrim' ? Promise.resolve(renderScrimVsLayout(approved)) : renderDefaultTable()).then(approvedHtml => {
+                    const pendingHtml = (type === 'scrim')
+                        ? `
+                            <ul>${pending.map(m => `<li>${m.userNickname} - ${m.message}</li>`).join('')}</ul>
+                            <div class="pending-actions">
+                              ${isOwner && pending.length === 5
+                            ? `<button onclick="approveTeam(${seq}, [${pending.map(m => m.id).join(',')}])">팀 전체 수락</button>`
+                            : `<p style="color:gray;">파티장만 수락할 수 있습니다.</p>`}
+                            </div>
+                          `
+                        : `<ul>${pending.map(m => `
+                            <li>${m.userNickname} - ${m.message}
+                                ${isOwner
+                            ? `<button onclick="approveMember(${seq}, ${m.id})">수락</button>
+                                       <button onclick="rejectMember(${seq}, ${m.id})">거절</button>` : ''}
+                            </li>
+                        `).join('')}</ul>`;
 
                     popup.innerHTML = `
                         <h3>파티 상세 정보</h3>
@@ -470,7 +536,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                         <div id="tab-pending" class="tab-content" style="display:none;">${pendingHtml}</div>
 
                         <div class="popup-buttons">
-                            ${ownerButtons}
+                            ${isOwner ? `<button onclick="handleEditFromDetail('${seq}')">수정</button><button onclick="deleteParty(${seq})">삭제</button>` : ''}
                             <button onclick="closePartyDetail()">닫기</button>
                             ${joinBtnHtml}
                         </div>
@@ -1163,6 +1229,7 @@ function submitScrimJoinRequest() {
     const message = form.querySelector('textarea[name="message"]').value.trim();
 
     const teamMembers = [];
+    const nicknameSet = new Set();
 
     for (let i = 0; i < 5; i++) {
         const userId = nicknames[i].value.trim();
@@ -1173,7 +1240,13 @@ function submitScrimJoinRequest() {
             return;
         }
 
-        teamMembers.push({ userId, position });
+        if (nicknameSet.has(userId)) {
+            alert(`중복된 닉네임이 있습니다: ${userId}`);
+            return;
+        }
+        nicknameSet.add(userId);
+
+        teamMembers.push({ userNickname: userId, position });
     }
 
     const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
@@ -1241,14 +1314,22 @@ function submitScrimCreateForm() {
     if (!endTime) return alert("종료일자를 입력해주세요.");
 
     const teamMembers = [];
+
     for (let i = 0; i < 5; i++) {
         const userId = nicknames[i].value.trim();
         const position = positions[i].value;
 
         if (!userId) return alert(`${i + 1}번 팀원의 닉네임을 입력해주세요.`);
 
-        teamMembers.push({ userId, position });
+        teamMembers.push({ userNickname: userId, position });
     }
+
+    const data = {
+        partyName: name,
+        partyEndTime: endTime,
+        memo,
+        teamMembers
+    };
 
     const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
     const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
@@ -1259,25 +1340,21 @@ function submitScrimCreateForm() {
             'Content-Type': 'application/json',
             [csrfHeader]: csrfToken
         },
-        body: JSON.stringify({
-            partyName: name,
-            partyEndTime: endTime,
-            memo,
-            teamMembers
-        })
+        credentials: 'include',
+        body: JSON.stringify(data)
     })
-        .then(res => res.text())
-        .then(text => {
-            if (text === 'OK') {
+        .then(res => res.text().then(text => ({ ok: res.ok, text })))
+        .then(({ ok, text }) => {
+            if (ok && text === 'OK') {
                 alert('내전 파티가 성공적으로 생성되었습니다!');
                 closeScrimCreatePopup();
                 loadParties('scrim');
             } else {
-                alert('생성 실패: ' + text);
+                alert(text);
             }
         })
         .catch(err => {
             console.error(err);
-            alert('서버 오류로 생성 실패');
+            alert('서버 오류가 발생했습니다.');
         });
 }

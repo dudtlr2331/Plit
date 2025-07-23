@@ -102,7 +102,7 @@ public class PartyRestController {
     @GetMapping("/{partyId}/joined")
     public boolean checkIfJoined(@PathVariable Long partyId,
                                  @AuthenticationPrincipal(expression = "username") String userId) {
-        return partyMemberRepository.existsByParty_PartySeqAndUserIdAndStatus(partyId, userId, MemberStatus.ACCEPTED);
+        return partyMemberRepository.existsByParty_PartySeqAndUser_UserIdAndStatus(partyId, userId, MemberStatus.ACCEPTED);
     }
 
     // 파티에 참가 중인 멤버 목록
@@ -132,7 +132,7 @@ public class PartyRestController {
 
     @GetMapping("/{partyId}/join-status")
     public ResponseEntity<String> getJoinStatus(@PathVariable Long partyId,
-                                                @AuthenticationPrincipal String userId) {
+                                                @AuthenticationPrincipal(expression = "username") String userId) {
         MemberStatus status = partyService.getJoinStatus(partyId, userId);
         String result = status != null ? status.name() : "NONE";
         return ResponseEntity.ok(result);
@@ -161,6 +161,8 @@ public class PartyRestController {
             partyService.joinScrimTeam(partyId, request);
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
+            System.out.println("예외 발생!");
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("실패: " + e.getMessage());
         }
@@ -169,6 +171,11 @@ public class PartyRestController {
     @PostMapping("/scrim-create")
     public ResponseEntity<String> createScrimParty(@RequestBody ScrimCreateRequestDTO request,
                                                    @AuthenticationPrincipal UserDetails user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인이 필요한 기능입니다.");
+        }
+
         try {
             partyService.createScrimParty(request, user.getUsername());
             return ResponseEntity.ok("OK");

@@ -1,6 +1,7 @@
 package com.plit.FO.party.entity;
 
 import com.plit.FO.party.enums.MemberStatus;
+import com.plit.FO.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -26,8 +27,9 @@ public class PartyMemberEntity {
     @JoinColumn(name = "party_seq", nullable = false)
     private PartyEntity party;
 
-    @Column(name = "user_id", nullable = false)
-    private String userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_seq", nullable = false)
+    private UserEntity user;
 
     @CreationTimestamp
     @Column(name = "join_time", nullable = false, updatable = false)
