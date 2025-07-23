@@ -12,9 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/clan.css"/>
     <link rel="stylesheet" href="/css/common/header.css"/>
+    <link rel="stylesheet" href="/css/common/footer.css">
 </head>
 
 <body class="clan-list">
+<div class="wrapper">
 <th:block th:replace="~{fo/common/header :: header}"></th:block>
 
 <div class="container">
@@ -50,7 +52,7 @@
         <div class="clan-register-box">
             <a href="javascript:void(0);" class="clan-btn" sec:authorize="isAuthenticated()"
                id="clanRegisterBtn"
-            onclick="openModal()">클랜등록</a>
+               onclick="openModal()">클랜등록</a>
             <a href="/login" class="clan-btn" sec:authorize="isAnonymous()">클랜등록</a>
         </div>
 
@@ -83,7 +85,8 @@
                         <div style="padding: 10px; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; color: #333;">
                             <th:block th:if="${nickname != null and #strings.contains(nickname, '#')}">
                                 <span th:text="${#strings.substringBefore(nickname, '#')}"></span>
-                                <span class="light-tag" th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
+                                <span class="light-tag"
+                                      th:text="'#' + ${#strings.substringAfter(nickname, '#')}"></span>
                             </th:block>
                             <th:block th:if="${nickname != null and !#strings.contains(nickname, '#')}">
                                 <span th:text="${nickname}"></span>
@@ -181,20 +184,24 @@
 
                 <!-- 소셜 링크 -->
                 <span class="clan-links" style="padding-right: -0.25rem; display: flex; gap: 4px;">
-    <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
-       th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
-      <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon"/>
-    </a>
-    <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
-       th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
-      <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon"/>
-    </a>
+        <a th:if="${clan.discordLink != null and !#strings.isEmpty(clan.discordLink)}"
+           th:href="${clan.discordLink}" target="_blank" onclick="event.stopPropagation()">
+          <img src="/images/clan/discord-icon.png" alt="Discord" class="social-icon"/>
+        </a>
+        <a th:if="${clan.kakaoLink != null and !#strings.isEmpty(clan.kakaoLink)}"
+           th:href="${clan.kakaoLink}" target="_blank" onclick="event.stopPropagation()">
+          <img src="/images/clan/kakao-icon.png" alt="KakaoTalk" class="social-icon"/>
+        </a>
   </span>
 
             </small>
         </div>
     </div>
 </div>
+
+<div th:replace="~{fo/common/footer :: footer}"></div>
+    </div>
+
 
 <script src="/js/clan.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>

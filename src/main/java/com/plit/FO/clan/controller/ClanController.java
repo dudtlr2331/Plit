@@ -7,6 +7,9 @@ import com.plit.FO.clan.entity.ClanEntity;
 import com.plit.FO.clan.service.ClanJoinRequestService;
 import com.plit.FO.clan.service.ClanMemberService;
 import com.plit.FO.clan.service.ClanService;
+import com.plit.FO.matchHistory.dto.riot.RiotSummonerResponse;
+import com.plit.FO.matchHistory.service.ImageService;
+import com.plit.FO.matchHistory.service.RiotApiService;
 import com.plit.FO.user.repository.UserRepository;
 import com.plit.FO.user.service.UserService;
 import com.plit.FO.user.dto.UserDTO;
@@ -38,7 +41,8 @@ public class ClanController {
     private final UserService userService;
     private final ClanMemberService clanMemberService;
     private final ClanJoinRequestService clanJoinRequestService;
-    private final UserRepository userRepository;
+    private final ImageService imageService;
+    private final RiotApiService riotApiService;
 
     @Value("${custom.upload-path.clan}")
     private String uploadDir;
@@ -190,10 +194,24 @@ public class ClanController {
                     Long userSeq = userDTO.getUserSeq().longValue();
                     model.addAttribute("nickname", userDTO.getUserNickname());
 
-                    String profileIconUrl = (userDTO.getProfileIconId() != null)
-                            ? "/images/profile-icon/" + userDTO.getProfileIconId() + ".png"
-                            : null;
-                    model.addAttribute("profileIconUrl", profileIconUrl);
+                    String defaultIconUrl = "/images/clan/clan_default.png";
+
+                    if (userDTO.getPuuid() != null && !userDTO.getPuuid().isBlank()) {
+                        try {
+                            RiotSummonerResponse response = riotApiService.getSummonerByPuuid(userDTO.getPuuid());
+                            if (response != null) {
+                                String profileIconUrl = imageService.getProfileIconUrl(response.getProfileIconId());
+                                model.addAttribute("profileIconUrl", profileIconUrl);
+                            } else {
+                                model.addAttribute("profileIconUrl", defaultIconUrl);
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Riot API 호출 실패: " + e.getMessage());
+                            model.addAttribute("profileIconUrl", defaultIconUrl);
+                        }
+                    } else {
+                        model.addAttribute("profileIconUrl", defaultIconUrl);
+                    }
 
                     boolean isVerified = userDTO.getPuuid() != null && !userDTO.getPuuid().isEmpty();
                     model.addAttribute("isVerified", isVerified);

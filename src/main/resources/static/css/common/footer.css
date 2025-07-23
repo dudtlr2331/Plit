@@ -5,7 +5,7 @@
     font-size: 13px;
     text-align: center;
     width: 100%;
-    margin-top: 80px;
+    margin-top: auto;
     box-sizing: border-box;
 }
 
@@ -25,4 +25,19 @@
 
 .footer-info p {
     margin: 5px 0;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    flex: 1;
 }

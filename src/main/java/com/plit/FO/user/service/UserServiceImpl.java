@@ -361,7 +361,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                 .userCreateDate(e.getUserCreateDate())
                 .userAuth(e.getUserAuth())
                 .puuid(e.getPuuid())
-                .profileIconId(e.getProfileIconId())
                 .build();
     }
 
