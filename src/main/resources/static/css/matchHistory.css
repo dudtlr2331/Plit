@@ -1,253 +1,293 @@
-body { font-family: sans-serif; margin: 0; padding: 0; background: #fff; }
-/* 기본 설정 */
+/* op.gg 완벽 복제 CSS */
 body {
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
     margin: 0;
     padding: 0;
-    background: #fff;
-    color: #222;
-}
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 30px auto 0;
-    flex: 1;
+    background: #f2f2f2;
+    color: #202d37;
+    line-height: 1.4;
 }
 
 /* 메인 레이아웃 */
 .main-wrapper {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 30px 20px;
-    box-sizing: border-box;
+    padding: 20px;
+    background: #f2f2f2;
 }
 
 .main {
+    display: flex;
+    gap: 20px;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 30px 20px;
-    display: flex;
-    justify-content: space-between;
-    gap: 30px;
-    box-sizing: border-box;
 }
 
 .left-panel {
-    flex: 1;
-    min-width: 320px;
+    flex: 0 0 350px;
 }
 
 .right-panel {
-    flex: 2.5;
-    min-width: 600px;
+    flex: 1;
+    min-width: 0;
 }
 
 /* 프로필 헤더 */
 .profile-header {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 10px 0;
 }
 
 .profile-icon-wrapper {
     position: relative;
-    width: 88px;
-    height: 88px;
+    flex-shrink: 0;
 }
 
 .profile-icon {
-    width: 88px;
-    height: 88px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    object-fit: cover;
+    border: 1px solid #e1e1e1;
 }
 
 .summoner-level-circle {
     position: absolute;
-    bottom: -10px;
-    right: -6px;
-    width: 30px;
-    height: 30px;
-    background-color: black;
-    color: white;
-    font-size: 13px;
+    bottom: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    background: #202d37;
+    color: #fff;
+    font-size: 9px;
     font-weight: bold;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid white;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
-}
-
-
-.profile-header img {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin-right: 20px;
+    border: 2px solid #fff;
 }
 
 .profile-header h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #202d37;
 }
 
-.btn-red {
-    margin-left: 10px;
-    background-color: #f45b5b;
-    color: white;
+.profile-header button {
+    background: #f0f0f0;
+    color: #202d37;
     border: none;
     padding: 6px 12px;
     border-radius: 4px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
+    margin-left: auto;
+}
+
+.profile-header button:hover {
+    background: #e0e0e0;
 }
 
 /* 공통 박스 스타일 */
 .rank-box,
 .champion-preference-box,
-.recent-games,
-.match-detail {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 15px;
+.recent-games {
+    background: #fff;
+    border-radius: 8px;
     margin-bottom: 20px;
-    background: #f9f9f9;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.rank-box h3,
+.champion-preference-box h3,
+.recent-games h3 {
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #202d37;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+/* 랭크 정보 */
+.tier-summary {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.tier-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.tier-info {
+    flex: 1;
+}
+
+.tier-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #202d37;
+    margin-bottom: 4px;
+}
+
+.lp {
+    font-size: 12px;
+    color: #202d37;
+    margin-bottom: 4px;
+}
+
+.win-rate {
+    font-size: 11px;
+    color: #888;
+}
+
+.no-rank-info {
+    padding: 20px;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
 }
 
 /* 탭 버튼 */
 .rank-tabs {
     display: flex;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 12px;
+    border-bottom: 1px solid #e1e1e1;
 }
 
 .tab-button {
     flex: 1;
-    padding: 8px 12px;
-    font-size: 14px;
+    padding: 12px 16px;
     background: none;
     border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
+    font-size: 13px;
     font-weight: bold;
-    color: #444;
-    text-align: center;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
 }
 
 .tab-button.active {
-    color: #f45b5b;
-    border-bottom: 2px solid #f45b5b;
+    color: #202d37;
+    border-bottom-color: #ee5a52;
 }
 
-.profile-icon-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 64px;
-    height: 64px;
+.tab-button:hover {
+    color: #202d37;
 }
-
-.summoner-level-circle {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 24px;
-    height: 24px;
-    background-color: black;
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-}
-
 
 /* 챔피언 리스트 */
+.champion-list {
+    padding: 0;
+}
+
 .champion-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid #eee;
-    font-size: 13px;
-    gap: 16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
 }
 
-.champion-icon img {
-    width: 42px;
-    height: 42px;
+.champion-row:hover {
+    background: #f8f9fa;
+}
+
+.champion-row:last-child {
+    border-bottom: none;
+}
+
+.champion-row .champion-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.champion-row .champion-icon img {
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
 }
 
 .champion-info {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 100px;
+    min-width: 0;
 }
 
-.champion-info .champ-name {
-    font-weight: 600;
-    font-size: 14px;
+.champ-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #202d37;
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.champion-info .cs-info {
-    color: #777;
-    font-size: 12px;
+.cs-info {
+    font-size: 11px;
+    color: #888;
 }
 
 .kda-info {
-    flex: 1;
     text-align: center;
-    min-width: 100px;
+    margin-right: 16px;
+    min-width: 80px;
 }
 
-.kda-info .kda-ratio {
-    font-weight: 500;
-    color: #333;
-    font-size: 13px;
-}
-
-.kda-info .kda {
+.kda-ratio {
     font-size: 12px;
+    font-weight: bold;
+    color: #202d37;
+    margin-bottom: 2px;
+}
+
+.kda {
+    font-size: 11px;
     color: #888;
 }
 
 .usage-info {
-    flex: 0.8;
     text-align: right;
-}
-
-.usage-info .usage-percent {
-    font-weight: bold;
-    color: #4189e2;
-    font-size: 13px;
-}
-
-.usage-info .game-count {
-    font-size: 12px;
-    color: #666;
+    min-width: 60px;
 }
 
 .usage-percent {
-    font-weight: 600;
-    color: #5b8ef4;
+    font-size: 12px;
+    font-weight: bold;
+    color: #ee5a52;
+    margin-bottom: 2px;
 }
 
 .game-count {
-    color: #666;
+    font-size: 11px;
+    color: #888;
 }
 
 .champion-tab-content {
     display: none;
+}
+
+.champion-tab-content[data-mode="overall"] {
+    display: block;
 }
 
 .hidden-champ {
@@ -255,832 +295,761 @@ body {
 }
 
 .show-more-button {
-    margin: 10px auto;
-    display: block;
-    padding: 8px 16px;
-    font-size: 14px;
-    background-color: #eee;
-    border: 1px solid #ccc;
-    cursor: pointer;
-}
-
-.match-summary-box {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    background-color: #eaf4ff; /* 승리 기본 */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s;
-}
-
-.match-summary-box.lose-bg {
-    background-color: #ffecec;
-}
-
-.match-summary-box:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.match-summary-box .match-info {
-    min-width: 90px;
-    font-size: 13px;
-    text-align: center;
-    color: #666;
-}
-
-.match-summary-box .champion-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 180px;
-}
-
-.match-summary-box .champion-image img {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 2px solid #888;
-}
-
-.match-summary-box .champion-level {
-    bottom: -4px;
-    right: -6px;
-    font-size: 10px;
-    padding: 1px 6px;
-}
-
-.match-summary-box .kda {
-    font-size: 15px;
-    font-weight: bold;
-    margin-top: 8px;
-}
-
-.match-summary-box .ratio {
-    font-size: 12px;
-    color: #888;
-    font-weight: normal;
-}
-.match-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    box-shadow: none;
+    width: 100%;
+    padding: 12px;
+    background: none;
     border: none;
-    font-family: 'Noto Sans KR', sans-serif;
-    transition: background-color 0.3s ease;
-}
-
-/* 승리/패배 배경색 */
-.match-card.win {
-    background-color: #e3f2fd; /* 하늘색 계열 */
-}
-
-.match-card.lose {
-    background-color: #ffe5e5; /* 붉은 계열 */
-}
-
-/* 모드 + 시간 + 결과 + 지속시간 */
-.match-info {
-    display: flex;
-    flex-direction: column;
-    font-size: 12px;
-    color: #555;
-    text-align: left;
-    margin-right: 12px;
-    width: 90px;
-}
-
-/* 챔피언 섹션 */
-.champion-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-}
-
-.champion-image {
-    position: relative;
-    width: 48px;
-    height: 48px;
-}
-
-.champion-image img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-}
-
-.champion-level {
-    position: absolute;
-    bottom: -6px;
-    right: -6px;
-    background-color: black;
-    color: white;
-    font-size: 10px;
-    border-radius: 50%;
-    padding: 2px 5px;
-}
-
-/* 룬 / 스펠 */
-.runes img, .traits img {
-    width: 20px;
-    height: 20px;
-    margin: 1px;
-}
-
-/* KDA */
-.kda {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 12px;
-    margin-right: 12px;
-}
-
-.kda .score {
-    font-weight: bold;
-}
-
-.kda .ratio {
-    color: #888;
-    font-size: 11px;
-}
-
-/* 아이템 */
-.items {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 2px;
-}
-
-.items img {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    background-color: #ccc;
-}
-
-/* 포지션, CS, 티어 */
-.placement .detail-stats {
-    font-size: 12px;
-    text-align: right;
-    color: #444;
-    white-space: nowrap;
-}
-
-.placement .tier img {
-    width: 16px;
-    vertical-align: middle;
-}
-
-/* 같이한 소환사 */
-.other-summoners {
-    display: flex;
-    flex-direction: column;
-    font-size: 10px;
-    gap: 2px;
-    text-align: right;
-}
-
-.summoner {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.summoner img {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-}
-
-.items img {
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #eee;
-    margin: 1px;
-}
-
-/* 상세 전적 테이블 */
-.match-detail {
-    background: #fff;
-    padding: 16px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    margin-bottom: 24px;
+    border-top: 1px solid #e1e1e1;
+    color: #ee5a52;
     font-size: 13px;
-}
-
-/* 테이블 전체 */
-.match-detail-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 12px;
-}
-
-/* 헤더 행 */
-.match-detail-table th {
-    background-color: #f1f5fa;
-    padding: 8px;
-    font-weight: 600;
-    border-bottom: 1px solid #ddd;
-}
-
-/* 일반 셀 */
-.match-detail-table td {
-    padding: 10px 6px;
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: 1px solid #eee;
-}
-
-/* 팀 헤더 */
-.match-detail-table .team-summary {
-    background-color: #d8e9ff;
     font-weight: bold;
-    text-align: center;
-    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-.match-detail-table .vs-row {
-    background-color: #fafafa;
-    font-weight: bold;
-    text-align: center;
+.show-more-button:hover {
+    background: #f8f9fa;
 }
-
-.match-detail-table .team-summary {
-    font-weight: bold;
-    text-align: center;
-    font-size: 14px;
-    padding: 8px;
-}
-
-.match-detail-table .team-blue {
-    background-color: #d8e9ff;
-    color: #003366;
-}
-
-.match-detail-table .team-red {
-    background-color: #ffe5e5;
-    color: #661111;
-}
-
-.match-detail .tier-icon {
-    width: 20px !important;
-    height: 20px !important;
-    object-fit: cover;
-    display: block;
-    margin-bottom: 4px;
-}
-.match-objective-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f9f9f9;
-    margin-top: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 13px;
-}
-
-.team-objectives {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.team-objectives div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.objective-bars-center {
-    flex: 1;
-    margin: 0 10px;
-}
-
-.bar-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin: 2px 0;
-}
-
-.bar-label {
-    width: 70px;
-    text-align: right;
-}
-
-.bar-wrapper {
-    flex: 1;
-    display: flex;
-    height: 10px;
-    background: #ddd;
-    border-radius: 5px;
-    overflow: hidden;
-    position: relative;
-}
-
-.bar {
-    height: 100%;
-}
-
-.bar.red {
-    background-color: #e74c3c;
-}
-
-.bar.blue {
-    background-color: #3498db;
-}
-
-.bar-count {
-    width: 40px;
-    text-align: center;
-    font-size: 12px;
-}
-
-.red-text {
-    color: #e74c3c;
-}
-
-.blue-text {
-    color: #3498db;
-}
-
-
-
-/* 프로필 + 챔피언 + 룬 세트 */
-.player-summary-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-align: left;
-}
-
-/* 아이콘 */
-.profile-icon,
-.champion-icon,
-.rune-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    object-fit: cover;
-}
-
-/* 룬 세트 */
-.runes {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-/* 소환사 이름과 티어 */
-.summoner-info {
-    margin-left: 6px;
-}
-
-.summoner-name {
-    font-weight: bold;
-}
-
-.summoner-tier {
-    font-size: 12px;
-    color: #888;
-}
-
-/* KDA */
-.kda-cell {
-    font-weight: bold;
-    color: #333;
-}
-
-.kda-cell small {
-    display: block;
-    font-weight: normal;
-    color: #888;
-}
-
-/* 피해량 바 */
-.damage-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
-}
-
-.damage-line {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.damage-value {
-    width: 50px;
-    font-size: 12px;
-    text-align: right;
-    color: #333;
-}
-
-.damage-bar {
-    width: 90px;
-    height: 10px;
-    background-color: #eee;
-    border-radius: 6px;
-    position: relative;
-    overflow: hidden;
-}
-
-.damage-bar.red .bar {
-    background-color: #ff4d4d;
-    height: 100%;
-}
-
-.damage-bar.gray .bar {
-    background-color: #999;
-    height: 100%;
-}
-
-
-/* 아이템 */
-.item-icon {
-    width: 28px;
-    height: 28px;
-    margin: 2px;
-    border-radius: 4px;
-    object-fit: cover;
-    background: #ddd;
-    display: inline-block;
-}
-
-
-
-/* 아이템 아이콘 이미지 */
-.item-icon img {
-    width: 26px;
-    height: 26px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-/* 룬 아이콘 이미지 */
-.rune-icon img {
-    width: 28px;
-    height: 28px;
-    object-fit: cover;
-}
-
-/* 티어 아이콘 이미지 */
-.tier-icon img {
-    width: 42px;
-    height: 42px;
-    object-fit: cover;
-}
-
 
 /* KDA 요약 */
 .kda-summary {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.match-summary-block {
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
+    justify-content: space-between;
     margin-bottom: 20px;
 }
 
-.kda-summary .kda-stat {
-    text-align: center;
-}
-
-.kda-summary .kda-stat .label {
+.match-record-text {
+    font-size: 14px;
     font-weight: bold;
+    color: #202d37;
+    margin: 0;
 }
 
-/* 승패 그래프 */
 .win-loss-bar {
     display: flex;
     width: 200px;
-    height: 20px;
-    border-radius: 5px;
+    height: 24px;
+    border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 12px;
-    font-size: 13px;
-    text-align: center;
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin: 0 20px;
 }
 
 .win-bar {
-    background-color: #4da6ff;
-    line-height: 20px;
+    background: #4a90e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 .lose-bar {
-    background-color: #ff4d4d;
-    line-height: 20px;
+    background: #ee5a52;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
 }
 
-/* 포지션 그래프 */
-.favorite-positions {
-    margin-top: 32px;
-    padding: 16px;
-    background-color: #fdfdfd;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    width: 100%;
-    max-width: 360px;
+.win-rate-text {
+    font-size: 14px;
+    font-weight: bold;
+    color: #202d37;
+    margin: 0;
+}
+
+.kda-stat {
     text-align: center;
-    margin-left: auto;
-    margin-right: auto;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin: 0 8px;
 }
 
-.favorite-positions .section-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: #333;
+.kda-stat .label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.kda-stat strong {
+    font-size: 14px;
+    color: #202d37;
+}
+
+.kda-stat span {
+    font-size: 14px;
+    color: #202d37;
+}
+
+.death-count {
+    color: #ee5a52;
+}
+
+.kill-participation {
+    color: #ee5a52;
+    font-size: 12px;
+}
+
+/* 선호 챔피언 섹션 */
+.favorite-champions-section {
+    margin-top: 20px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #202d37;
+    margin-bottom: 12px;
+}
+
+.favorite-champions {
+    display: flex;
+    justify-content: space-around;
+    gap: 16px;
+}
+
+.champion {
+    text-align: center;
+    flex: 1;
+}
+
+.champion-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+}
+
+.graph-bar {
+    width: 100%;
+    height: 60px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.graph-bar::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #ee5a52;
+    transition: height 0.3s ease;
+}
+
+.percentage {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ee5a52;
+    margin-bottom: 4px;
+}
+
+.record {
+    font-size: 11px;
+    color: #888;
+}
+
+/* 포지션 섹션 */
+.favorite-positions {
+    margin-top: 20px;
 }
 
 .position-bar-container-vertical {
     display: flex;
-    justify-content: center;
+    justify-content: space-around;
     align-items: flex-end;
-    gap: 18px;
     height: 120px;
+    gap: 16px;
 }
 
 .position-column {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 40px;
+    flex: 1;
 }
 
 .position-percent {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
-    margin-bottom: 6px;
-    color: #222;
+    color: #202d37;
+    margin-bottom: 8px;
 }
 
 .position-bar-vertical {
-    width: 12px;
+    width: 16px;
     height: 80px;
-    background-color: #e0e0e0;
+    background: #f0f0f0;
     border-radius: 4px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .position-bar-vertical .fill {
     position: absolute;
     bottom: 0;
     width: 100%;
-    background-color: #5b8ef4;
-    height: 0;
+    background: #ee5a52;
     transition: height 0.3s ease;
 }
 
-.position-bar-vertical .fill[data-percent='0'] {
-    height: 2px !important;
-    background-color: #ccc;
-}
-
 .position-column img {
-    width: 22px;
-    height: 22px;
-    display: block;
-    margin-top: 2px;
-    opacity: 0.9;
+    width: 24px;
+    height: 24px;
+    opacity: 0.8;
 }
 
+.position-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+    margin: 0 auto;
+}
 
+/* 매치 카드 */
+.match-block {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
 
-/* 상세 테이블 */
-.match-summary {
+.match-card {
     display: flex;
     align-items: center;
-    background-color: #f5f7fb;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 10px 0;
+    padding: 12px 16px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background-color 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
 }
 
-.match-summary:hover {
-    background-color: #e4e9f1;
+.match-card:hover {
+    background: #f8f9fa;
 }
 
+.match-card.win {
+    border-left: 4px solid #4a90e2;
+}
+
+.match-card.lose {
+    border-left: 4px solid #ee5a52;
+}
+
+/* 매치 정보 */
 .match-info {
     width: 100px;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.mode {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.time {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.result {
     font-size: 12px;
-    text-align: center;
-    margin-right: 10px;
-}
-
-.match-info .result.win {
-    color: #4189e2;
     font-weight: bold;
+    margin-bottom: 2px;
 }
 
+.result.win {
+    color: #4a90e2;
+}
+
+.result.lose {
+    color: #ee5a52;
+}
+
+.duration {
+    font-size: 11px;
+    color: #888;
+}
+
+/* 챔피언 정보 */
 .champion-info {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    width: 200px;
-    margin-right: 10px;
+    gap: 6px;
+    flex: 1;
+    margin-right: 6px;
 }
 
 .champion-image {
     position: relative;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
 }
 
 .champion-image img {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
 }
 
 .champion-level {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: -4px;
+    right: -4px;
+    background: #202d37;
+    color: #fff;
     font-size: 10px;
-    background-color: #222;
-    color: white;
-    padding: 1px 4px;
+    padding: 2px 4px;
     border-radius: 50%;
+    border: 2px solid #fff;
 }
 
-.runes img {
-    width: 18px;
-    height: 18px;
-    margin: 1px;
+/* 룬/스펠 */
+.traits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    margin-right: 6px;
 }
 
+.runes {
+    display: flex;
+    gap: 4px;
+    width: 28px;
+    height: 28px;
+    margin-right: 6px;
+}
+
+.spells {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 12px;
+    height: 28px;
+}
+
+.runes-only {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 12px;
+    height: 28px;
+}
+
+
+
+.runes img, .traits img {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: block;
+    object-fit: cover;
+}
+
+.spells img, .runes-only img {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: block;
+    object-fit: cover;
+}
+
+/* KDA */
 .kda {
-    font-size: 14px;
     text-align: center;
+    margin-right: 6px;
+    min-width: 80px;
 }
 
-.kda .ratio {
+.kda-score {
     font-size: 12px;
-    color: #888;
+    font-weight: bold;
+    margin-bottom: 2px;
 }
 
+.kda-score .kills,
+.kda-score .assists,
+.kda-score .separator {
+    color: #4a90e2;
+}
+
+.kda-score .deaths {
+    color: #ee5a52;
+}
+
+.kda-ratio {
+    font-size: 11px;
+    color: #4a90e2;
+}
+
+/* 아이템 */
 .items {
-    margin-top: 5px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    margin-right: 4px;
+    flex-shrink: 0;
+    width: 54px;
+    height: 36px;
+    position: relative;
 }
 
 .items img {
-    width: 24px;
-    height: 24px;
-    margin: 1px;
-    border-radius: 4px;
-}
-
-.items .spell {
-    border: 1px solid #999;
-}
-
-.placement {
-    text-align: center;
-    font-size: 13px;
-    width: 60px;
-    margin-right: 10px;
-}
-
-.teammates {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.teammate {
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    gap: 4px;
-}
-
-.teammate img {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-}
-
-.slot-img {
-    width: 28px;
-    height: 28px;
-    background-color: #ddd;  /* 회색 배경 */
-    border-radius: 4px;
-    object-fit: cover;
-    display: inline-block;
-    margin: 2px;
-    border: 1px solid #bbb;
-}
-
-/* 이미지가 없으면 회색 박스로만 보여짐 */
-.slot-img[src=""],
-.slot-img:not([src]) {
-    background-color: #ddd;
-    content: "";
-}
-
-.position-icon-img,
-.tier-icon-img {
-    width: 28px;
-    height: 28px;
-    object-fit: cover;
-    vertical-align: middle;
-    margin-left: 4px;
-}
-
-.match-items {
-    display: flex;
-    gap: 4px;
-}
-
-.item-icon-img {
-    width: 26px;
-    height: 26px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-.match-detail {
-    background: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-}
-
-/* 유틸 */
-.item-icon {
-    width: 26px;
-    height: 26px;
-    margin: 0 2px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.profile-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    margin-right: 5px;
-    vertical-align: middle;
-}
-
-.other-summoners {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.summoner-columns {
-    display: flex;
-    gap: 40px;
-}
-
-.summoner-column {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.summoner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.summoner img {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    background: #f0f0f0;
 }
 
 .empty-slot {
-    width: 22px;
-    height: 22px;
-    background-color: #e0e0e0;
+    width: 100%;
+    height: 100%;
+    background: #f0f0f0;
+    border-radius: 3px;
+    border: 1px solid #e1e1e1;
+}
+
+/* 장신구 슬롯 */
+.trinket-slot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+}
+
+.trinket-slot img {
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    background: #f0f0f0;
+}
+
+/* 상세 통계 */
+.placement {
+    text-align: right !important;
+    min-width: 180px !important;
+    flex-shrink: 0 !important;
+    padding-right: 16px !important;
+    width: 180px !important;
+}
+
+.detail-stats {
+    font-size: 11px;
+    color: #888;
+    min-width: 140px !important;
+    width: 140px !important;
+}
+
+.detail-stats div {
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: visible;
+}
+
+.detail-stats .tier {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.detail-stats .tier img {
+    width: 16px;
+    height: 16px;
+}
+
+/* 매치 상세 */
+.match-detail {
+    background: #f8f9fa;
+    padding: 20px;
+    border-top: 1px solid #e1e1e1;
+    display: none;
+}
+
+.match-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.match-detail-table th {
+    background: #202d37;
+    color: #fff;
+    padding: 8px 12px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.match-detail-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e1e1e1;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.match-detail-table .team-summary {
+    background: #f0f0f0;
+    font-weight: bold;
+    text-align: center;
+}
+
+.match-detail-table .team-blue {
+    background: #e3f2fd;
+}
+
+.match-detail-table .team-red {
+    background: #ffebee;
+}
+
+/* 상단 요약 섹션의 큰 아이콘들 */
+.match-summary-box .champion-image {
+    width: 40px;
+    height: 40px;
+}
+
+.match-summary-box .champion-image img {
+    width: 100%;
+    height: 100%;
     border-radius: 4px;
-    display: inline-block;
-    margin: 2px;
+}
+
+.match-summary-box .runes img,
+.match-summary-box .traits img {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+}
+
+.match-summary-box .items img {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+}
+
+.match-summary-box .empty-slot {
+    width: 20px;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    border: 1px solid #e1e1e1;
+}
+
+/* 상세 전적 테이블의 아이템 아이콘 */
+.item-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    background: #f0f0f0;
+    margin-right: 2px;
+}
+
+/* 상세 전적 테이블의 챔피언 아이콘 */
+.champion-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+/* 상세 전적 테이블의 룬 아이콘 */
+.rune-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 2px;
+}
+
+/* 상세 전적 테이블의 티어 아이콘 */
+.tier-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
+/* 상세 전적 테이블의 프로필 아이콘 */
+.detail-profile-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* 오브젝트 아이콘 */
+.objective-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+/* 오브젝트 요약 */
+.match-objective-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e1e1e1;
+}
+
+.team-objectives {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.team-objectives div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.team-objectives img {
+    width: 16px;
+    height: 16px;
+}
+
+.objective-bars-center {
+    flex: 1;
+    margin: 0 20px;
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.bar-label {
+    width: 80px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.bar-wrapper {
+    flex: 1;
+    height: 12px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.bar.red {
+    background: #ee5a52;
+}
+
+.bar.blue {
+    background: #4a90e2;
+}
+
+.bar-count {
+    width: 40px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.red-text {
+    color: #ee5a52;
+}
+
+.blue-text {
+    color: #4a90e2;
+}
+
+/* 더보기 버튼 */
+#match-load-more-wrapper {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#match-load-more-button {
+    background: #ee5a52;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#match-load-more-button:hover {
+    background: #d94a42;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .main {
+        flex-direction: column;
+}
+
+    .left-panel {
+        flex: none;
+}
+
+    .match-card {
+        flex-wrap: wrap;
+        gap: 12px;
+}
+
+    .champion-info {
+        order: 1;
+        width: 100%;
+        margin-right: 0;
+}
+
+    .match-info {
+        order: 2;
+        width: auto;
+        margin-right: 0;
+}
+
+    .placement {
+        order: 3;
+        width: 100%;
+        text-align: left;
+    }
 }
 

@@ -10,7 +10,7 @@
     <!-- 로그인 필요 팝업 스크립트 -->
     <script th:if="${popup}" defer>
         window.addEventListener('DOMContentLoaded', () => {
-            alert([[${popup}]]);
+            alert([[$,{popup}]]);
         });
     </script>
 </head>
@@ -258,8 +258,7 @@
                                     <div class="champion">
                                         <img class="champion-img"
                                              th:src="${overallSummary.favoriteChampionImageUrls[stat.index]}"
-                                             alt="챔피언 이미지"
-                                             style="width: 48px; height: 48px; border-radius: 50%; margin-bottom: 4px;" />
+                                         alt="챔피언 이미지" />
 
                                         <div class="graph-bar"
                                              th:style="${championHeightStyles != null and championHeightStyles[entry.key] != null
@@ -305,8 +304,7 @@
 
                                 <img th:src="@{'/images/position/' + ${positionStr} + '.svg'}"
                                      alt="position icon"
-                                     width="24"
-                                     height="24"
+                                     class="position-icon"
                                      style="display: block; margin: 0 auto;" />
 
                             </div>
@@ -344,10 +342,14 @@
 
                                 <!-- 주문 2개 + 룬 2개 (소환사의 협곡 / 칼바람 / 튜토리얼 / AI / 격전 / 기타) -->
                                 <div class="runes" th:if="${match.gameMode != 'CHERRY'}">
+                                    <div class="spells">
                                     <img th:if="${match.spell1ImageUrl != null}" th:src="${match.spell1ImageUrl}" alt="스펠1" />
                                     <img th:if="${match.spell2ImageUrl != null}" th:src="${match.spell2ImageUrl}" alt="스펠2" />
+                                    </div>
+                                    <div class="runes-only">
                                     <img th:if="${match.mainRune1Url != null}" th:src="${match.mainRune1Url}" alt="메인 룬" />
                                     <img th:if="${match.mainRune2Url != null}" th:src="${match.mainRune2Url}" alt="서브 룬" />
+                                    </div>
                                 </div>
 
                                 <!-- 아레나 특성 4개 -->
@@ -360,13 +362,19 @@
 
                                 <!-- KDA -->
                                 <div class="kda">
-                                    <span class="score" th:text="${match.kills + ' / ' + match.deaths + ' / ' + match.assists}">K / D / A</span>
-                                    <span class="ratio" th:text="${match.kdaRatio}">평점</span>
+                                    <div class="kda-score">
+                                        <span class="kills" th:text="${match.kills}">9</span>
+                                        <span class="separator">/</span>
+                                        <span class="deaths" th:text="${match.deaths}">10</span>
+                                        <span class="separator">/</span>
+                                        <span class="assists" th:text="${match.assists}">9</span>
+                                    </div>
+                                    <div class="kda-ratio" th:text="${match.kdaRatio} + ':1 평점'">1.80:1 평점</div>
                                 </div>
 
-                                <!-- 아이템 + 스펠 -->
+                                <!-- 아이템 -->
                                 <div class="items">
-                                    <th:block th:each="i : ${#numbers.sequence(0, 6)}">
+                                    <th:block th:each="i : ${#numbers.sequence(0, 5)}">
                                         <th:block th:if="${match.itemImageUrls != null}">
                                             <th:block th:if="${i < match.itemImageUrls.size()}">
                                                 <img th:if="${match.itemImageUrls[i] != '/images/default.png'}"
@@ -377,6 +385,16 @@
                                         <th:block th:if="${i >= match.itemImageUrls.size() or match.itemImageUrls[i] == '/images/default.png'}">
                                             <div class="empty-slot"></div>
                                         </th:block>
+                                    </th:block>
+                                </div>
+                                <!-- 장신구 슬롯 -->
+                                <div class="trinket-slot">
+                                    <th:block th:if="${match.itemImageUrls != null and match.itemImageUrls.size() > 6}">
+                                        <img th:if="${match.itemImageUrls[6] != '/images/default.png'}"
+                                             th:src="@{${match.itemImageUrls[6]}}"/>
+                                    </th:block>
+                                    <th:block th:if="${match.itemImageUrls == null or match.itemImageUrls.size() <= 6}">
+                                        <div class="empty-slot"></div>
                                     </th:block>
                                 </div>
                             </div>
