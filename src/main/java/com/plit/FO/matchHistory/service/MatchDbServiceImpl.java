@@ -189,6 +189,15 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         dto.setTier(tier);
         log.info("[updateOverallSummary] 요약 계산 결과 dto={}", dto);
 
+        // 포지션 이미지 설정
+        dto.setPreferredPositionImageUrl(imageService.getImageUrl(dto.getPreferredPosition() + ".png", "position"));
+
+        // 선호 챔피언 이미지 설정
+        List<String> championImageUrls = dto.getPreferredChampions().stream()
+                .map(championName -> imageService.getImageUrl(championName + ".png", "champion"))
+                .toList();
+        dto.setFavoriteChampionImageUrls(championImageUrls);
+
         Optional<MatchOverallSummaryEntity> existing = matchOverallSummaryRepository.findByPuuid(puuid);
 
         // DTO -> Entity 변환
@@ -300,6 +309,8 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .positionCounts(Collections.emptyMap())
                     .sortedPositionList(Collections.emptyList())
                     .preferredChampions(Collections.emptyList())
+                    .favoriteChampionImageUrls(Collections.emptyList())
+                    .preferredPositionImageUrl(null)
                     .build();
         }
 
@@ -308,8 +319,20 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         String gameName = account != null ? account.getGameName() : "";
         String tagLine = account != null ? account.getTagLine() : "";
 
-        // 전체 요약 계산 (MatchHelper 활용)
-        return MatchHelper.getOverallSummary(puuid, gameName, tagLine, matches);
+        // 전체 요약 계산
+        MatchOverallSummaryDTO dto = MatchHelper.getOverallSummary(puuid, gameName, tagLine, matches);
+
+        // 이미지 URL
+        dto.setFavoriteChampionImageUrls(
+                dto.getPreferredChampions().stream()
+                        .map(name -> imageService.getImageUrl(name + ".png", "champion"))
+                        .toList()
+        );
+        dto.setPreferredPositionImageUrl(
+                imageService.getImageUrl(dto.getPreferredPosition() + ".png", "position")
+        );
+
+        return dto;
     }
 
 
@@ -397,32 +420,16 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         List<MatchSummaryEntity> entities = matchSummaryRepository.findTop20ByPuuidOrderByGameEndTimestampDesc(puuid);
 
         return entities.stream()
-                .map(entity -> {
-                    MatchHistoryDTO dto = MatchHistoryDTO.builder()
-                            .matchId(entity.getMatchId())
-                            .win(entity.isWin())
-                            .teamPosition(entity.getTeamPosition())
-                            .championName(entity.getChampionName())
-                            .kills(entity.getKills())
-                            .deaths(entity.getDeaths())
-                            .assists(entity.getAssists())
-                            .kdaRatio(entity.getKdaRatio())
-                            .tier(entity.getTier())
-                            .gameEndTimestamp(entity.getGameEndTimestamp())
-                            .gameMode(Optional.ofNullable(entity.getGameMode()).orElse("UNKNOWN"))
-                            .build();
+                .map(summary -> {
+                    // matchId에 해당하는 전체 player 리스트 조회
+                    List<MatchPlayerEntity> playerEntities = matchPlayerRepository.findByMatchId(summary.getMatchId());
+                    List<MatchPlayerDTO> playerDTOs = playerEntities.stream()
+                            .map(MatchPlayerDTO::fromEntity)
+                            .collect(Collectors.toList());
 
-                    // 이미지 URL 세팅
-                    dto.setChampionImageUrl(imageService.getImageUrl(dto.getChampionName() + ".png", "champion"));
-
-                    if (dto.getTier() != null) {
-                        dto.setTierImageUrl(imageService.getImageUrl(dto.getTier().toUpperCase() + ".png", "tier"));
-                    } else {
-                        dto.setTierImageUrl("/images/default.png");
-                    }
-
-                    return dto;
+                    return MatchHistoryDTO.fromEntities(summary, playerDTOs, imageService);
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
     }
@@ -608,7 +615,16 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     @Override
     public List<FavoriteChampionDTO> getFavoriteChampions(String puuid, String queueType) {
         return favoriteChampionRepository.findByPuuidAndQueueType(puuid, queueType).stream()
-                .map(FavoriteChampionDTO::fromEntity)
+                .map(entity -> {
+                    FavoriteChampionDTO dto = FavoriteChampionDTO.fromEntity(entity);
+
+                    // 챔피언 이미지 URL
+                    dto.setChampionImageUrl(
+                            imageService.getImageUrl(entity.getChampionName() + ".png", "champion")
+                    );
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -760,17 +776,17 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
             throw new RuntimeException(e);
         }
 
-//        List<MatchSummaryEntity> summaryList = matchSummaryRepository.findByPuuid(puuid);
-//
-//        List<MatchHistoryDTO> matchList = summaryList.stream()
-//                .map(summary -> {
-//                    List<MatchPlayerEntity> players = matchPlayerRepository.findByMatchId(summary.getMatchId());
-//                    List<MatchPlayerDTO> playerDTOs = players.stream()
-//                            .map(MatchPlayerDTO::fromEntity)
-//                            .toList();
-//                    return MatchHistoryDTO.fromEntities(summary, playerDTOs, imageService);
-//                })
-//                .toList();
+        List<MatchSummaryEntity> summaryList = matchSummaryRepository.findByPuuid(puuid);
+
+        List<MatchHistoryDTO> matchList = summaryList.stream()
+                .map(summary -> {
+                    List<MatchPlayerEntity> players = matchPlayerRepository.findByMatchId(summary.getMatchId());
+                    List<MatchPlayerDTO> playerDTOs = players.stream()
+                            .map(MatchPlayerDTO::fromEntity)
+                            .toList();
+                    return MatchHistoryDTO.fromEntities(summary, playerDTOs, imageService);
+                })
+                .toList();
 
         List<String> matchIdsForFavorite = riotApiService.getRecentMatchIds(puuid, 30);
         List<MatchHistoryDTO> matchListForFavorite = new ArrayList<>();

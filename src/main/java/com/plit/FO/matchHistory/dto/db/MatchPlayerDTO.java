@@ -77,6 +77,7 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     private int statRune2;
     private int spell1Id;
     private int spell2Id;
+    private List<String> traitIds;
 
     private String mainRune1Url;
     private String mainRune2Url;
