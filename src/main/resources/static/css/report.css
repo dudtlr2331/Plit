@@ -76,18 +76,23 @@ body {
 ================================ */
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate; /* collapse 말고 separate */
+    border-spacing: 0;         /* 셀 간격 없애기 */
+    border-radius: 12px;       /* 모서리 둥글게 */
+    overflow: hidden;          /* 둥근 모서리 밖으로 나오는 선 숨기기 */
 }
 
 th, td {
     border-bottom: 1px solid #ddd;
     padding: 12px;
     text-align: center;
+    height: 50px;
 }
 
 th {
-    background: #6570b4;
-    color: white;
+    background: #e5e1fb;
+    color: #333333;
+    font-size: 13px;
 }
 
 tr:hover {
@@ -113,11 +118,7 @@ tr:hover {
 
 .summoner-name {
     font-weight: bold;
-}
-
-.summoner-tag {
-    font-size: 12px;
-    color: gray;
+    padding-left: 5px;
 }
 
 .tier-icon {
