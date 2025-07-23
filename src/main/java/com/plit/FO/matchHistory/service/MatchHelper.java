@@ -240,9 +240,9 @@ public class MatchHelper { // 서브 메서드
                 .winRate(summary.getTotalCount() > 0
                         ? summary.getWinCount() * 100.0 / summary.getTotalCount()
                         : 0.0)
-                .averageKills(summary.getAvgKills())
-                .averageDeaths(summary.getAvgDeaths())
-                .averageAssists(summary.getAvgAssists())
+                .averageKills(summary.getAverageKills())
+                .averageDeaths(summary.getAverageDeaths())
+                .averageAssists(summary.getAverageAssists())
                 .averageKda(summary.getKdaRatio())
                 .averageCs(averageCs)
                 .preferredPosition(summary.getSortedPositionList() != null && !summary.getSortedPositionList().isEmpty()

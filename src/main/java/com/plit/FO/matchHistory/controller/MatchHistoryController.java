@@ -236,8 +236,8 @@ public class MatchHistoryController {
 //        matchDbService.saveFavoriteChampionOnly("T1 Gumayusi", "KR1");
 //        matchDbService.saveFavoriteChampionOnly("Summer", "pado");
 //        matchDbService.saveFavoriteChampionOnly("죽기장인", "KR1");
-        matchDbService.saveFavoriteChampionOnly("kiin", "KR1");
-        matchDbService.saveFavoriteChampionOnly("귀찮게하지마", "KR3");
+//        matchDbService.saveFavoriteChampionOnly("kiin", "KR1");
+//        matchDbService.saveFavoriteChampionOnly("귀찮게하지마", "KR3");
 //        matchDbService.saveFavoriteChampionOnly("파피몬", "1111");
 
         return "전적 저장 완료";

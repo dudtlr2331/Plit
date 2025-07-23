@@ -408,9 +408,9 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
         if (total == 0) {
             System.out.println("matchList가 비어있어서 요약 통계를 만들 수 없음");
             return MatchSummaryDTO.builder()
-                    .avgKills(0)
-                    .avgDeaths(0)
-                    .avgAssists(0)
+                    .averageKills(0)
+                    .averageDeaths(0)
+                    .averageAssists(0)
                     .kdaRatio(0.0)
                     .killParticipation(0.0)
                     .winCount(0)
@@ -476,30 +476,30 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
         }
 
         // 챔피언 승률
-        Map<String, Integer> championWinRates = new HashMap<>();
+        Map<String, Double> championWinRates = new HashMap<>();
         for (String champ : championTotalGames.keySet()) {
             championWins.putIfAbsent(champ, 0);
             int count = championTotalGames.get(champ);
             int win = championWins.get(champ);
-            int rate = (int) round(win * 100.0 / count, 0);
+            double rate = round((double) win * 100.0 / count, 1);
             championWinRates.put(champ, rate);
         }
 
         // 포지션 승률 (고정 순서 기준)
-        Map<String, Integer> positionWinRates = new HashMap<>();
+        Map<String, Double> positionWinRates = new HashMap<>();
         for (String pos : allPositions) {
             int count = positionTotalGames.getOrDefault(pos, 0);
             int win = positionWins.getOrDefault(pos, 0);
-            int rate = (count == 0) ? 0 : (int) round(win * 100.0 / count, 0);
+            double rate = (count == 0) ? 0 : round(win * 100.0 / count, 1);
             positionWinRates.put(pos, rate);
         }
 
         // 선호 챔피언
-        Map<String, Integer> favoritePositions = new HashMap<>();
+        Map<String, Double> favoritePositions = new HashMap<>();
         for (MatchHistoryDTO match : matchList) {
             String position = match.getTeamPosition();
             if (position != null && !position.isBlank()) {
-                favoritePositions.put(position, favoritePositions.getOrDefault(position, 0) + 1);
+                favoritePositions.put(position, favoritePositions.getOrDefault(position, 0.0) + 1);
             }
         }
 
@@ -512,7 +512,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
         int lose = total - wins;
 
         List<String> sortedPositionList = favoritePositions.entrySet().stream()
-                .sorted((a, b) -> b.getValue() - a.getValue())
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
@@ -520,9 +520,9 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
 
         return MatchSummaryDTO.builder()
-                .avgKills(sumKills / total)
-                .avgDeaths(sumDeaths / total)
-                .avgAssists(sumAssists / total)
+                .averageKills(sumKills / total)
+                .averageDeaths(sumDeaths / total)
+                .averageAssists(sumAssists / total)
                 .kdaRatio(sumDeaths == 0 ? (sumKills + sumAssists) : (sumKills + sumAssists) / sumDeaths)
                 .killParticipation(sumKp / total)
                 .winCount(wins)
@@ -636,7 +636,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
             List<FavoriteChampionDTO> favoriteChampions = getFavoriteChampions(matchList);
 
             return MatchSummaryWithListDTO.builder()
-                    .summary(overallSummary)
+                    .summary(summary)
                     .matchList(matchList)
                     .favoriteChampions(favoriteChampions)
                     .build();
@@ -644,7 +644,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
         } catch (Exception e) {
             System.err.println("getSummaryAndListFromApi() 에러: " + e.getMessage());
             return MatchSummaryWithListDTO.builder()
-                    .summary(MatchOverallSummaryDTO.builder().totalCount(0).build())
+                    .summary(MatchSummaryDTO.builder().totalCount(0).build())
                     .matchList(Collections.emptyList())
                     .favoriteChampions(Collections.emptyList())
                     .build();

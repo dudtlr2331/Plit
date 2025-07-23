@@ -90,6 +90,12 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
             return null;
         }
 
+        String mainRune1Url = imageService.getImageUrl(self.getMainRune1() + ".png", "rune");
+        String mainRune2Url = imageService.getImageUrl(self.getMainRune2() + ".png", "rune");
+
+        log.info("mainRune1: {}, url: {}", self.getMainRune1(), mainRune1Url);
+        log.info("mainRune2: {}, url: {}", self.getMainRune2(), mainRune2Url);
+
         return MatchHistoryDTO.builder()
                 .matchId(summary.getMatchId())
                 .puuid(summary.getPuuid())
@@ -124,8 +130,8 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .spell1ImageUrl(imageService.getImageUrl(String.valueOf(self.getSpell1Id()), "spell"))
                 .spell2ImageUrl(imageService.getImageUrl(String.valueOf(self.getSpell2Id()), "spell"))
 
-                .mainRune1Url(imageService.getImageUrl(self.getMainRune1() + ".png", "rune"))
-                .mainRune2Url(imageService.getImageUrl(self.getMainRune2() + ".png", "rune"))
+                .mainRune1Url(mainRune1Url)
+                .mainRune2Url(mainRune2Url)
 
                 .profileIconUrl(imageService.getImageUrl(self.getProfileIconId() + ".png", "profile-icon"))
 

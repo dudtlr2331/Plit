@@ -101,3 +101,25 @@
 //
 //
 //}
+package com.plit.FO.matchHistory.controller;
+
+import com.plit.FO.matchHistory.service.ImageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/image/test")
+@RequiredArgsConstructor
+public class TestController {
+
+    private final ImageService imageService;
+
+    @GetMapping("/rune")
+    public String syncRuneImages(@RequestParam(defaultValue = "15.14.1") String version) {
+        imageService.updateImagesByType("rune", version);
+        return "룬 이미지 동기화 완료!";
+    }
+}

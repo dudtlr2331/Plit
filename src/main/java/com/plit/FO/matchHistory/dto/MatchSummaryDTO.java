@@ -16,26 +16,28 @@ public class MatchSummaryDTO { //  매치 전체( 20게임 ) 요악 정보 - DB 
     private int winCount;
     private int loseCount;
     private int totalCount;
-    private double avgKills;
-    private double avgDeaths;
-    private double avgAssists;
+    private double averageKills;
+    private double averageDeaths;
+    private double averageAssists;
+    private double averageKda;
     private double kdaRatio;
     private double killParticipation;
 
     // 포지션별 통계
     private Map<String, Integer> positionTotalGames;
     private Map<String, Integer> positionWins;
-    private Map<String, Integer> positionWinRates;
-    private Map<String, Integer> favoritePositions;
+    private Map<String, Double> positionWinRates;
+    private Map<String, Double> favoritePositions;
 
     // 챔피언별 통계
     private Map<String, Integer> championTotalGames;
     private Map<String, Integer> championWins;
-    private Map<String, Integer> championWinRates;
+    private Map<String, Double> championWinRates;
     private List<Map.Entry<String, Integer>> sortedChampionList;
 
     // 상위 챔피언 정보
     private List<FavoriteChampionDTO> topChampions;
 
     private List<String> sortedPositionList;
+
 }

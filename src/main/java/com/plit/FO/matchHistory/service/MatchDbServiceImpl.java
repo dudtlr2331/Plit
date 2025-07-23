@@ -569,7 +569,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     @Override
     public MatchSummaryWithListDTO getSummaryAndList(String puuid) {
         List<MatchHistoryDTO> matchList = getMatchSummaryFromDB(puuid);
-        MatchOverallSummaryDTO summary = calculateOverallSummary(matchList, puuid);
+        MatchSummaryDTO summary = calculateSummary(matchList);
         List<FavoriteChampionDTO> favoriteChampions = getFavoriteChampions(puuid, "overall");
 
         return MatchSummaryWithListDTO.builder()
@@ -578,6 +578,72 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .favoriteChampions(favoriteChampions)
                 .build();
     }
+
+    private MatchSummaryDTO calculateSummary(List<MatchHistoryDTO> matchList) {
+        MatchSummaryDTO dto = new MatchSummaryDTO();
+
+        int total = matchList.size();
+        int wins = 0;
+
+        double totalKills = 0.0;
+        double totalDeaths = 0.0;
+        double totalAssists = 0.0;
+        double totalKillParticipation = 0.0;
+
+        Map<String, Integer> championWins = new HashMap<>();
+        Map<String, Integer> championTotalGames = new HashMap<>();
+
+        for (MatchHistoryDTO match : matchList) {
+            if (match.isWin()) wins++;
+
+            totalKills += match.getKills();
+            totalDeaths += match.getDeaths();
+            totalAssists += match.getAssists();
+            totalKillParticipation += match.getKillParticipation();
+
+            String championName = match.getChampionName();
+            championTotalGames.put(championName, championTotalGames.getOrDefault(championName, 0) + 1);
+            if (match.isWin()) {
+                championWins.put(championName, championWins.getOrDefault(championName, 0) + 1);
+            }
+        }
+
+        dto.setTotalCount(total);
+        dto.setWinCount(wins);
+        dto.setLoseCount(total - wins);
+
+        if (total > 0) {
+            dto.setAverageKills(totalKills / total);
+            dto.setAverageDeaths(totalDeaths / total);
+            dto.setAverageAssists(totalAssists / total);
+
+            double kda = (totalDeaths > 0) ? (totalKills + totalAssists) / totalDeaths : (totalKills + totalAssists);
+            dto.setAverageKda(kda);
+            dto.setKillParticipation(totalKillParticipation / total);
+        }
+
+        dto.setChampionWins(championWins);
+        dto.setChampionTotalGames(championTotalGames);
+
+        // 승률 계산
+        Map<String, Double> championWinRates = new HashMap<>();
+        for (String champ : championTotalGames.keySet()) {
+            int win = championWins.getOrDefault(champ, 0);
+            int count = championTotalGames.get(champ);
+            double winRate = (count > 0) ? (win * 100.0 / count) : 0.0;
+            championWinRates.put(champ, winRate);
+        }
+        dto.setChampionWinRates(championWinRates);
+
+        // 출현 빈도순 정렬
+        List<Map.Entry<String, Integer>> sortedChampionList = championTotalGames.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .collect(Collectors.toList());
+        dto.setSortedChampionList(sortedChampionList);
+
+        return dto;
+    }
+
 
     @Override
     public void updateMatchHistory(String puuid) {
@@ -954,15 +1020,23 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         int totalMatches = matchList.size();
         int totalWins = (int) matchList.stream().filter(MatchHistoryDTO::isWin).count();
         double winRate = round((double) totalWins / totalMatches * 100.0, 0);
-        double avgKills = matchList.stream().mapToInt(MatchHistoryDTO::getKills).average().orElse(0);
-        double avgDeaths = matchList.stream().mapToInt(MatchHistoryDTO::getDeaths).average().orElse(0);
-        double avgAssists = matchList.stream().mapToInt(MatchHistoryDTO::getAssists).average().orElse(0);
-        double avgKDA = matchList.stream().mapToDouble(MatchHistoryDTO::getKdaRatio).average().orElse(0);
-        double avgCs = matchList.stream().mapToInt(MatchHistoryDTO::getCs).average().orElse(0);
+        double averageKills = matchList.stream().mapToInt(MatchHistoryDTO::getKills).average().orElse(0);
+        double averageDeaths = matchList.stream().mapToInt(MatchHistoryDTO::getDeaths).average().orElse(0);
+        double averageAssists = matchList.stream().mapToInt(MatchHistoryDTO::getAssists).average().orElse(0);
+        double averageKDA = matchList.stream().mapToDouble(MatchHistoryDTO::getKdaRatio).average().orElse(0);
+        double averageCs = matchList.stream().mapToInt(MatchHistoryDTO::getCs).average().orElse(0);
 
         Map<String, Long> positionCounts = matchList.stream()
                 .filter(m -> m.getTeamPosition() != null)
                 .collect(Collectors.groupingBy(MatchHistoryDTO::getTeamPosition, Collectors.counting()));
+
+        int totalPositions = positionCounts.values().stream().mapToInt(Long::intValue).sum();
+
+        Map<String, Double> favoritePositions = positionCounts.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> round((double) e.getValue() * 100.0 / totalPositions, 1)
+                ));
 
         List<String> sortedPositionList = positionCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
@@ -1030,14 +1104,15 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .totalMatches(totalMatches)
                 .totalWins(totalWins)
                 .winRate(round(winRate,0))
-                .averageKills(round(avgKills, 1))
-                .averageDeaths(round(avgDeaths, 1))
-                .averageAssists(round(avgAssists, 1))
-                .averageKda(round(avgKDA, 2))
-                .averageCs(round(avgCs, 1))
+                .averageKills(round(averageKills, 1))
+                .averageDeaths(round(averageDeaths, 1))
+                .averageAssists(round(averageAssists, 1))
+                .averageKda(round(averageKDA, 2))
+                .averageCs(round(averageCs, 1))
                 .preferredPosition(preferredPosition)
                 .preferredChampions(top3Champions)
                 .positionCounts(positionCounts)
+                .favoritePositions(favoritePositions)
                 .sortedPositionList(sortedPositionList)
                 .sortedChampionList(sortedChampionList)
                 .championTotalGames(championTotalGames)
@@ -1076,6 +1151,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     }
 
     @Override
+    @Transactional
     public void saveFavoriteChampionOnly(String gameName, String tagLine) {
         String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
 
