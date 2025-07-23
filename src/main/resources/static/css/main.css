@@ -7,6 +7,15 @@ body {
     flex-direction: column;
 }
 
+.main-banner img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    padding-top: 150px;
+}
+
 .main-container {
     width: 90%;
     max-width: 1200px;
@@ -16,25 +25,26 @@ body {
 }
 
 .search-box {
-    width: 500px;
+    width: 800px;
     position: relative;
-    margin: 30px auto;
+    margin: 50px auto;
+    margin-bottom: 100px;
 }
 
 #searchInput {
     width: 100%;
-    padding: 13px;
+    padding: 20px;
     padding-right: 34px;
-    border-radius: 20px;
+    border-radius: 35px;
     border: 1px solid #ccc;
-    font-size: 14px;
+    font-size: 18px;
     box-sizing: border-box;
 }
 
 .search-button {
     position: absolute;
     top: 50%;
-    right: 10px;
+    right: 20px;
     transform: translateY(-50%);
     background: none;
     border: none;
@@ -48,8 +58,8 @@ body {
 }
 
 .search-button svg {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
 }
 
 .player-list {

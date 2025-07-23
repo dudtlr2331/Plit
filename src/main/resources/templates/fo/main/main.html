@@ -27,6 +27,11 @@
 <!-- 메인 콘텐츠 영역 -->
 <div class="main-container">
 
+    <!-- 메인 배너 -->
+    <div class="main-banner">
+        <img th:src="@{/images/main/main_banner.png}" alt="메인 배너" class="floating-image" />
+    </div>
+
     <!-- 검색 박스 -->
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="플레이어 이름 (플레이어#KR1)">
@@ -37,23 +42,6 @@
             </svg>
         </button>
         <div id="autocompleteList" class="autocomplete-box"></div>
-    </div>
-
-    <!-- 플레이어 리스트 -->
-    <div class="player-list">
-        <div class="player-item">
-            <span>플레이어1</span>
-            <button onclick="toggleChatPopup()">💬</button>
-        </div>
-        <div class="player-item">
-            <span>플레이어2</span>
-            <button onclick="toggleChatPopup()">💬</button>
-        </div>
-        <div class="player-item">
-            <span>플레이어3</span>
-            <button onclick="toggleChatPopup()">💬</button>
-        </div>
-        <button class="more-button">더보기</button>
     </div>
 
     <!-- 클랜 영역 -->
