@@ -22,7 +22,7 @@ public interface ClanService {
 
     boolean isMember(Long clanId, Long userId);
 
-    void deleteClan(Long id);
+//    void deleteClan(Long id);
 
     boolean existsByNameAndUseYn(String name, String useYn);
 
@@ -32,5 +32,7 @@ public interface ClanService {
 
     List<ClanDTO> getTop3ClansByMemberCount();
 
+    void deleteClan(Long id, Long userId);
 
+    boolean userHasClan(Long userSeq);
 }

@@ -7,11 +7,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClanRepository extends JpaRepository<ClanEntity, Long> {
 
     List<ClanEntity> findByUseYnOrderByCreatedAtDesc(String useYn);
+
+    Optional<ClanEntity> findByLeaderIdAndUseYn(Long leaderId, String useYn);
+
+    boolean existsByNameAndUseYn(String name, String useYn);
+
+    boolean existsByLeaderIdAndUseYn(Long leaderId, String useYn);
 
     @Query("SELECT c FROM ClanEntity c " +
             "WHERE (:tier IS NULL OR c.minTier = :tier) " +
@@ -25,6 +32,5 @@ public interface ClanRepository extends JpaRepository<ClanEntity, Long> {
     List<ClanEntity> searchByTierAndKeyword(@Param("tier") String tier,
                                             @Param("keyword") String keyword);
 
-    boolean existsByNameAndUseYn(String name, String useYn);
 }
 

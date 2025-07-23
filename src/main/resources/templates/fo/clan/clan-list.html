@@ -8,6 +8,7 @@
     <meta name="isVerified" th:content="${isVerified}"/>
     <meta name="login-user-seq" th:if="${loginUser != null}" th:content="${loginUser.userSeq}">
     <meta name="login-user-nickname" th:if="${loginUser != null}" th:content="${loginUser.userNickname}">
+    <meta name="userId" content="${user.userSeq}">
     <title>클랜 찾기</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/clan.css"/>
@@ -175,7 +176,7 @@
       <!-- 텍스트 -->
     <span th:switch="${clan.minTier}">
       <span th:case="'NONE'">티어 제한 없음</span>
-      <span th:case="'CHALLENGER'">챌린저</span>
+      <span th:case="'CHALLENGER'">CHALLENGER</span>
       <span th:case="*" th:text="${clan.minTier + ' 이상'}"></span>
     </span>
   </span>
