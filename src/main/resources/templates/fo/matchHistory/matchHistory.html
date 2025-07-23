@@ -23,7 +23,7 @@
 
     <div class="profile-header">
         <div class="profile-icon-wrapper">
-            <img class="profile-icon" th:src="${summoner.profileIconUrl}" alt="프로필 아이콘">
+            <img class="profile-icon" th:if="${summoner != null}" th:src="${summoner.profileIconUrl}" alt="프로필 아이콘">
             <div class="summoner-level-circle" th:text="${summoner.summonerLevel}"></div>
         </div>
         <div>
@@ -125,8 +125,6 @@
                                     <div class="usage-percent"
                                          th:text="|승률 ${champ.winRate}%|"
                                          style="color:#5b8ef4;"></div>
-                                    <div class="game-count"
-                                         th:text="|${champ.gameCount}게임|">게임</div>
                                 </div>
                             </div>
                         </div>
@@ -186,8 +184,6 @@
                                 <div class="usage-percent"
                                      th:text="|승률 ${champ.winRate}%|"
                                      style="color:#5b8ef4;"></div>
-                                <div class="game-count"
-                                     th:text="|${champ.gameCount}게임|">게임</div>
                             </div>
                         </div>
                         <!-- 더보기 버튼 -->
@@ -291,31 +287,31 @@
 
                     <!-- 선호 포지션 전체 컨테이너 -->
                     <div class="favorite-positions" style="width: 100%;">
-                        <h4 class="section-title" style="text-align: left; margin-bottom: 12px;">
-                            최근 선호 포지션
-                        </h4>
-
+                        <h4 class="section-title">최근 선호 포지션</h4>
                         <div class="position-bar-container-vertical"
                              style="display: flex; justify-content: center; gap: 16px;">
-                            <div class="position-column" th:each="pos : ${overallSummary.sortedPositionList}"
-                                 style="text-align: center;">
-                                <div class="position-percent"
-                                     th:text="${overallSummary.favoritePositions != null and overallSummary.favoritePositions[pos] != null} ?
-                                            #numbers.formatDecimal(overallSummary.favoritePositions[pos], 0, 1) + '%' : '0.0%'"
-                                     style="margin-bottom: 4px;">
+                            <div class="position-column" th:each="positionStr : ${overallSummary.sortedPositionList}" style="text-align: center;">
+
+                                <!-- 퍼센트 -->
+                                <div class="position-percent">
+                                    <span th:text="|${#numbers.formatDecimal(overallSummary.favoritePositions.get(positionStr), 0, 1)}%|"></span>
                                 </div>
 
                                 <div class="position-bar-vertical">
                                     <div class="fill"
-                                         th:style="'height:' + (overallSummary.favoritePositions[pos] ?: 0.0) + '%;'">
+                                         th:style="|height: ${#numbers.formatDecimal(overallSummary.favoritePositions.get(positionStr), 0, 1)}%;|">
                                     </div>
                                 </div>
 
-                                <div class="position-label" th:text="${pos}" style="margin-top: 4px;"></div>
+                                <img th:src="@{'/images/position/' + ${positionStr} + '.svg'}"
+                                     alt="position icon"
+                                     width="24"
+                                     height="24"
+                                     style="display: block; margin: 0 auto;" />
+
                             </div>
                         </div>
                     </div>
-
                 </div>
                 <!-- summary 부분 끝 -->
 
@@ -323,7 +319,6 @@
                 <th:block th:each="match, iterStat : ${matchList}">
                     <div class="match-block"
                          th:style="${iterStat.index < 5} ? 'display:block;' : 'display:none;'">
-
 
                         <div class="match-summary-box match-card"
                              th:attr="data-match-id=${match.matchId}, data-puuid=${summoner.puuid}"
@@ -399,9 +394,10 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
                         <!-- 상세 전적 표시 영역 -->
-                        <div class="match-detail" style="display: none;">
+                        <div class="match-detail" style="display: none;" data-loaded="false">
                             <table class="match-detail-table"></table>
 
                             <!-- Objective 요약 전체 박스 -->

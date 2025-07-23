@@ -162,7 +162,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
             String championImageUrl = imageService.getImage(engName + ".png", "champion")
                     .map(ImageEntity::getImageUrl)
-                    .orElse("/images/default.png");
+                    .orElse("/images/riot_default.png");
 
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
                     .puuid(puuid)
@@ -367,7 +367,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
             String championImageUrl = imageService.getImage(engName + ".png", "champion")
                     .map(ImageEntity::getImageUrl)
-                    .orElse("/images/default.png");
+                    .orElse("/images/riot_default.png");
 
 
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()

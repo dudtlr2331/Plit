@@ -49,6 +49,11 @@ public class FavoriteChampionDTO { // 선호챔피언
                 .winCount(entity.getWinCount())
                 .winRate(entity.getWinRate())
                 .kdaRatio(entity.getKdaRatio())
+                .kills(entity.getAverageKills())
+                .deaths(entity.getAverageDeaths())
+                .assists(entity.getAverageAssists())
+                .averageCs(entity.getAverageCs() != null ? entity.getAverageCs().intValue() : 0)
+                .csPerMin(entity.getCsPerMin() != null ? entity.getCsPerMin() : 0.0)
                 .championImageUrl(entity.getChampionImageUrl())
                 .build();
     }

@@ -36,6 +36,21 @@ public class FavoriteChampionEntity {
     @Column(name = "kda_ratio")
     private Double kdaRatio;
 
+    @Column(name = "average_kills")
+    private Double averageKills;
+
+    @Column(name = "average_deaths")
+    private Double averageDeaths;
+
+    @Column(name = "average_assists")
+    private Double averageAssists;
+
+    @Column(name = "average_cs")
+    private Double averageCs;
+
+    @Column(name = "cs_per_min")
+    private Double csPerMin;
+
     @Transient // DB에 저장되지 않음
     private String championImageUrl;
 
@@ -47,7 +62,12 @@ public class FavoriteChampionEntity {
         entity.setPlayCount(dto.getGameCount());
         entity.setWinCount(dto.getWinCount());
         entity.setWinRate(round(dto.getWinRate(),0));
-        entity.setKdaRatio(round(dto.getKdaRatio(),1));
+        entity.setKdaRatio(round(dto.getKdaRatio(),2));
+        entity.setAverageKills(round(dto.getKills(), 1));
+        entity.setAverageDeaths(round(dto.getDeaths(), 1));
+        entity.setAverageAssists(round(dto.getAssists(), 1));
+        entity.setAverageCs(round(dto.getAverageCs(), 0));
+        entity.setCsPerMin(round(dto.getCsPerMin(), 1));
         entity.setChampionImageUrl(dto.getChampionImageUrl());
         return entity;
     }

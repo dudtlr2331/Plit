@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.plit.FO.matchHistory.service.MatchHelper.*;
@@ -190,7 +191,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         log.info("[updateOverallSummary] 요약 계산 결과 dto={}", dto);
 
         // 포지션 이미지 설정
-        dto.setPreferredPositionImageUrl(imageService.getImageUrl(dto.getPreferredPosition() + ".png", "position"));
+        dto.setPreferredPositionImageUrl(imageService.getImageUrl(dto.getPreferredPosition() + ".svg", "position"));
 
         // 선호 챔피언 이미지 설정
         List<String> championImageUrls = dto.getPreferredChampions().stream()
@@ -215,7 +216,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         log.info("match_overall_summary 저장 완료 for puuid={}", puuid);
     }
 
-    // 내부 계산 로직
+    // dto -> entity -> db ( 내부 계산 로직 )
     public List<FavoriteChampionDTO> calculateFavoriteChampions(List<MatchHistoryDTO> matchList, String mode, String puuid) {
         Map<String, List<MatchHistoryDTO>> byChampion = matchList.stream()
                 .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
@@ -259,7 +260,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
             String championImageUrl = imageService.getImage(engName + ".png", "champion")
                     .map(ImageEntity::getImageUrl)
-                    .orElse("/images/default.png");
+                    .orElse("/images/riot_default.png");
 
             FavoriteChampionDTO dto = FavoriteChampionDTO.builder()
                     .puuid(puuid)
@@ -297,9 +298,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     @Override
     public MatchOverallSummaryDTO getOverallSummary(String puuid) {
         // 전체 전적 조회
-        List<MatchSummaryEntity> matches = matchSummaryRepository.findByPuuid(puuid);
+        List<MatchHistoryDTO> matchList = getMatchSummaryFromDB(puuid);
 
-        if (matches.isEmpty()) {
+        if (matchList == null || matchList.isEmpty()) {
             return MatchOverallSummaryDTO.builder()
                     .puuid(puuid)
                     .totalMatches(0)
@@ -314,13 +315,8 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .build();
         }
 
-        // 게임네임 + 태그
-        RiotAccountResponse account = riotApiService.getAccountByPuuid(puuid);
-        String gameName = account != null ? account.getGameName() : "";
-        String tagLine = account != null ? account.getTagLine() : "";
-
         // 전체 요약 계산
-        MatchOverallSummaryDTO dto = MatchHelper.getOverallSummary(puuid, gameName, tagLine, matches);
+        MatchOverallSummaryDTO dto = calculateOverallSummary(matchList, puuid);
 
         // 이미지 URL
         dto.setFavoriteChampionImageUrls(
@@ -329,14 +325,11 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                         .toList()
         );
         dto.setPreferredPositionImageUrl(
-                imageService.getImageUrl(dto.getPreferredPosition() + ".png", "position")
+                imageService.getImageUrl(dto.getPreferredPosition() + ".svg", "position")
         );
 
         return dto;
     }
-
-
-
 
     // 요약 + 상세 정보 -> DB 저장
     // MatchDbServiceImpl
@@ -549,6 +542,22 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         boolean blueWin = players.stream()
                 .anyMatch(p -> p.getTeamId() == 100 && p.isWin());
 
+        int redTotalKills = redTeam.stream().mapToInt(MatchPlayerDTO::getKills).sum();
+        int blueTotalKills = blueTeam.stream().mapToInt(MatchPlayerDTO::getKills).sum();
+
+        int redTotalGold = redTeam.stream().mapToInt(MatchPlayerDTO::getGoldEarned).sum();
+        int blueTotalGold = blueTeam.stream().mapToInt(MatchPlayerDTO::getGoldEarned).sum();
+
+        MatchObjectiveDTO redObjectives = MatchObjectiveDTO.builder()
+                .totalKills(redTotalKills)
+                .totalGold(redTotalGold)
+                .build();
+
+        MatchObjectiveDTO blueObjectives = MatchObjectiveDTO.builder()
+                .totalKills(blueTotalKills)
+                .totalGold(blueTotalGold)
+                .build();
+
         return MatchDetailDTO.builder()
                 .matchId(matchId)
                 .myPuuid(puuid)
@@ -559,8 +568,8 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .blueTeam(blueTeam)
                 .redTeam(redTeam)
                 .blueWin(blueWin)
-                .blueObjectives(new MatchObjectiveDTO())
-                .redObjectives(new MatchObjectiveDTO())
+                .blueObjectives(blueObjectives)
+                .redObjectives(redObjectives)
                 .totalMaxDamage(maxDamage)
                 .otherSummonerNames(otherSummonerNames)
                 .build();
@@ -678,6 +687,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .collect(Collectors.toList());
     }
 
+    // DB 에서 가져온 entity -> dto
     @Override
     public List<FavoriteChampionDTO> getFavoriteChampions(String puuid, String queueType) {
         return favoriteChampionRepository.findByPuuidAndQueueType(puuid, queueType).stream()
@@ -745,6 +755,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     }
 
 
+    // MatchHistoryDTO
     public List<MatchHistoryDTO> fetchFavoriteChampionMatches(String gameName, String tagLine) {
         String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
         List<String> matchIds = riotApiService.getRecentMatchIds(puuid, 30);
@@ -1027,8 +1038,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         double averageCs = matchList.stream().mapToInt(MatchHistoryDTO::getCs).average().orElse(0);
 
         Map<String, Long> positionCounts = matchList.stream()
-                .filter(m -> m.getTeamPosition() != null)
-                .collect(Collectors.groupingBy(MatchHistoryDTO::getTeamPosition, Collectors.counting()));
+                .map(match -> MatchHelper.normalizePosition(match.getTeamPosition()))
+                .filter(pos -> pos != null && !pos.equals("unknown"))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         int totalPositions = positionCounts.values().stream().mapToInt(Long::intValue).sum();
 
@@ -1037,17 +1049,25 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                         Map.Entry::getKey,
                         e -> round((double) e.getValue() * 100.0 / totalPositions, 1)
                 ));
+        // 모든 포지션 기본값 세팅
+        List<String> allPositions = List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY");
 
-        List<String> sortedPositionList = positionCounts.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        for (String pos : allPositions) {
+            favoritePositions.putIfAbsent(pos, 0.0);
+        }
+
+        List<String> sortedPositionList = allPositions.stream()
+                .sorted(Comparator.comparingDouble((String pos) ->
+                        -favoritePositions.getOrDefault(pos, 0.0)))
+                .toList();
 
         // 포지션 선호도
         String preferredPosition = positionCounts.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse("UNKNOWN");
+
+        log.info("favoritePositions = {}", favoritePositions);
 
         // 챔피언별 경기 수
         Map<String, Integer> championTotalGames = matchList.stream()
@@ -1121,6 +1141,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .build();
     }
 
+    // favorite_champion 테이블 -> dto로 map 리턴
     @Override
     public Map<String, List<FavoriteChampionDTO>> getFavoriteChampionsAll(String puuid) {
         Map<String, List<FavoriteChampionDTO>> result = new HashMap<>();
@@ -1150,6 +1171,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         favoriteChampionRepository.saveAll(entities);
     }
 
+    // dto -> entity
     @Override
     @Transactional
     public void saveFavoriteChampionOnly(String gameName, String tagLine) {

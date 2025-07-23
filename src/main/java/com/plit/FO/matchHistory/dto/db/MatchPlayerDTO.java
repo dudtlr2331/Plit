@@ -2,6 +2,8 @@ package com.plit.FO.matchHistory.dto.db;
 
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
+import com.plit.FO.matchHistory.service.ImageService;
+import com.plit.FO.matchHistory.service.MatchHelper;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -149,7 +151,7 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     }
 
     public static MatchPlayerDTO fromEntity(MatchPlayerEntity e) {
-        return MatchPlayerDTO.builder()
+        MatchPlayerDTO dto = MatchPlayerDTO.builder()
                 .puuid(e.getPuuid())
                 .summonerName(e.getSummonerName())
                 .championName(e.getChampionName())
@@ -172,6 +174,15 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .spell1Id(e.getSpell1Id())
                 .spell2Id(e.getSpell2Id())
                 .build();
+
+        dto.setItemImageUrls(
+                dto.getItemIds().stream()
+                        .map(MatchHelper::getItemImageUrl)
+                        .collect(Collectors.toList())
+        );
+
+
+        return dto;
     }
 
 }

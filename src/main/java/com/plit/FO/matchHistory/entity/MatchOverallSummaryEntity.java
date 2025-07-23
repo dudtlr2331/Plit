@@ -109,6 +109,14 @@ public class MatchOverallSummaryEntity {
                 .averageKda(round(this.averageKda, 2))
                 .averageCs(this.averageCs)
                 .preferredPosition(this.preferredPosition)
+                .favoritePositions(Map.of(
+                        "TOP", 0.0,
+                        "JUNGLE", 0.0,
+                        "MIDDLE", 0.0,
+                        "BOTTOM", 0.0,
+                        "UTILITY", 0.0
+                ))
+                .sortedPositionList(List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"))
                 .positionCounts(positionMap)
                 .preferredChampions(championList)
                 .createdAt(this.createdAt)

@@ -232,8 +232,8 @@ public class MatchHistoryController {
 //        matchDbService.saveFavoriteChampionOnly("어리고싶다", "KR1");
 //        matchDbService.saveFavoriteChampionOnly("96년생 티모장인", "9202");
 //        matchDbService.saveFavoriteChampionOnly("허거덩", "0303");
-//        matchDbService.saveFavoriteChampionOnly("Hide on bush", "KR1");
-//        matchDbService.saveFavoriteChampionOnly("T1 Gumayusi", "KR1");
+        matchDbService.saveFavoriteChampionOnly("Hide on bush", "KR1");
+        matchDbService.saveFavoriteChampionOnly("T1 Gumayusi", "KR1");
 //        matchDbService.saveFavoriteChampionOnly("Summer", "pado");
 //        matchDbService.saveFavoriteChampionOnly("죽기장인", "KR1");
 //        matchDbService.saveFavoriteChampionOnly("kiin", "KR1");

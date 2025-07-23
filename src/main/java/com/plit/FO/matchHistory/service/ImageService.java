@@ -37,7 +37,7 @@ public class ImageService {
     // name, type -> DB 에서 이미지 url 반환
     public String getImageUrl(String name, String type) {
         if ("spell".equals(type)) {
-            String fileName = SPELL_ID_TO_FILENAME.getOrDefault(name, "default.png");
+            String fileName = SPELL_ID_TO_FILENAME.getOrDefault(name, "riot_default.png");
             return "/images/spell/" + fileName;
         }
 
@@ -47,12 +47,12 @@ public class ImageService {
 
         return imageRepository.findByNameAndType(name, type)
                 .map(ImageEntity::getImageUrl)
-                .orElse("/images/default.png");
+                .orElse("/images/riot_default.png");
     }
 
     // 프로필 아이콘 이미지 url ( 프로필 아이콘 아이디 -> url ) : 입력값 정수
     public String getProfileIconUrl(Integer profileIconId) {
-        if (profileIconId == null) return "/images/default.png";
+        if (profileIconId == null) return "/images/riot_default.png";
 
         return getImageUrl(profileIconId + ".png", "profile-icon");
     }

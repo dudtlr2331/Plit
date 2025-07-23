@@ -7,6 +7,12 @@ body {
     background: #fff;
     color: #222;
 }
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto 0;
+    flex: 1;
+}
 
 /* 메인 레이아웃 */
 .main-wrapper {
@@ -28,12 +34,12 @@ body {
 
 .left-panel {
     flex: 1;
-    min-width: 350px;
+    min-width: 320px;
 }
 
 .right-panel {
-    flex: 2;
-    min-width: 500px;
+    flex: 2.5;
+    min-width: 600px;
 }
 
 /* 프로필 헤더 */
@@ -162,59 +168,73 @@ body {
 
 
 /* 챔피언 리스트 */
-.champion-list {
-    margin-top: 16px;
-}
-
 .champion-row {
     display: flex;
     align-items: center;
-    padding: 10px 0;
+    justify-content: space-between;
+    padding: 10px 12px;
     border-bottom: 1px solid #eee;
-    gap: 12px;
+    font-size: 13px;
+    gap: 16px;
 }
 
 .champion-icon img {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     object-fit: cover;
 }
 
 .champion-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 100px;
 }
 
-.champ-name {
+.champion-info .champ-name {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
     margin-bottom: 2px;
 }
 
-.cs-info {
-    font-size: 13px;
-    color: #666;
+.champion-info .cs-info {
+    color: #777;
+    font-size: 12px;
 }
 
 .kda-info {
-    text-align: right;
-    font-size: 13px;
     flex: 1;
+    text-align: center;
+    min-width: 100px;
 }
 
-.kda-ratio {
+.kda-info .kda-ratio {
     font-weight: 500;
-    color: #555;
+    color: #333;
+    font-size: 13px;
 }
 
-.kda {
-    color: #999;
+.kda-info .kda {
+    font-size: 12px;
+    color: #888;
 }
 
 .usage-info {
-    text-align: right;
-    font-size: 13px;
     flex: 0.8;
+    text-align: right;
+}
+
+.usage-info .usage-percent {
+    font-weight: bold;
+    color: #4189e2;
+    font-size: 13px;
+}
+
+.usage-info .game-count {
+    font-size: 12px;
+    color: #666;
 }
 
 .usage-percent {
@@ -773,54 +793,80 @@ body {
 
 /* 포지션 그래프 */
 .favorite-positions {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-around;
-    margin-top: 10px;
+    margin-top: 32px;
+    padding: 16px;
+    background-color: #fdfdfd;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-
-.position-percent {
-    font-size: 13px;
-    margin-bottom: 4px;
-    font-weight: bold;
+.favorite-positions .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
     color: #333;
 }
 
+.position-bar-container-vertical {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 18px;
+    height: 120px;
+}
+
+.position-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px;
+}
+
+.position-percent {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #222;
+}
+
 .position-bar-vertical {
-    width: 24px;
+    width: 12px;
     height: 80px;
-    background-color: #ddd;
-    position: relative;
+    background-color: #e0e0e0;
     border-radius: 4px;
-    margin: 0 auto 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 6px;
 }
 
 .position-bar-vertical .fill {
     position: absolute;
     bottom: 0;
     width: 100%;
-    background-color: #4da6ff;
-    border-radius: 4px;
+    background-color: #5b8ef4;
+    height: 0;
+    transition: height 0.3s ease;
 }
 
-.position-label {
-    font-size: 13px;
-    font-weight: bold;
-    color: #555;
+.position-bar-vertical .fill[data-percent='0'] {
+    height: 2px !important;
+    background-color: #ccc;
 }
 
-.position-bar-container-inline {
-    text-align: center;
-    white-space: nowrap;
+.position-column img {
+    width: 22px;
+    height: 22px;
+    display: block;
+    margin-top: 2px;
+    opacity: 0.9;
 }
 
-.position-column {
-    display: inline-block;
-    margin: 0 10px;
-    vertical-align: top;
-    text-align: center;
-}
+
 
 /* 상세 테이블 */
 .match-summary {

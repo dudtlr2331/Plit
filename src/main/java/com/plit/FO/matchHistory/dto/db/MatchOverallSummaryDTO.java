@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.dto.db;
 
+import com.plit.FO.matchHistory.entity.MatchOverallSummaryEntity;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -46,7 +47,5 @@ public class MatchOverallSummaryDTO {
     public int getLoseCount() {
         return totalMatches - winCount;
     }
-
-
 
 }

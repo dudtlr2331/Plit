@@ -8,6 +8,7 @@ import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import com.plit.FO.matchHistory.repository.MatchOverallSummaryRepository;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,8 +25,18 @@ import java.util.stream.Collectors;
 @Component
 public class MatchHelper { // 서브 메서드
 
+    private static ImageService staticImageService;
     private static final Map<String, String> korNameMap = new HashMap<>();
     private static MatchOverallSummaryRepository matchPlayerRepository;
+
+    @Autowired
+    public void setImageService(ImageService imageService) {
+        MatchHelper.staticImageService = imageService;
+    }
+
+    public static String getItemImageUrl(String itemId) {
+        return staticImageService.getImageUrl(itemId + ".png", "item");
+    }
 
     // 한글 챔피언 이름 - riot 챔피언 json 으로 호출 - 모든 챔피언의 영어 이름(key) 과 한글 이름 필드가 들어있음
     @PostConstruct
@@ -55,18 +66,41 @@ public class MatchHelper { // 서브 메서드
     }
 
 
-//    정규화
+    // 정규화
     public static String normalizePosition(String pos) {
-        if (pos == null) return "unknown";
+        if (pos == null || pos.trim().isEmpty()) return "UNKNOWN";
         return switch (pos.toUpperCase()) {
-            case "TOP" -> "top";
-            case "JUNGLE" -> "jungle";
-            case "MID", "MIDDLE" -> "mid";
-            case "ADC", "BOTTOM", "BOT" -> "bottom";
-            case "SUPPORT", "UTILITY" -> "support";
-            default -> "unknown";
+            case "TOP" -> "TOP";
+            case "JUNGLE" -> "JUNGLE";
+            case "MID", "MIDDLE" -> "MIDDLE";
+            case "ADC", "BOTTOM", "BOT" -> "BOTTOM";
+            case "SUPPORT", "UTILITY" -> "UTILITY";
+            default -> "UNKNOWN";
         };
     }
+
+
+    public static final Map<String, String> POSITION_NAME_MAP = Map.of(
+            "TOP", "탑",
+            "JUNGLE", "정글",
+            "MIDDLE", "미드",
+            "BOTTOM", "원딜",
+            "UTILITY", "서폿"
+    );
+
+    public static String getPositionKoName(String position) {
+        return POSITION_NAME_MAP.getOrDefault(position, position); // 못 찾으면 원본 그대로
+    }
+
+    Map<String, String> objectiveNameKo = Map.of(
+            "baron", "바론",
+            "dragon", "드래곤",
+            "tower", "포탑",
+            "herald", "협곡의 전령",
+            "rift", "공허유충",
+            "atakhan", "아타칸"
+    );
+
     // 소문자화 + 띄어쓰기 제거
     public static String normalizeGameName(String gameName) {
         return gameName.trim().replaceAll("\\s+", "").toLowerCase();

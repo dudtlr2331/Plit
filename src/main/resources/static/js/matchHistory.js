@@ -153,7 +153,7 @@ function loadMatchDetail(element) {
                 const damageDealt = (player.totalDamageDealtToChampions * 100 / data.totalMaxDamage).toFixed(1);
                 const damageTaken = (player.totalDamageTaken * 100 / data.totalMaxDamage).toFixed(1);
                 const csPerMin = player.csPerMin.toFixed(2);
-                const itemsHtml = player.itemImageUrls.map(img => img ? `<img src="${img}" class="item-icon">` : '').join('');
+                const itemsHtml = (player.itemImageUrls || []).map(img => img ? `<img src="${img}" class="item-icon">` : '').join('');
 
                 return `
                     <tr>
@@ -256,4 +256,16 @@ function cancelInit() {
     document.getElementById("patchPopup").style.display = "none";
     localStorage.setItem("initCanceled", "true");
     window.location.href = "/main";
+}
+
+function updateObjectiveBar(redValue, blueValue, redBarId, blueBarId, redTextId, blueTextId) {
+    const total = redValue + blueValue || 1;
+    const redPercent = (redValue / total) * 100;
+    const bluePercent = (blueValue / total) * 100;
+
+    document.getElementById(redBarId).style.width = `${redPercent}%`;
+    document.getElementById(blueBarId).style.width = `${bluePercent}%`;
+
+    document.getElementById(redTextId).innerText = redValue.toLocaleString();
+    document.getElementById(blueTextId).innerText = blueValue.toLocaleString();
 }

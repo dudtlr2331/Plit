@@ -328,7 +328,7 @@ public class RiotApiServiceImpl implements RiotApiService{
                             String itemUrl = itemId != 0
                                     ? imageService.getImage(String.valueOf(itemId) + ".png", "item")
                                     .map(ImageEntity::getImageUrl)
-                                    .orElse("/images/default.png")
+                                    .orElse("/images/riot_default.png")
                                     : null;
                             itemImageUrls.add(itemUrl);
                         }
@@ -361,7 +361,7 @@ public class RiotApiServiceImpl implements RiotApiService{
 
                             String iconUrl = imageService.getImage(iconId + ".png", "profile-icon")
                                     .map(ImageEntity::getImageUrl)
-                                    .orElse("/images/default.png");
+                                    .orElse("/images/riot_default.png");
 
                             otherProfileIconUrls.add(iconUrl);
                         }
@@ -369,25 +369,25 @@ public class RiotApiServiceImpl implements RiotApiService{
                         // imageService 에서 DB 에서 가져온 이미지 경로 매핑
                         String profileIconUrl = imageService.getImage(String.valueOf(p.get("profileIcon") + ".png"), "profile-icon")
                                 .map(ImageEntity::getImageUrl)
-                                .orElse("/images/default.png");
+                                .orElse("/images/riot_default.png");
 
                         String championImageUrl = imageService.getImage((String) p.get("championName") + ".png", "champion")
                                 .map(ImageEntity::getImageUrl)
-                                .orElse("/images/default.png");
+                                .orElse("/images/riot_default.png");
 
                         String spell1ImageUrl = imageService.getImage(p.get("summoner1Id") + ".png", "spell")
-                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                                .map(ImageEntity::getImageUrl).orElse("/images/riot_default.png");
                         String spell2ImageUrl = imageService.getImage(p.get("summoner2Id") + ".png", "spell")
-                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                                .map(ImageEntity::getImageUrl).orElse("/images/riot_default.png");
 
                         String mainRune1Url = imageService.getImage(p.get("perkPrimaryStyle") + ".png", "rune")
-                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                                .map(ImageEntity::getImageUrl).orElse("/images/riot_default.png");
                         String mainRune2Url = imageService.getImage(p.get("perkSubStyle") + ".png", "rune")
-                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                                .map(ImageEntity::getImageUrl).orElse("/images/riot_default.png");
 
                         String tier = this.getTierByPuuid(puuid);
                         String tierImageUrl = imageService.getImage(tier + ".png", "tier")
-                                .map(ImageEntity::getImageUrl).orElse("/images/default.png");
+                                .map(ImageEntity::getImageUrl).orElse("/images/riot_default.png");
 
                         LocalDateTime endTime = LocalDateTime.ofEpochSecond(
                                 ((Number) info.get("gameEndTimestamp")).longValue() / 1000, 0, ZoneOffset.UTC);
@@ -521,7 +521,7 @@ public class RiotApiServiceImpl implements RiotApiService{
                     String itemImg = imageService.getImageUrl(itemId + ".png", "item");
                     itemImages.add(itemImg);
                 } else {
-                    itemImages.add("/images/default.png");
+                    itemImages.add("/images/riot_default.png");
                 }
             }
             dto.setItemImageUrls(itemImages);
@@ -534,7 +534,7 @@ public class RiotApiServiceImpl implements RiotApiService{
             if (tier != null) {
                 dto.setTierImageUrl("/images/tier/" + tier.toUpperCase() + ".png");
             } else {
-                dto.setTierImageUrl("/images/default.png");
+                dto.setTierImageUrl("/images/riot_default.png");
             }
 
             // Kill Participation 계산
