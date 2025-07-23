@@ -176,6 +176,7 @@ header nav a {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: none;
 }
 
 .btn-admin,
@@ -184,10 +185,11 @@ header nav a {
 .btn-login {
     background: white;
     color: #6570b4;
+    border: none;
 }
 
 .btn-login {
-    border: 1px solid white;
+    border: none;
 }
 
 .btn:hover {

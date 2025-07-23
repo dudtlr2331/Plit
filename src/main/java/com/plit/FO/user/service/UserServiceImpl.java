@@ -422,7 +422,11 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Override
     @Transactional
     public boolean verifyAndSaveSummoner(String userId, String summonerName, String tagLine) {
-        RiotAccountResponse response = getAccountByRiotId(summonerName, tagLine);
+        String cleanedName = summonerName.replaceAll("\\s+", "");
+        String cleanedTag = tagLine.replaceAll("\\s+", "");
+
+        RiotAccountResponse response = getAccountByRiotId(cleanedName, cleanedTag);
+
 
         if (response == null) {
             throw new IllegalArgumentException("존재하지 않는 소환사명입니다. 소환사명을 다시 확인해주세요.");
