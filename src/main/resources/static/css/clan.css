@@ -511,15 +511,15 @@ label {
 .member-row {
     display: grid;
     grid-template-columns:
-    minmax(100px, 2.2fr)   /* 소환사명 */
+    minmax(100px, 3fr)   /* 소환사명 */
     minmax(80px, 1fr)      /* 티어 */
     minmax(60px, 1fr)      /* 포지션 */
     minmax(100px, 2fr)     /* 최근 챔피언 */
-    minmax(60px, 1.6fr)    /* 승률 */
-    minmax(100px, 1.6fr)   /* ✅ KDA */
-    minmax(160px, 2.5fr)   /* 소개 */
-    minmax(80px, 1.2fr)    /* 신청일 */
-    minmax(120px, 1.6fr);  /* 관리 */
+    minmax(60px, 1.5fr)    /* 승률 */
+    minmax(100px, 1.5fr)   /* KDA */
+    minmax(160px, 2fr)   /* 소개 */
+    minmax(80px, 1fr)    /* 신청일 */
+    minmax(120px, 1.5fr);  /* 관리 */
     padding: 12px;
     border-bottom: 1px solid #ddd;
     align-items: stretch;
@@ -577,10 +577,13 @@ label {
 
 .member-cell.intro {
     /*justify-content: flex-start;*/
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    overflow: visible;
     max-width: 100%;
+    padding: 0 8px;
+    text-align: center;
 }
 
 /* 포지션 아이콘 (Position Icons) */
