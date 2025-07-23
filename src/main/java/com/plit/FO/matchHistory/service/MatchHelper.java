@@ -34,6 +34,10 @@ public class MatchHelper { // 서브 메서드
         MatchHelper.staticImageService = imageService;
     }
 
+    public static String getImageUrl(String name, String type) {
+        return staticImageService.getImageUrl(name, type);
+    }
+
     public static String getItemImageUrl(String itemId) {
         return staticImageService.getImageUrl(itemId + ".png", "item");
     }

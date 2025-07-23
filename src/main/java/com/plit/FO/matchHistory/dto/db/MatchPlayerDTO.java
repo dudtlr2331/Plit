@@ -145,6 +145,30 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                     dto.setMatchId(matchId);
                     dto.setTier(tier);
 
+                    dto.setChampionImageUrl(MatchHelper.getImageUrl(dto.getChampionName() + ".png", "champion"));
+
+                    dto.setMainRune1Url(MatchHelper.getImageUrl(dto.getMainRune1() + ".png", "rune"));
+                    dto.setMainRune2Url(MatchHelper.getImageUrl(dto.getMainRune2() + ".png", "rune"));
+                    dto.setStatRune1Url(MatchHelper.getImageUrl(dto.getStatRune1() + ".png", "rune"));
+                    dto.setStatRune2Url(MatchHelper.getImageUrl(dto.getStatRune2() + ".png", "rune"));
+
+                    dto.setSpell1ImageUrl(MatchHelper.getImageUrl(String.valueOf(dto.getSpell1Id()), "spell"));
+                    dto.setSpell2ImageUrl(MatchHelper.getImageUrl(String.valueOf(dto.getSpell2Id()), "spell"));
+
+                    dto.setStatRune1Url(MatchHelper.getImageUrl(dto.getStatRune1() + ".png", "rune"));
+                    dto.setStatRune2Url(MatchHelper.getImageUrl(dto.getStatRune2() + ".png", "rune"));
+
+                    dto.setTierImageUrl(dto.getTier() != null
+                            ? MatchHelper.getImageUrl(dto.getTier().toUpperCase() + ".png", "tier")
+                            : "/images/riot_default.png");
+
+                    dto.setItemImageUrls(
+                            dto.getItemIds().stream()
+                                    .map(MatchHelper::getItemImageUrl)
+                                    .collect(Collectors.toList())
+                    );
+
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -181,8 +205,28 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                         .collect(Collectors.toList())
         );
 
+        dto.setChampionImageUrl(MatchHelper.getImageUrl(dto.getChampionName() + ".png", "champion"));
+
+        if (dto.getTier() != null) {
+            dto.setTierImageUrl(MatchHelper.getImageUrl(dto.getTier().toUpperCase() + ".png", "tier"));
+        } else {dto.setTierImageUrl("/images/riot_default.png");
+        }
+
+        dto.setMainRune1Url(MatchHelper.getImageUrl(dto.getMainRune1() + ".png", "rune"));
+        dto.setMainRune2Url(MatchHelper.getImageUrl(dto.getMainRune2() + ".png", "rune"));
+
+        dto.setSpell1ImageUrl(MatchHelper.getImageUrl(String.valueOf(dto.getSpell1Id()), "spell"));
+        dto.setSpell2ImageUrl(MatchHelper.getImageUrl(String.valueOf(dto.getSpell2Id()), "spell"));
+
+        dto.setStatRune1Url(MatchHelper.getImageUrl(dto.getStatRune1() + ".png", "rune"));
+        dto.setStatRune2Url(MatchHelper.getImageUrl(dto.getStatRune2() + ".png", "rune"));
 
         return dto;
     }
+
+    public String getKdaString() {
+        return String.format("%d / %d / %d (%.1f)", kills, deaths, assists, kdaRatio);
+    }
+
 
 }

@@ -133,11 +133,11 @@ function loadMatchDetail(element) {
             const redColorClass = isBlueWin ? 'red-text' : 'blue-text';
 
             const buildTeamObjectiveIcons = (obj, colorClass) => `
-                <div><img src="/images/objective/tower.svg" class="objective-icon ${colorClass}"> ${obj.towerKills}</div>
-                <div><img src="/images/objective/dragon.svg" class="objective-icon ${colorClass}"> ${obj.dragonKills}</div>
-                <div><img src="/images/objective/baron.svg" class="objective-icon ${colorClass}"> ${obj.baronKills}</div>
-                <div><img src="/images/objective/herald.svg" class="objective-icon ${colorClass}"> ${obj.heraldKills}</div>
-                <div><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}"> ${obj.riftKills}</div>
+                <div><img src="/images/objective/tower.svg" class="objective-icon ${colorClass}" alt="타워"> ${obj.towerKills}</div>
+                <div><img src="/images/objective/dragon.svg" class="objective-icon ${colorClass}" alt="드래곤"> ${obj.dragonKills}</div>
+                <div><img src="/images/objective/baron.svg" class="objective-icon ${colorClass}" alt="바론"> ${obj.baronKills}</div>
+                <div><img src="/images/objective/herald.svg" class="objective-icon ${colorClass}" alt="전령"> ${obj.heraldKills}</div>
+                <div><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${obj.riftKills}</div>
             `;
 
             // 블루 = 왼쪽, 레드 = 오른쪽 (위치 고정)
@@ -159,13 +159,12 @@ function loadMatchDetail(element) {
                     <tr>
                         <td>
                             <div class="player-summary-cell">
-                                <img src="${player.profileIconUrl}" class="profile-icon" />
-                                <img src="${player.championImageUrl}" class="champion-icon" />
+                                <img src="${player.championImageUrl}" class="champion-icon" alt="챔피언"/>
                                 <div class="runes">
-                                    <img src="${player.mainRune1Url}" class="rune-icon" />
-                                    <img src="${player.mainRune2Url}" class="rune-icon" />
-                                    <img src="${player.statRune1Url}" class="rune-icon" />
-                                    <img src="${player.statRune2Url}" class="rune-icon" />
+                                    <img src="${player.mainRune1Url}" class="rune-icon" alt="메인 룬"/>
+                                    <img src="${player.mainRune2Url}" class="rune-icon" alt="메인 룬"/>
+                                    <img src="${player.statRune1Url}" class="rune-icon" alt="스탯 룬"/>
+                                    <img src="${player.statRune2Url}" class="rune-icon" alt="스탯 룬"/>
                                 </div>
                                 <div class="summoner-info">
                                     <div class="summoner-name">${player.summonerName}</div>
