@@ -13,4 +13,5 @@ public interface FavoriteChampionRepository extends JpaRepository<FavoriteChampi
     Optional<FavoriteChampionEntity> findByPuuidAndChampionName(String puuid, String championName);
     List<FavoriteChampionEntity> findByPuuidAndQueueType(String puuid, String queueType);
     void deleteByPuuid(String puuid);
+    void deleteByPuuidAndQueueType(String puuid, String queueType);
 }

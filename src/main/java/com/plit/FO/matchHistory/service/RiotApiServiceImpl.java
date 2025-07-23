@@ -510,7 +510,7 @@ public class RiotApiServiceImpl implements RiotApiService{
 
             // CDN 기반 이미지 (DB에서 조회)
             dto.setChampionImageUrl(imageService.getImageUrl(p.getChampionName() + ".png", "champion"));
-            dto.setProfileIconUrl(imageService.getImageUrl(p.getProfileIconId() + ".png", "profile"));
+            dto.setProfileIconUrl(imageService.getImageUrl(p.getProfileIconId() + ".png", "profile-icon"));
             dto.setMainRune1Url(imageService.getImageUrl(p.getPerkPrimaryStyle() + ".png", "rune"));
             dto.setMainRune2Url(imageService.getImageUrl(p.getPerkSubStyle() + ".png", "rune"));
 

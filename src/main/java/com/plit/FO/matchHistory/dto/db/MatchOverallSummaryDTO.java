@@ -31,10 +31,14 @@ public class MatchOverallSummaryDTO {
     private Map<String, Long> positionCounts;
     private List<String> preferredChampions;
     private Map<String, Integer> championTotalGames;
-    private Map<String, Integer> favoritePositions;
+    private Map<String, Integer> championWins;
+    private Map<String, Double> championWinRates;
+    private Map<String, Double> favoritePositions;
     private LocalDateTime createdAt;
     private int loseCount;
     private double killParticipation;
+    private List<Map.Entry<String, Long>> sortedChampionList;
+    private List<String> sortedPositionList;
 
 
 

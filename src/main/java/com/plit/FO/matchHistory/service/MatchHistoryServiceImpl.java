@@ -48,12 +48,6 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
         return List.of();
     }
 
-    @Override
-    public MatchDetailDTO getMatchDetail(String matchId) {
-        return null;
-    }
-
-
     // ** Riot id -> puuid ( DB 캐시 활용, riot api 호출 ) **
     @Override
     public String getPuuidOrRequest(String gameName, String tagLine) {
@@ -189,6 +183,10 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .queueType(mode)
                     .build();
 
+            if ("overall".equals(mode)) {
+                dto.setSeasonName("S2025");
+            }
+
             result.add(dto);
         }
 
@@ -286,7 +284,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .deaths(participant.getDeaths())
                     .assists(participant.getAssists())
                     .cs(cs)
-                    .csPerMin(csPerMin)
+                    .csPerMin(round(csPerMin,1))
                     .win(participant.isWin())
                     .queueType(matchInfo.getQueueId())
                     .gameEndTimestamp(gameEndTime)
@@ -385,6 +383,8 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .flexPickRate(totalFlexGames == 0 ? 0 : (flexGames * 100.0 / totalFlexGames))
                     .championImageUrl(championImageUrl)
                     .build();
+
+            dto.setSeasonName("S2025");
 
             result.add(dto);
         }
@@ -671,6 +671,5 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
             matchDbService.saveMatchHistory(summary, players);
         }
     }
-
 
 }

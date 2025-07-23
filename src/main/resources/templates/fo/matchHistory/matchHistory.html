@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <link rel="stylesheet" href="/css/common/header.css">
+    <link rel="stylesheet" href="/css/common/footer.css">
     <link rel="stylesheet" href="/css/matchHistory.css">
     <meta charset="UTF-8">
     <title>플레이어 전적 페이지</title>
@@ -274,10 +275,14 @@
 
                                         <!-- 전적 -->
                                         <div class="record"
-                                             th:text="${summary.championTotalGames[entry.key]} + '전 '
-                                                  + ${summary.championWins[entry.key]} + '승 '
-                                                  + (${summary.championTotalGames[entry.key]} - ${summary.championWins[entry.key]}) + '패'">
+                                             th:with="
+                                                total=${summary.championTotalGames[entry.key] ?: 0},
+                                                wins=${summary.championWins[entry.key] ?: 0}"
+                                             th:text="|${total}전 ${wins}승 ${total - wins}패|">
                                         </div>
+
+
+
 
                                     </div>
                                 </th:block>
@@ -293,18 +298,21 @@
 
                         <div class="position-bar-container-vertical"
                              style="display: flex; justify-content: center; gap: 16px;">
-                            <div class="position-column" th:each="pos : ${summary.sortedPositionList}"
+                            <div class="position-column" th:each="pos : ${overallSummary.sortedPositionList}"
                                  style="text-align: center;">
                                 <div class="position-percent"
-                                     th:text="${#numbers.formatDecimal(summary.favoritePositions[pos], 0, 1)} + '%'"
+                                     th:text="${overallSummary.favoritePositions != null and overallSummary.favoritePositions[pos] != null} ?
+                                            #numbers.formatDecimal(overallSummary.favoritePositions[pos], 0, 1) + '%' : '0.0%'"
                                      style="margin-bottom: 4px;">
                                 </div>
 
                                 <div class="position-bar-vertical">
                                     <div class="fill"
-                                         th:style="'height:' + ${summary.favoritePositions[pos]} + '%;'">
+                                         th:style="'height:' + (overallSummary.favoritePositions[pos] ?: 0.0) + '%;'">
                                     </div>
                                 </div>
+
+
 
                                 <div class="position-label" th:text="${pos}" style="margin-top: 4px;"></div>
                             </div>
@@ -337,7 +345,9 @@
                             <div class="champion-info">
                                 <div class="champion-image">
                                     <img th:src="@{${match.championImageUrl}}" class="champion-icon-img" alt="챔피언" />
-                                    <span class="champion-level" th:text="${match.championLevel}">레벨</span>
+<!--                                    <span class="champion-level"-->
+<!--                                          th:if="${match.championLevel != null}"-->
+<!--                                          th:text="'Lv. ' + ${match.championLevel}">레벨</span>-->
                                 </div>
 
                                 <!-- 주문 2개 + 룬 2개 (소환사의 협곡 / 칼바람 / 튜토리얼 / AI / 격전 / 기타) -->
@@ -365,9 +375,13 @@
                                 <!-- 아이템 + 스펠 -->
                                 <div class="items">
                                     <th:block th:each="i : ${#numbers.sequence(0, 6)}">
-                                        <th:block th:if="${i < match.itemImageUrls.size() and match.itemImageUrls[i] != '/images/default.png'}">
-                                            <img th:src="${match.itemImageUrls[i]}" class="slot-img" alt="아이템" />
+                                        <th:block th:if="${match.itemImageUrls != null}">
+                                            <th:block th:if="${i < match.itemImageUrls.size()}">
+                                                <img th:if="${match.itemImageUrls[i] != '/images/default.png'}"
+                                                     th:src="@{${match.itemImageUrls[i]}}"/>
+                                            </th:block>
                                         </th:block>
+
                                         <th:block th:if="${i >= match.itemImageUrls.size() or match.itemImageUrls[i] == '/images/default.png'}">
                                             <div class="empty-slot"></div>
                                         </th:block>
@@ -458,6 +472,9 @@
         </button>
     </div>
 </div>
+
+<!-- 푸터 영역 -->
+<div th:replace="~{fo/common/footer :: footer}"></div>
 
 <script src="/js/common/position-icon.js"></script>
 <script src="/js/matchHistory.js"></script>

@@ -63,5 +63,11 @@ public interface MatchDbService {
 //    UserMatchSummaryDTO getUserMatchSummary(String puuid);
     void saveOnlyOverallSummary(String gameName, String tagLine, String tier);
 
+    MatchOverallSummaryDTO getOverallSummary(String puuid);
+
+    List<MatchHistoryDTO> fetchFavoriteChampionMatches(String gameName, String tagLine);
+
+    void saveFavoriteChampionOnly(String gameName, String tagLine);
+
     void overwriteTier(String gameName, String tagLine, String tier);
 }

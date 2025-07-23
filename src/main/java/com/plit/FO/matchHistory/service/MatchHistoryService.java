@@ -18,8 +18,6 @@ public interface MatchHistoryService {
 
     List<MatchHistoryDTO> getMatchHistory(String puuid);
 
-    MatchDetailDTO getMatchDetail(String matchId);
-
     List<FavoriteChampionDTO> getFavoriteChampionsBySeason(String puuid, String season);
 
     MatchSummaryDTO getMatchSummary(List<MatchHistoryDTO> matchList);
@@ -31,3 +29,4 @@ public interface MatchHistoryService {
     MatchSummaryWithListDTO getSummaryAndListFromApi(String puuid);
 
 }
+

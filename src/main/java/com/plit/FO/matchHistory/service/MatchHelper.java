@@ -138,6 +138,7 @@ public class MatchHelper { // 서브 메서드
     public static MatchOverallSummaryDTO getOverallSummary(String puuid, String gameName, String tagLine, List<MatchSummaryEntity> matches) {
         int totalMatches = matches.size();
         int totalWins = (int) matches.stream().filter(MatchSummaryEntity::isWin).count();
+        int loseCount = totalMatches - totalWins;
 
         double avgKills = matches.stream().mapToInt(MatchSummaryEntity::getKills).average().orElse(0.0);
         double avgDeaths = matches.stream().mapToInt(MatchSummaryEntity::getDeaths).average().orElse(0.0);
@@ -146,6 +147,7 @@ public class MatchHelper { // 서브 메서드
         double avgKda = avgDeaths == 0 ? avgKills + avgAssists : (avgKills + avgAssists) / avgDeaths;
         double winRate = totalMatches == 0 ? 0.0 : (100.0 * totalWins / totalMatches);
 
+        // 선호포지션
         String preferredPosition = matches.stream()
                 .map(MatchSummaryEntity::getTeamPosition)
                 .filter(pos -> pos != null && !pos.equals("NONE"))
@@ -154,6 +156,21 @@ public class MatchHelper { // 서브 메서드
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse("UNKNOWN");
+
+        // 포지션별 개수
+        Map<String, Long> positionCounts = matches.stream()
+                .map(MatchSummaryEntity::getTeamPosition)
+                .filter(pos -> pos != null && !pos.equals("NONE"))
+                .collect(Collectors.groupingBy(pos -> pos, Collectors.counting()));
+
+        // 포지션 별 비율
+        Map<String, Double> favoritePositions = new HashMap<>();
+        for (Map.Entry<String, Long> entry : positionCounts.entrySet()) {
+            String pos = entry.getKey();
+            Long count = entry.getValue();
+            double percent = totalMatches == 0 ? 0.0 : (100.0 * count / totalMatches);
+            favoritePositions.put(pos, round(percent, 1));
+        }
 
         // 챔피언별 사용 횟수 카운트 후 상위 3개 추출
         List<String> preferredChampions = matches.stream()
@@ -165,13 +182,6 @@ public class MatchHelper { // 서브 메서드
                 .limit(3)
                 .map(Map.Entry::getKey)
                 .toList();
-
-        Map<String, Long> positionCounts = matches.stream()
-                .map(MatchSummaryEntity::getTeamPosition)
-                .filter(pos -> pos != null && !pos.equals("NONE"))
-                .collect(Collectors.groupingBy(pos -> pos, Collectors.counting()));
-
-        int loseCount = totalMatches - totalWins;
 
         return MatchOverallSummaryDTO.builder()
                 .puuid(puuid)
@@ -186,6 +196,7 @@ public class MatchHelper { // 서브 메서드
                 .averageKda(avgKda)
                 .averageCs(avgCs)
                 .preferredPosition(preferredPosition)
+                .favoritePositions(favoritePositions)
                 .preferredChampions(preferredChampions)
                 .positionCounts(positionCounts)
                 .loseCount(loseCount)
@@ -204,11 +215,19 @@ public class MatchHelper { // 서브 메서드
                 .average()
                 .orElse(0.0);
 
-        Map<String, Long> converted = summary.getFavoritePositions().entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().longValue()
-                ));
+        Map<String, Long> positionCounts = matchList.stream()
+                .map(MatchHistoryDTO::getTeamPosition)
+                .filter(pos -> pos != null && !pos.equals("NONE"))
+                .collect(Collectors.groupingBy(pos -> pos, Collectors.counting()));
+
+        Map<String, Double> favoritePositions = new HashMap<>();
+        for (Map.Entry<String, Long> entry : positionCounts.entrySet()) {
+            String pos = entry.getKey();
+            Long count = entry.getValue();
+            double percent = summary.getTotalCount() == 0 ? 0.0 : (100.0 * count / summary.getTotalCount());
+            favoritePositions.put(pos, round(percent, 1));
+        }
+
 
         return MatchOverallSummaryDTO.builder()
                 .puuid(puuid)
@@ -229,8 +248,8 @@ public class MatchHelper { // 서브 메서드
                 .preferredPosition(summary.getSortedPositionList() != null && !summary.getSortedPositionList().isEmpty()
                         ? summary.getSortedPositionList().get(0)
                         : null)
-                .positionCounts(converted)
-                .favoritePositions(summary.getFavoritePositions())
+                .favoritePositions(favoritePositions)
+                .positionCounts(positionCounts)
                 .preferredChampions(summary.getSortedChampionList() != null
                         ? summary.getSortedChampionList().stream().map(Map.Entry::getKey).toList()
                         : null)

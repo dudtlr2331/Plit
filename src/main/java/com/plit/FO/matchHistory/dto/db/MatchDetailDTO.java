@@ -78,7 +78,7 @@ public class MatchDetailDTO { // 최근 매치 상세 정보 - 팀으로
                             .assists(p.getAssists())
                             .win(p.isWin())
                             .cs(cs)
-                            .csPerMin(csPerMin)
+                            .csPerMin(round(csPerMin,1))
                             .kdaRatio(round(kdaRatio,1))
 
                             .mainRune1(p.getPerkPrimaryStyle())

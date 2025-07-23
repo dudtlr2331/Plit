@@ -13,6 +13,7 @@ public class FavoriteChampionDTO { // 선호챔피언
     private String puuid;
     private String championName;
     private String korName;
+    private String seasonName;
     private String queueType;
     private int gamesPlayed;
     private int wins;

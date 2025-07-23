@@ -87,7 +87,7 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
                 .assists(dto.getAssists())
                 .kdaRatio(round(dto.getKdaRatio(),1))
                 .cs(dto.getCs())
-                .csPerMin(dto.getCsPerMin())
+                .csPerMin(round(dto.getCsPerMin(),1))
                 .damageDealt(dto.getDamageDealt())
                 .totalDamageDealtToChampions(dto.getTotalDamageDealtToChampions())
                 .totalDamageTaken(dto.getTotalDamageTaken())
