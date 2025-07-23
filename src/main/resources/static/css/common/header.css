@@ -29,6 +29,33 @@ header nav a {
     cursor: pointer;
 }
 
+/* 채팅 아이콘 설정 */
+.chat-icon-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.chat-icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.chat-icon-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background-color: red;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* 채팅 리스트 팝업 */
 
 #chatListPopup {
@@ -61,6 +88,20 @@ header nav a {
 
 .chat-list-item:hover {
     background: #f0f0f0;
+}
+
+.unread-badge {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    background-color: red;
+    border-radius: 50%;
 }
 
 /* 채팅 팝업 */
