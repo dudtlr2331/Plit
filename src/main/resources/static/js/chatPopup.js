@@ -275,11 +275,8 @@
         bindChatInputHandler();
         bindChatIconClick();
 
-        // 페이지 로딩 시 기본으로 출력
-        const popup = document.getElementById('chatListPopup');
-        if (popup && chatUserId) {
-            popup.style.display = 'block'; // 기본적으로 열기
-            loadChatList();                // 채팅 목록 로딩
+        if (chatUserId) {
+            loadChatList();
         }
     };
 })();
