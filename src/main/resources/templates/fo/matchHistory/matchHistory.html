@@ -260,17 +260,20 @@
                             <th:block th:each="entry, stat : ${summary.sortedChampionList}">
                                 <th:block th:if="${stat.index < 3}"> <!-- 객체 stat 이 3보다 작을 때만 렌더링 [ 상위 3개 항목 ] -->
                                     <div class="champion">
-                                        <!--                                        -->
+                                        <img class="champion-img"
+                                             th:src="${overallSummary.favoriteChampionImageUrls[stat.index]}"
+                                             alt="챔피언 이미지"
+                                             style="width: 48px; height: 48px; border-radius: 50%; margin-bottom: 4px;" />
 
                                         <div class="graph-bar"
                                              th:style="${championHeightStyles != null and championHeightStyles[entry.key] != null
-                                    ? championHeightStyles[entry.key] : ''}">
+                                            ? championHeightStyles[entry.key] : ''}">
                                         </div>
 
                                         <!-- 승률 -->
                                         <div class="percentage"
                                              th:text="${summary.championWinRates[entry.key] != null
-                                    ? summary.championWinRates[entry.key] + '%' : '0%'}">
+                                            ? summary.championWinRates[entry.key] + '%' : '0%'}">
                                         </div>
 
                                         <!-- 전적 -->
@@ -280,10 +283,6 @@
                                                 wins=${summary.championWins[entry.key] ?: 0}"
                                              th:text="|${total}전 ${wins}승 ${total - wins}패|">
                                         </div>
-
-
-
-
                                     </div>
                                 </th:block>
                             </th:block>
@@ -311,8 +310,6 @@
                                          th:style="'height:' + (overallSummary.favoritePositions[pos] ?: 0.0) + '%;'">
                                     </div>
                                 </div>
-
-
 
                                 <div class="position-label" th:text="${pos}" style="margin-top: 4px;"></div>
                             </div>

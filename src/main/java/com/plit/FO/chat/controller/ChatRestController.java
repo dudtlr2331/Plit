@@ -9,9 +9,12 @@ import com.plit.FO.chat.service.ChatService;
 import com.plit.FO.user.dto.UserDTO;
 import com.plit.FO.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,12 +91,6 @@ public class ChatRestController {
         return ResponseEntity.ok(result);
     }
 
-    // 안 읽은 메세지 처리
-    @PostMapping("/{roomId}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long roomId, @RequestParam Long userId) {
-        chatService.markMessagesAsRead(roomId, userId);
-        return ResponseEntity.ok().build();
-    }
 
     @GetMapping("/rooms/{userId}")
     public ResponseEntity<List<Map<String, Object>>> getRoomsByUserId(@PathVariable Long userId) {
@@ -138,6 +135,25 @@ public class ChatRestController {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("채팅방이 없습니다."));
         return ResponseEntity.ok(room.getChatRoomId());
+    }
+
+    // 특정 채팅방의 메시지를 읽음 처리
+    @PostMapping("/{roomId}/read")
+    public ResponseEntity<Void> markMessagesAsRead(
+            @PathVariable Long roomId,
+            Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserDTO loginUser = userService.getUserByUserId(principal.getName())
+                .orElse(null);
+        if (loginUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        chatService.markMessagesAsRead(roomId, loginUser.getUserSeq().longValue());
+        return ResponseEntity.ok().build();
     }
 
 }

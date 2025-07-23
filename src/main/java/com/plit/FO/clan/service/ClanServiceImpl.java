@@ -10,6 +10,7 @@ import com.plit.FO.clan.repository.ClanRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -42,6 +44,10 @@ public class ClanServiceImpl implements ClanService {
     public void createClan(ClanEntity clan) {
         clan.setUseYn("Y");
 
+        if (clanRepository.existsByLeaderIdAndUseYn(clan.getLeaderId(), "Y")) {
+            throw new IllegalStateException("이미 클랜을 생성한 유저입니다!");
+        }
+
         ClanEntity saved;
         try {
             saved = clanRepository.save(clan);
@@ -64,6 +70,15 @@ public class ClanServiceImpl implements ClanService {
                 throw new RuntimeException("리더 자동 등록에 실패했습니다.", e);
             }
         }
+    }
+
+    @Override
+    public boolean userHasClan(Long userSeq) {
+        if (userSeq == null) {
+            throw new IllegalArgumentException("유저 ID는 null일 수 없습니다.");
+        }
+
+        return clanRepository.existsByLeaderIdAndUseYn(userSeq, "Y");
     }
 
     @Override
@@ -140,16 +155,20 @@ public class ClanServiceImpl implements ClanService {
     }
 
     @Override
-    public void deleteClan(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("클랜 ID는 null일 수 없습니다.");
+    public void deleteClan(Long clanId, Long userId) {
+        if (clanId == null || userId == null) {
+            throw new IllegalArgumentException("클랜 ID 또는 유저 ID는 null일 수 없습니다.");
         }
 
         try {
-            ClanEntity clan = clanRepository.findById(id)
+            ClanEntity clan = clanRepository.findById(clanId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 클랜입니다."));
 
-            clan.setUseYn("N"); // 소프트 삭제
+            if (!clan.getLeaderId().equals(userId)) {
+                throw new AccessDeniedException("내가 만든 클랜만 삭제할 수 있어요!");
+            }
+
+            clan.setUseYn("N");
             clanRepository.save(clan);
         } catch (Exception e) {
             throw new RuntimeException("클랜 삭제 중 오류가 발생했습니다.", e);

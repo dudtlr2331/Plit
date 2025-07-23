@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.SPELL_ID_TO_FILENAME;
+
 @Service
 @RequiredArgsConstructor
 public class ImageService {
@@ -34,6 +36,11 @@ public class ImageService {
 
     // name, type -> DB 에서 이미지 url 반환
     public String getImageUrl(String name, String type) {
+        if ("spell".equals(type)) {
+            String fileName = SPELL_ID_TO_FILENAME.getOrDefault(name, "default.png");
+            return "/images/spell/" + fileName;
+        }
+
         if (STATIC_TYPES.contains(type)) {
             return "/images/" + type + "/" + name;
         }

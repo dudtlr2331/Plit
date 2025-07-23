@@ -145,12 +145,33 @@ public class ClanController {
                 clan.setImageUrl("/images/clan/clan_default.png");
             }
 
-            clanService.createClan(clan);
+            try {
+                clanService.createClan(clan);
+            } catch (IllegalStateException ise) {
+                redirectAttributes.addFlashAttribute("errorMessage", ise.getMessage());
+                return "redirect:/clan/register";
+            }
+
             return "redirect:/clan";
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "클랜 등록 중 오류가 발생했습니다.");
             return "redirect:/clan";
         }
+    }
+
+    @GetMapping("/has-clan")
+    @ResponseBody
+    public boolean hasClan(Principal principal) {
+        if (principal == null) return false;
+
+        String userId = principal.getName();
+        Optional<UserDTO> optionalUser = userService.getUserByUserId(userId);
+
+        if (optionalUser.isEmpty()) return false;
+
+        Long userSeq = optionalUser.get().getUserSeq().longValue();
+        return clanService.userHasClan(userSeq);
     }
 
     @GetMapping("/{id}")
@@ -279,6 +300,8 @@ public class ClanController {
 
             String userId = principal.getName();
             UserDTO user = userService.findByUserId(userId);
+
+            Long userSeq = user.getUserSeq().longValue();
             ClanDTO clan = clanService.findById(id);
 
             if (clan == null) {
@@ -291,7 +314,7 @@ public class ClanController {
                 return "redirect:/clan/" + id;
             }
 
-            clanService.deleteClan(id);
+            clanService.deleteClan(id, userSeq);
             redirectAttributes.addFlashAttribute("successMessage", "클랜이 삭제되었습니다.");
             return "redirect:/clan";
 

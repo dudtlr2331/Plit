@@ -39,7 +39,8 @@ public class MatchOverallSummaryDTO {
     private double killParticipation;
     private List<Map.Entry<String, Long>> sortedChampionList;
     private List<String> sortedPositionList;
-
+    private String preferredPositionImageUrl;
+    private List<String> favoriteChampionImageUrls;
 
 
     public int getLoseCount() {

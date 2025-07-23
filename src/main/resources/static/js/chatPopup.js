@@ -78,26 +78,45 @@
                 const container = document.getElementById('chatListContainer');
                 container.innerHTML = '';
 
+                let hasUnread = false;
+
                 if (data.length === 0) {
                     container.innerHTML = '<div class="chat-list-empty">참여한 채팅방이 없습니다.</div>';
                     return;
                 }
 
                 data.forEach(room => {
+                    if (room.unreadCount > 0) {
+                        hasUnread = true;
+                    }
                     const div = document.createElement('div');
                     div.className = 'chat-list-item';
 
+                    const nameSpan = document.createElement('span');
                     if (room.type === 'friend') {
-                        div.textContent = room.otherNickname + (room.unreadCount > 0 ? ` (${room.unreadCount})` : '');
+                        nameSpan.textContent = room.otherNickname;
+                    } else if (room.type === 'party') {
+                        nameSpan.textContent = `[파티] ${room.partyName || '이름없음'}`;
+                    }
+                    div.appendChild(nameSpan);
+
+                    if (room.unreadCount > 0) {
+                        const badge = document.createElement('span');
+                        badge.className = 'unread-badge';
+                        badge.textContent = room.unreadCount;
+                        div.appendChild(badge);
+                    }
+
+
+                    if (room.type === 'friend') {
                         div.onclick = () => openChatWithFriend(room.roomId, room.otherUserId, room.otherNickname);
                     } else if (room.type === 'party') {
-                        div.textContent = `[파티] ${room.partyName || '이름없음'}` + (room.unreadCount > 0 ? ` (${room.unreadCount})` : '');
                         div.onclick = () => openPartyChat(room.partyId, room.partyName);
                     }
 
                     container.appendChild(div);
                 });
-
+                updateHeaderBadge(hasUnread);
             });
     }
 
@@ -110,6 +129,8 @@
 
         loadPreviousMessages(roomId);
         connectToChatRoom(roomId);
+        //읽음처리 호출
+        markMessagesAsRead(roomId);
     }
 
     function loadPreviousMessages(roomId) {
@@ -202,12 +223,48 @@
 
                 loadPreviousMessages(roomId);
                 connectToChatRoom(roomId);
+                markMessagesAsRead(roomId);
             })
             .catch(err => {
                 console.error(err);
                 alert('채팅방을 불러오지 못했습니다.');
             });
     };
+
+    //메세지 읽음 처리
+    function markMessagesAsRead(roomId) {
+        fetch(`/api/chat/${roomId}/read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getCsrfHeaders()
+            },
+            credentials: 'include'
+        }).then(() => {
+            // 읽음 처리 후 목록 갱신
+            loadChatList();
+        }).catch(err => {
+            console.error('읽음 처리 실패', err);
+        });
+    }
+
+    function updateHeaderBadge(hasUnread) {
+        let badge = document.querySelector('.chat-icon-wrapper .chat-icon-badge');
+
+        if (hasUnread) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'chat-icon-badge';
+                badge.textContent = 'N'; // ✅ 항상 N
+                document.querySelector('.chat-icon-wrapper').appendChild(badge);
+            } else {
+                badge.textContent = 'N'; // 혹시 다른 값이 있으면 N으로
+            }
+        } else {
+            if (badge) badge.remove(); // 읽을 메시지 없으면 배지 제거
+        }
+    }
+
 
 
     // 전역 등록 단 하나만
@@ -217,5 +274,9 @@
         createChatPopupElement();
         bindChatInputHandler();
         bindChatIconClick();
+
+        if (chatUserId) {
+            loadChatList();
+        }
     };
 })();

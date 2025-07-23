@@ -265,4 +265,27 @@ public class MatchHelper { // 서브 메서드
                 : new ArrayList<>();
     }
 
+    // 스펠 이미지 이름 매핑
+    public static final Map<String, String> SPELL_ID_TO_FILENAME = Map.ofEntries(
+            Map.entry("1", "SummonerBoost.png"),             // 정화
+            Map.entry("3", "SummonerExhaust.png"),           // 탈진
+            Map.entry("4", "SummonerFlash.png"),             // 점멸
+            Map.entry("6", "SummonerHaste.png"),             // 유체화
+            Map.entry("7", "SummonerHeal.png"),              // 회복
+            Map.entry("11", "SummonerSmite.png"),            // 강타
+            Map.entry("12", "SummonerTeleport.png"),         // 순간이동
+            Map.entry("13", "SummonerMana.png"),             // 총명 (예전)
+            Map.entry("14", "SummonerDot.png"),              // 점화
+            Map.entry("21", "SummonerBarrier.png"),          // 방어막
+            Map.entry("30", "SummonerPoroRecall.png"),
+            Map.entry("31", "SummonerPoroThrow.png"),
+            Map.entry("32", "SummonerSnowball.png"),
+            Map.entry("39", "SummonerSnowURFSnowball_Mark.png"),
+            Map.entry("54", "SummonerCherryHold.png"),
+            Map.entry("55", "SummonerCherryFlash.png"),
+            Map.entry("2200", "SummonerUltBookPlaceholder.png"),
+            Map.entry("2201", "SummonerUltBookSmitePlaceholder.png")
+    );
+
+
 }

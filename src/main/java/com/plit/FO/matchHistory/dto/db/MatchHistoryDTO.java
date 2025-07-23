@@ -4,12 +4,14 @@ import com.plit.FO.matchHistory.entity.MatchSummaryEntity;
 import com.plit.FO.matchHistory.service.ImageService;
 import com.plit.FO.matchHistory.service.MatchHelper;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.plit.FO.matchHistory.service.MatchHelper.round;
 
+@Slf4j
 @Getter
 @Setter
 @NoArgsConstructor
@@ -59,12 +61,11 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private List<String> traitIds;
     private List<String> traitImageUrls;
 
-    // 걸린 시간 (분)
+    // html 에서 사용
     public int getGameDurationMinutes() {
         return gameDurationSeconds / 60;
     }
 
-    // 남은 시간 (초)
     public int getGameDurationRemainSeconds() {
         return gameDurationSeconds % 60;
     }
@@ -79,6 +80,16 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
         double csPerMin = (duration > 0) ? ((double) cs / duration) * 60 : 0;
         double kdaRatio = MatchHelper.getKda(summary.getKills(), summary.getDeaths(), summary.getAssists());
 
+        MatchPlayerDTO self = players.stream()
+                .filter(p -> p.getPuuid().equals(summary.getPuuid()))
+                .findFirst()
+                .orElse(null);
+
+        if (self == null) {
+            log.warn("No match player found for puuid: {}", summary.getPuuid());
+            return null;
+        }
+
         return MatchHistoryDTO.builder()
                 .matchId(summary.getMatchId())
                 .puuid(summary.getPuuid())
@@ -88,10 +99,10 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .win(summary.isWin())
 
                 .championName(summary.getChampionName())
-                .championImageUrl(imageService.getImageUrl(summary.getChampionName(), "champion"))
+                .championImageUrl(imageService.getImageUrl(summary.getChampionName() + ".png", "champion"))
 
                 .tier(summary.getTier())
-                .tierImageUrl(imageService.getImageUrl(summary.getTier(), "tier"))
+                .tierImageUrl(imageService.getImageUrl(summary.getTier() + ".png", "tier"))
 
                 .teamPosition(summary.getTeamPosition())
                 .position(summary.getTeamPosition())
@@ -107,8 +118,22 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .damageTaken(summary.getDamageTaken())
                 .gameDurationSeconds(duration)
 
-                .itemImageUrls(imageService.getItemImageUrls(summary.getItemIds())) // List<String>
+                .itemImageUrls(imageService.getItemImageUrls(summary.getItemIds()))
                 .matchPlayers(players)
+
+                .spell1ImageUrl(imageService.getImageUrl(String.valueOf(self.getSpell1Id()), "spell"))
+                .spell2ImageUrl(imageService.getImageUrl(String.valueOf(self.getSpell2Id()), "spell"))
+
+                .mainRune1Url(imageService.getImageUrl(self.getMainRune1() + ".png", "rune"))
+                .mainRune2Url(imageService.getImageUrl(self.getMainRune2() + ".png", "rune"))
+
+                .profileIconUrl(imageService.getImageUrl(self.getProfileIconId() + ".png", "profile-icon"))
+
+                .traitIds(self.getTraitIds())
+                .traitImageUrls(imageService.getTraitImageUrls(self.getTraitIds()))
+
+                .timeAgo(MatchHelper.getTimeAgo(summary.getGameEndTimestamp()))
+
                 .build();
     }
 

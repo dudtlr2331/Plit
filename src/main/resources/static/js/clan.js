@@ -167,6 +167,23 @@ async function validateForm() {
         return false;
     }
 
+    const hasClan = await fetch('/clan/has-clan')
+        .then(res => res.json())
+        .catch(err => {
+            console.error("클랜 중복 확인 실패:", err);
+            alert("서버 오류입니다. 다시 시도해주세요.");
+            return null; // or false, or 그냥 아무것도 안 함
+        });
+
+    if (hasClan === true) {
+        alert("이미 클랜을 보유하고 있어요. 하나만 만들 수 있어요!");
+        return;
+    }
+
+    if (hasClan === null) {
+        return; // 서버 오류 난 경우 처리 중단
+    }
+
     try {
         const res = await fetch(`/clan/check-name?name=${encodeURIComponent(name)}`);
         if (!res.ok) throw new Error(`서버 응답 실패: ${res.status}`);
