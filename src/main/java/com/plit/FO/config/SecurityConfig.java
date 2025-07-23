@@ -98,7 +98,7 @@ public class SecurityConfig {
                 )
                 // csrf 가 web socket 에 영향을 줄 수 있어 예외 등록
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/ws/**", "/chat/**", "/sub/**", "/pub/**", "/mypage/verify-summoner")
+                        .ignoringRequestMatchers("/ws/**", "/chat/**", "api/chat/**", "/sub/**", "/pub/**", "/mypage/verify-summoner")
                 )
 
                 // 비로그인 사용자가 마이페이지 접속시, 로그인 페이지 이동

@@ -17,7 +17,9 @@
 
         <!-- 우측 사용자 -->
         <div class="header-user-area" style="display: flex; align-items: center; gap: 10px; z-index: 1;">
-            <div class="chat-icon" sec:authorize="isAuthenticated()">💬</div>
+            <div class="chat-icon-wrapper">
+                <div class="chat-icon">💬</div>
+            </div>
 
             <!-- 로그인 상태 -->
             <div sec:authorize="isAuthenticated()" class="auth-area">
