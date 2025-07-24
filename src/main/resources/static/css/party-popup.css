@@ -92,10 +92,10 @@ select {
 /* 셀 너비 정리 (최소한으로) */
 .recruit-header span,
 .recruit-item span {
-    flex: 1;
     text-align: center;
-    padding: 4px;
-    font-size: 13px;
+    justify-content: center;
+    display: flex;
+    align-items: center;
 }
 
 .recruit-header span:first-child,
@@ -109,23 +109,36 @@ select {
 }
 .recruit-header span:nth-child(2),
 .recruit-item span:nth-child(2) {
-    width: 240px; /* 파티이름 */
+    width: 280px; /* 파티이름 */
 }
 .recruit-header span:nth-child(3),
 .recruit-item span:nth-child(3) {
-    width: 80px;  /* 상태 */
+    width: 160px; /* 메모 */
 }
 .recruit-header span:nth-child(4),
 .recruit-item span:nth-child(4) {
-    width: 80px;  /* 주 포지션 */
+    width: 80px;  /* 상태 */
 }
 .recruit-header span:nth-child(5),
 .recruit-item span:nth-child(5) {
-    width: 120px; /* 모집 포지션 */
+    width: 80px;  /* 주 포지션 */
 }
 .recruit-header span:nth-child(6),
 .recruit-item span:nth-child(6) {
-    width: 40px;  /* 채팅 아이콘 */
+    width: 120px; /* 모집 포지션 */
+}
+.recruit-header span:nth-child(7),
+.recruit-item span:nth-child(7) {
+    width: 50px; /* 채팅 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* 길어진 메모가 레이아웃 깨지 않도록 조정 */
+.recruit-item span:nth-child(3) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 모집 수정 버튼 오른쪽 정렬 */
@@ -133,6 +146,77 @@ select {
     margin-top: 20px;
     text-align: right;
 }
+
+/* 파티 상세 */
+
+.detail-summary-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 40px;
+    padding: 24px;
+    background: #fdfdff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    font-size: 14px;
+    margin-top: 20px;
+}
+
+.detail-summary-box p,
+.detail-summary-box .position-cell {
+    margin: 0;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+.detail-summary-box strong {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.detail-summary-box .position-row {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 200px;
+    margin-top: 13px;
+    margin-bottom: 13px;
+}
+
+.position-row .position-cell {
+    flex: 0 0 120px;
+    text-align: center;
+}
+
+.position-row .position-cell strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #555;
+}
+
+.detail-summary-box p.position-field {
+    text-align: center;
+}
+
+.detail-summary-box svg.position-icon {
+    width: 26px;
+    height: 26px;
+}
+
+.recruit-position-icons {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 1;
+    flex-grow: 1;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 
 /* 상세 -  멤버 */
 .member-table {
@@ -297,26 +381,29 @@ select {
 
 /* 채팅 아이콘 정렬 */
 .recruit-item .chat-icon {
-    display: flex;
+    font-size: 16px;
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
 .recruit-item.empty-row {
-    height: 140px;
+    height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
+    width: 100%;
 }
 
-.recruit-item.empty-row span {
+.recruit-item.empty-row span.empty-message {
     white-space: nowrap;
     font-size: 15px;
     color: #777;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: none;
+    overflow: visible;
+    text-overflow: unset;
 }
 
 .chat-icon {
@@ -324,11 +411,12 @@ select {
 }
 
 .recruit-button {
-    padding: 6px 12px;
+    font-size: 14px;
+    padding: 10px 16px;
     background: #6570b4;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
 }
 
@@ -521,8 +609,12 @@ select {
 #partyDetailPopup p {
     display: block;
     margin-bottom: 12px;
-    font-size: 14px;
+    font-size: 15px;
     color: #333;
+}
+
+.party-form input[name="partyCreateDate"] {
+    margin-bottom: 25px;
 }
 
 /* 팝업 좌우 여백 시각 정렬 보완 */
@@ -538,11 +630,12 @@ select {
 /* textarea 팝업 전체 너비 맞춤 */
 .recruit-popup textarea {
     width: 100%;
-    height: 100px;
+    height: 120px;
     resize: vertical;
     font-size: 14px;
     padding: 8px 10px;
-    border-radius: 6px;
+    margin-top: 12px;
+    border-radius: 8px;
     border: 1px solid #ccc;
     box-sizing: border-box;
 }
@@ -750,4 +843,60 @@ select {
 
 .main-position-selector label:hover {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 파티 신청에 모집 포지션 아이콘 */
+.join-position-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.join-position-group label {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.2s;
+    padding: 0;
+    border: none;
+}
+
+.join-position-group label.selected {
+    background-color: #6570b4;
+}
+
+.join-position-group svg.position-icon path {
+    fill: #bbb;
+}
+
+.join-position-group svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+/* 선택되지 않은 아이콘은 어두운 회색 */
+.join-position-group svg.position-icon .top-fill,
+.join-position-group svg.position-icon .mid-fill,
+.join-position-group svg.position-icon .bottom-fill,
+.join-position-group svg.position-icon .all-fill {
+    fill: #444;
+}
+
+/* 선택된 아이콘은 흰색으로 반전 */
+.join-position-group label.selected svg.position-icon .top-fill,
+.join-position-group label.selected svg.position-icon .mid-fill,
+.join-position-group label.selected svg.position-icon .bottom-fill,
+.join-position-group label.selected svg.position-icon .all-fill {
+    fill: white;
+}
+
+.recruit-popup#joinPopup {
+    width: 480px;
 }

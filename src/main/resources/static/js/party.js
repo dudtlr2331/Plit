@@ -20,19 +20,13 @@ function openJoinPopup(partyId) {
     const getIcon = window.getPositionIconHTML;
 
     Promise.all([
-
         fetch(`/api/parties/${partyId}`).then(res => res.json()),
         fetch(`/api/parties/${partyId}/members`).then(res => res.json())
     ]).then(([party, members]) => {
-        console.log("모집 포지션:", party.positions);
-        console.log("현재 멤버 목록:", members);
-
         const availablePositions = party.positions;
         const takenPositions = members
             .filter(m => m.status === 'ACCEPTED')
             .map(m => m.position);
-
-        console.log("이미 배정된 포지션:", takenPositions);
 
         // 모집 포지션이 ALL인 경우 전체 포지션으로 확장
         const isAllPosition = availablePositions.length === 1 && availablePositions[0] === 'ALL';
@@ -41,39 +35,29 @@ function openJoinPopup(partyId) {
             : availablePositions;
 
         const selectablePositions = positionPool.filter(pos => !takenPositions.includes(pos));
-        console.log("신청 가능한 포지션:", selectablePositions);
 
         const container = document.querySelector('.position-group');
         container.innerHTML = '';
-
-        const positionLabels = {
-            TOP: '탑',
-            JUNGLE: '정글',
-            MID: '미드',
-            ADC: '원딜',
-            SUPPORT: '서포터',
-            ALL: '상관없음'
-        };
+        container.classList.add('join-position-group'); // 스타일 클래스 추가
 
         if (selectablePositions.length === 0) {
             container.innerHTML = `<p style="color:gray;">선택 가능한 포지션이 없습니다.</p>`;
         } else {
-            if (isAllPosition) {
-                const allLabel = document.createElement('label');
-                allLabel.innerHTML = `
-                    <input type="radio" name="joinPosition" value="ALL">
-                    ${getIcon('ALL')} ${positionLabels['ALL']}
-                `;
-                container.appendChild(allLabel);
-            }
-
+            // 모집 포지션 라디오 버튼을 아이콘으로 표시
             selectablePositions.forEach(pos => {
                 const label = document.createElement('label');
                 label.innerHTML = `
-                    <input type="radio" name="joinPosition" value="${pos}">
-                    ${getIcon(pos)} ${positionLabels[pos] || pos}
+                    <input type="radio" name="joinPosition" value="${pos}" style="display: none;">
+                    ${getIcon(pos)}
                 `;
                 container.appendChild(label);
+
+                // 클릭 시 스타일 적용
+                label.addEventListener('click', () => {
+                    container.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+                    label.classList.add('selected');
+                    label.querySelector('input').checked = true;
+                });
             });
         }
     });
@@ -204,7 +188,7 @@ function renderParties(data) {
 
             // chat-icon 부분을 조건부로 처리
             const chatIconHtml = canChat
-                ? `<span class="chat-icon" onclick="openPartyChat(${party.partySeq})">💬</span>`
+                ? `<span class="chat-icon" onclick="openPartyChat(${party.partySeq}, '${party.partyName}')">💬</span>`
                 : '';
 
             item.innerHTML = `
@@ -225,6 +209,7 @@ function renderParties(data) {
                     data-createdby="${party.createdBy}"
                 >${party.partyName}</a>
             </span>
+            <span title="메모">${party.memo || ''}</span>
             <span>${translateStatus(party.partyStatus)}</span>
             <span title="주 포지션">${mainIcon}</span>
             <span title="모집 포지션">${recruitIcons}</span>
@@ -259,9 +244,18 @@ function filterByMainPosition(koreanPos) {
     const code = positionMap[koreanPos];
     if (!code) return;
 
-    renderParties(
-        allParties.filter(p => p.mainPosition && p.mainPosition.toUpperCase() === code)
-    );
+    if (code === 'ALL') {
+        // 주 포지션이 TOP/JUNGLE/MID/ADC/SUPPORT 중 하나라도 해당되면 모두 출력
+        renderParties(
+            allParties.filter(p =>
+                ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].includes(p.mainPosition?.toUpperCase())
+            )
+        );
+    } else {
+        renderParties(
+            allParties.filter(p => p.mainPosition?.toUpperCase() === code)
+        );
+    }
 }
 
 function toggleChatList() {
@@ -353,16 +347,30 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 const pending = members.filter(m => m.status === 'PENDING');
 
                 const detailHtml = `
-                    <p><strong>이름:</strong> ${name}</p>
-                    <p><strong>타입:</strong> ${type}</p>
-                    <p><strong>생성일자:</strong> ${formatDateTime(createDate)}</p>
-                    <p><strong>종료일자:</strong> ${formatDateTime(endDate)}</p>
-                    <p><strong>상태:</strong> ${translateStatus(status)}</p>
-                    <p><strong>현재 인원:</strong> ${headcount}</p>
-                    <p><strong>최대 인원:</strong> ${max}</p>
-                    <p><strong>메모:</strong> ${memo}</p>
-                    <p><strong>주 포지션:</strong> ${mainPosition}</p>
-                    <p><strong>모집 포지션:</strong> ${positions}</p>
+                    <div class="detail-summary-box">
+                        <p><strong>이름</strong><br>${name}</p>
+                        <p><strong>타입</strong><br>${type.toUpperCase()}</p>
+                        <p><strong>상태</strong><br>${translateStatus(status)}</p>
+                        
+                        <p><strong>생성일자</strong><br>${formatDateTime(createDate)}</p>
+                        <p><strong>종료일자</strong><br>${formatDateTime(endDate)}</p>
+                        <p><strong>현재 인원</strong><br>${headcount} / ${max}</p>
+                        
+                        <div class="position-row">
+                            <div class="position-cell">
+                                <strong>주 포지션</strong><br>
+                                    ${getPositionIconHTML(mainPosition, true)}
+                            </div>
+                            <div class="position-cell">
+                                <strong>모집 포지션</strong><br>
+                                <div class="recruit-position-icons">
+                                    ${positions.split(',').map(p => getPositionIconHTML(p.trim(), true)).join(' ')}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p style="grid-column: 1 / -1;"><strong>메모</strong><br>${memo?.trim() || '-'}</p>
+                    </div>
                 `;
 
                 const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
@@ -431,6 +439,15 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 };
 
                 const renderDefaultTable = async () => {
+                    let sortedApproved = approved;
+                    if (type === 'solo') {
+                        sortedApproved = approved.sort((a, b) => {
+                            if (a.userId === createdBy) return -1;
+                            if (b.userId === createdBy) return 1;
+                            return 0;
+                        });
+                    }
+
                     const rows = await Promise.all(approved.map(async m => {
                         const res = await fetch(`/api/users/${encodeURIComponent(m.userId)}/relation-status`);
                         const relation = await res.json();
@@ -523,6 +540,21 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                             </li>
                         `).join('')}</ul>`;
 
+                    const partyObj = {
+                        partySeq: seq,
+                        partyName: name,
+                        partyType: type,
+                        partyCreateDate: createDate,
+                        partyEndTime: endDate,
+                        partyStatus: status,
+                        partyHeadcount: headcount,
+                        partyMax: max,
+                        memo,
+                        mainPosition,
+                        positions: positions.split(',').map(p => p.trim())
+                    };
+                    const encodedPartyJson = encodeURIComponent(JSON.stringify(partyObj));
+
                     popup.innerHTML = `
                         <h3>파티 상세 정보</h3>
                         <div class="tabs">
@@ -530,17 +562,35 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                             <button class="tab-btn" onclick="switchDetailTab('approved')">참가 멤버</button>
                             <button class="tab-btn" onclick="switchDetailTab('pending')">수락 대기</button>
                         </div>
-
+                        
                         <div id="tab-detail" class="tab-content">${detailHtml}</div>
                         <div id="tab-approved" class="tab-content" style="display:none;">${approvedHtml}</div>
                         <div id="tab-pending" class="tab-content" style="display:none;">${pendingHtml}</div>
-
+                        
                         <div class="popup-buttons">
-                            ${isOwner ? `<button onclick="handleEditFromDetail('${seq}')">수정</button><button onclick="deleteParty(${seq})">삭제</button>` : ''}
+                            ${isOwner ? `
+                            <button class="edit-btn" data-party='${encodedPartyJson}'>수정</button>
+                            <button onclick="deleteParty(${seq})">삭제</button>
+                            ` : ''}
                             <button onclick="closePartyDetail()">닫기</button>
                             ${joinBtnHtml}
                         </div>
                     `;
+
+                    setTimeout(() => {
+                        document.querySelectorAll('.edit-btn').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const raw = btn.dataset.party;
+                                try {
+                                    const partyObj = JSON.parse(decodeURIComponent(raw));
+                                    handleEditFromDetail(JSON.stringify(partyObj));
+                                } catch (e) {
+                                    console.error("파티 JSON 파싱 오류", e);
+                                    alert("파티 정보 처리 중 오류 발생");
+                                }
+                            });
+                        });
+                    }, 0);
 
                     popup.style.display = 'block';
                 });
@@ -786,7 +836,7 @@ function openPartyFormPopup(party = null) {
           </div>
           <div class="field-group">
             <label>종료일자</label>
-            <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${party?.partyEndTime ?? ''}" required>
+            <input type="datetime-local" id="partyEndTime" name="partyEndTime" value="${formatLocalDateTime(party?.partyEndTime)}" required>
           </div>
           ${isEdit ? `
             <div class="field-group">
@@ -839,7 +889,7 @@ function openPartyFormPopup(party = null) {
           </div>
         </div>
 
-        ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${party.partyCreateDate}" readonly></label><br>` : ''}
+        ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${formatLocalDateTime(party?.partyCreateDate)}" readonly><br>` : ''}
 
         <label>메모 (선택)<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
         
@@ -916,16 +966,25 @@ function openPartyFormPopup(party = null) {
     });
 
     mainGroup.querySelectorAll('label').forEach(label => {
-        label.addEventListener('click', () => {
-            mainGroup.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
-            label.classList.add('selected');
-            label.querySelector('input').checked = true;
-        });
-    });
+        label.addEventListener('click', (e) => {
+            e.preventDefault(); // ← 이걸 꼭 넣어줘야 label 클릭 시 폼 submit 등 부작용 방지됨
 
-    // 주 포지션을 바꿀 때 모집 포지션 중 동일 포지션은 선택 못하게 막기
-    mainGroup.querySelectorAll('input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', () => {
+            const radio = label.querySelector('input');
+            const isSelected = label.classList.contains('selected');
+
+            // 다시 누르면 해제
+            if (isSelected) {
+                label.classList.remove('selected');
+                radio.checked = false;
+            } else {
+                // 다른 선택은 모두 해제 후 선택
+                mainGroup.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+                mainGroup.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+                label.classList.add('selected');
+                radio.checked = true;
+            }
+
+            // 주 포지션이 바뀌었을 경우 → 모집 포지션 중복 제거
             const selected = radio.value;
 
             popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
@@ -937,10 +996,12 @@ function openPartyFormPopup(party = null) {
                     chk.disabled = false;
                 }
             });
+
+            updatePartyHeadcountFromSelection(popup);
         });
     });
 
-// 모집 포지션 체크 시, 주 포지션과 동일하면 막기
+ // 모집 포지션 체크 시, 주 포지션과 동일하면 막기
     popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
         chk.addEventListener('change', () => {
             const selectedMain = popup.querySelector('.main-position-selector label.selected input')?.value;
@@ -962,6 +1023,14 @@ function openPartyFormPopup(party = null) {
 
     setMinEndTime();
     updatePartyHeadcountFromSelection(popup);
+}
+
+/* 시간포맷팅*/
+function formatLocalDateTime(datetimeString) {
+    if (!datetimeString) return '';
+    const date = new Date(datetimeString);
+    const pad = n => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 /* 종료시간 계산 */
