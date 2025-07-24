@@ -30,6 +30,12 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     private String summonerName;
     private String championName;
 
+    @Column
+    private String gameName;
+
+    @Column
+    private String tagLine;
+
     private int kills;
     private int deaths;
     private int assists;
@@ -82,6 +88,8 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
                 .profileIconId(dto.getProfileIconId())
                 .summonerName(dto.getSummonerName())
                 .championName(dto.getChampionName())
+                .gameName(dto.getGameName())
+                .tagLine(dto.getTagLine())
                 .kills(dto.getKills())
                 .deaths(dto.getDeaths())
                 .assists(dto.getAssists())

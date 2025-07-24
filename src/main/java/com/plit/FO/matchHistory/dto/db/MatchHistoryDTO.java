@@ -90,6 +90,17 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
             return null;
         }
 
+        int myTeamId = self.getTeamId();
+
+        int teamKills = players.stream()
+                .filter(p -> p.getTeamId() == myTeamId)
+                .mapToInt(MatchPlayerDTO::getKills)
+                .sum();
+
+        double matchKillParticipation = MatchHelper.calculateKillParticipation(
+                self.getKills(), self.getAssists(), teamKills
+        );
+
         String mainRune1Url = imageService.getImageUrl(self.getMainRune1() + ".png", "rune");
         String mainRune2Url = imageService.getImageUrl(self.getMainRune2() + ".png", "rune");
 
@@ -117,6 +128,7 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
                 .deaths(summary.getDeaths())
                 .assists(summary.getAssists())
                 .kdaRatio(round(kdaRatio,1))
+                .killParticipation(round(matchKillParticipation, 1))
 
                 .cs(cs)
                 .csPerMin(round(csPerMin, 1))

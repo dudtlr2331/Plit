@@ -28,6 +28,9 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     private String tier;
 
     // 기본 정보
+    private String gameName;
+    private String tagLine;
+
     private String championName;
     private String championKorName;
     private String summonerName;
@@ -211,6 +214,9 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
             dto.setTierImageUrl(MatchHelper.getImageUrl(dto.getTier().toUpperCase() + ".png", "tier"));
         } else {dto.setTierImageUrl("/images/riot_default.png");
         }
+
+        dto.setGameName(e.getGameName());
+        dto.setTagLine(e.getTagLine());
 
         dto.setMainRune1Url(MatchHelper.getImageUrl(dto.getMainRune1() + ".png", "rune"));
         dto.setMainRune2Url(MatchHelper.getImageUrl(dto.getMainRune2() + ".png", "rune"));

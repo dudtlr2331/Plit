@@ -57,6 +57,9 @@ public class MatchOverallSummaryEntity {
     @Column(columnDefinition = "TEXT")
     private String preferredChampions;
 
+    @Transient
+    private Double killParticipation;
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -66,7 +69,7 @@ public class MatchOverallSummaryEntity {
 
     public static MatchOverallSummaryEntity fromDTO(MatchOverallSummaryDTO dto) {
         return MatchOverallSummaryEntity.builder()
-                .id(dto.getId())  // 있을 수도 있음
+                .id(dto.getId())
                 .puuid(dto.getPuuid())
                 .gameName(dto.getGameName())
                 .tagLine(dto.getTagLine())
@@ -82,6 +85,7 @@ public class MatchOverallSummaryEntity {
                 .preferredPosition(dto.getPreferredPosition())
                 .positionCounts(new Gson().toJson(dto.getPositionCounts()))
                 .preferredChampions(String.join(",", dto.getPreferredChampions()))
+                .killParticipation(dto.getKillParticipation())
                 .build();
     }
 
@@ -119,6 +123,7 @@ public class MatchOverallSummaryEntity {
                 .sortedPositionList(List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"))
                 .positionCounts(positionMap)
                 .preferredChampions(championList)
+                .killParticipation(round(this.killParticipation, 1))
                 .createdAt(this.createdAt)
                 .build();
     }

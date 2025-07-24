@@ -414,6 +414,17 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="players">
+                                    <div th:each="player : ${match.matchPlayers}"
+                                         style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                        <img th:src="@{${player.championImageUrl}}"
+                                             alt="챔피언"
+                                             width="32" height="32"
+                                             style="border-radius: 6px;" />
+                                        <span th:text="${player.gameName + '#' + player.tagLine}"
+                                              style="font-size: 14px;">gameName#tagLine</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 상세 전적 표시 영역 -->

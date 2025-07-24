@@ -738,8 +738,38 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                         matchDetail.getParticipants(), matchId, durationSec, endTime, gameMode, queueType, tier);
 
                 for (MatchPlayerDTO player : playerList) {
-                    MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
-                    matchPlayerRepository.save(entity);
+                    try {
+                        String playerPuuid = player.getPuuid();
+
+                        RiotIdCacheEntity cache = riotIdCacheRepository.findByPuuid(playerPuuid).orElse(null);
+
+                        if (cache == null) {
+                            RiotAccountResponse account = riotApiService.getAccountByPuuid(playerPuuid);
+                            if (account != null) {
+                                cache = RiotIdCacheEntity.builder()
+                                        .puuid(playerPuuid)
+                                        .gameName(account.getGameName())
+                                        .tagLine(account.getTagLine())
+                                        .normalizedGameName(account.getGameName().toLowerCase())
+                                        .normalizedTagLine(account.getTagLine().toLowerCase())
+                                        .build();
+                                riotIdCacheRepository.save(cache);
+                            } else {
+                                cache = RiotIdCacheEntity.ofDummy(playerPuuid);
+                                riotIdCacheRepository.save(cache);
+                            }
+                        }
+
+                        player.setGameName(cache.getGameName());
+                        player.setTagLine(cache.getTagLine());
+
+                        // DB 저장
+                        MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
+                        matchPlayerRepository.save(entity);
+
+                    } catch (Exception e) {
+                        log.warn("플레이어 저장 중 오류: {}", player.getPuuid(), e);
+                    }
                 }
             } catch (Exception e) {
                 log.error("매치 저장 오류 : " + matchId, e);
@@ -1037,6 +1067,34 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         double averageKDA = matchList.stream().mapToDouble(MatchHistoryDTO::getKdaRatio).average().orElse(0);
         double averageCs = matchList.stream().mapToInt(MatchHistoryDTO::getCs).average().orElse(0);
 
+        int totalMyKills = 0;
+        int totalMyAssists = 0;
+        int totalTeamKills = 0;
+
+        for (MatchHistoryDTO match : matchList) {
+            List<MatchPlayerDTO> players = match.getMatchPlayers();
+            if (players == null || players.isEmpty()) continue;
+
+            MatchPlayerDTO me = players.stream()
+                    .filter(p -> p.getPuuid().equals(puuid))
+                    .findFirst()
+                    .orElse(null);
+            if (me == null) continue;
+
+            int myTeamId = me.getTeamId();
+
+            int teamKills = players.stream()
+                    .filter(p -> p.getTeamId() == myTeamId)
+                    .mapToInt(MatchPlayerDTO::getKills)
+                    .sum();
+
+            totalMyKills += me.getKills();
+            totalMyAssists += me.getAssists();
+            totalTeamKills += teamKills;
+        }
+
+        double killParticipation = MatchHelper.calculateKillParticipation(totalMyKills, totalMyAssists, totalTeamKills);
+
         Map<String, Long> positionCounts = matchList.stream()
                 .map(match -> MatchHelper.normalizePosition(match.getTeamPosition()))
                 .filter(pos -> pos != null && !pos.equals("unknown"))
@@ -1129,6 +1187,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .averageAssists(round(averageAssists, 1))
                 .averageKda(round(averageKDA, 2))
                 .averageCs(round(averageCs, 1))
+                .killParticipation(round(killParticipation, 1))
                 .preferredPosition(preferredPosition)
                 .preferredChampions(top3Champions)
                 .positionCounts(positionCounts)
