@@ -120,16 +120,36 @@ header nav a {
     z-index: 10000;
     overflow: hidden;
     font-family: 'Noto Sans KR', sans-serif;
+    padding: 10px;
+}
+.chat-popup .close-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10001;
+    color: #fff;
+}
+
+.chat-header {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+    background: #6570b4;
+    border-radius: 12px;
 }
 
 /* 채팅 제목 영역 */
 #chatTarget {
-    background: linear-gradient(to right, #7c4798, #6570b4);
-    color: white;
+    color: #f4f4f4;
     font-weight: bold;
     padding: 12px;
     text-align: center;
-    border-bottom: 1px solid #ccc;
 }
 
 /* 채팅 본문 */
@@ -140,13 +160,14 @@ header nav a {
     padding: 10px;
     display: flex;
     flex-direction: column;
+    border-radius: 12px;
 }
 
 /* 입력창 */
 #chatInput {
     border: none;
     border-top: 1px solid #ddd;
-    padding: 10px;
+    padding: 20px 10px;
     font-size: 14px;
     width: 100%;
     box-sizing: border-box;
