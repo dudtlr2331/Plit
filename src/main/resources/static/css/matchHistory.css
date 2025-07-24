@@ -1,4 +1,5 @@
 /* op.gg 완벽 복제 CSS */
+
 body {
     font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
     margin: 0;
@@ -133,6 +134,12 @@ body {
     flex-shrink: 0;
 }
 
+.rank-tier-icon {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}
+
 .tier-info {
     flex: 1;
 }
@@ -203,15 +210,15 @@ body {
     transition: background-color 0.2s;
 }
 
-.champion-row:hover {
+.champion-list .champion-row:hover {
     background: #f8f9fa;
 }
 
-.champion-row:last-child {
+.champion-list .champion-row:last-child {
     border-bottom: none;
 }
 
-.champion-row .champion-icon {
+.champion-list .champion-row .champion-icon {
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -220,19 +227,19 @@ body {
     overflow: hidden;
 }
 
-.champion-row .champion-icon img {
+.champion-list .champion-row .champion-icon img {
     width: 100%;
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
 }
 
-.champion-info {
+.champion-list .champion-info {
     flex: 1;
     min-width: 0;
 }
 
-.champ-name {
+.champion-list .champ-name {
     font-size: 13px;
     font-weight: bold;
     color: #202d37;
@@ -242,42 +249,42 @@ body {
     text-overflow: ellipsis;
 }
 
-.cs-info {
+.champion-list .cs-info {
     font-size: 11px;
     color: #888;
 }
 
-.kda-info {
+.champion-list .kda-info {
     text-align: center;
     margin-right: 16px;
     min-width: 80px;
 }
 
-.kda-ratio {
+.champion-list .kda-ratio {
     font-size: 12px;
     font-weight: bold;
     color: #202d37;
     margin-bottom: 2px;
 }
 
-.kda {
+.champion-list .kda {
     font-size: 11px;
     color: #888;
 }
 
-.usage-info {
+.champion-list .usage-info {
     text-align: right;
     min-width: 60px;
 }
 
-.usage-percent {
+.champion-list .usage-percent {
     font-size: 12px;
     font-weight: bold;
     color: #ee5a52;
     margin-bottom: 2px;
 }
 
-.game-count {
+.champion-list .game-count {
     font-size: 11px;
     color: #888;
 }
@@ -311,7 +318,13 @@ body {
     background: #f8f9fa;
 }
 
-/* KDA 요약 */
+
+
+/* ===== 최근 게임 요약 섹션 ===== */
+.recent-games-summary {
+    margin-bottom: 30px;
+}
+
 .kda-summary {
     background: #fff;
     border-radius: 8px;
@@ -334,33 +347,45 @@ body {
     margin: 0;
 }
 
-.win-loss-bar {
+/* 도넛 차트 */
+.donut-chart-container {
     display: flex;
-    width: 200px;
-    height: 24px;
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 0 20px;
+    justify-content: center;
+    align-items: center;
 }
 
-.win-bar {
-    background: #4a90e2;
+.donut-chart {
+    width: 80px;
+    height: 80px;
+    position: relative;
+}
+
+.donut-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(#4a90e2 0deg, #4a90e2 calc(var(--win-percent, 0) * 3.6deg), #e0e0e0 calc(var(--win-percent, 0) * 3.6deg), #e0e0e0 360deg);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 12px;
-    font-weight: bold;
+    position: relative;
 }
 
-.lose-bar {
-    background: #ee5a52;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 12px;
+.donut-circle::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+}
+
+.donut-text {
+    position: relative;
+    z-index: 1;
+    font-size: 16px;
     font-weight: bold;
+    color: #333;
 }
 
 .win-rate-text {
@@ -370,28 +395,127 @@ body {
     margin: 0;
 }
 
-.kda-stat {
-    text-align: center;
-    padding: 16px;
+/* 3단 레이아웃: 도넛 + KDA + 챔피언 */
+.summary-layout {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    margin-top: 20px;
+    padding: 15px;
     background: #f8f9fa;
-    border-radius: 6px;
-    margin: 0 8px;
+    border-radius: 8px;
 }
 
-.kda-stat .label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 4px;
+.summary-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
-.kda-stat strong {
+.summary-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.summary-right {
+    flex: 1.5;
+}
+
+/* 압축된 포지션 스타일 */
+.position-bar-container-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 5px;
+}
+
+.position-item-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    height: 16px;
+}
+
+.position-bar-compact {
+    width: 50px;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.position-fill-compact {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #4a90e2, #357abd);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.position-icon-compact {
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+.position-percent-compact {
+    font-size: 10px;
+    color: #555;
+    min-width: 30px;
+    font-weight: 500;
+}
+
+
+
+
+
+
+
+/* KDA 정보 */
+.kda-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    text-align: center;
+}
+
+.kda-numbers {
     font-size: 14px;
+    font-weight: bold;
     color: #202d37;
 }
 
-.kda-stat span {
-    font-size: 14px;
+.kda-numbers .kills,
+.kda-numbers .assists,
+.kda-numbers .separator {
+    color: #555;
+}
+
+.kda-numbers .deaths {
+    color: #ee5a52;
+}
+
+.kda-ratio {
+    font-size: 18px;
+    font-weight: bold;
     color: #202d37;
+}
+
+.kill-participation {
+    font-size: 11px;
+    color: #ee5a52;
+    font-weight: bold;
 }
 
 .death-count {
@@ -417,52 +541,56 @@ body {
 
 .favorite-champions {
     display: flex;
-    justify-content: space-around;
-    gap: 16px;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.champion {
-    text-align: center;
-    flex: 1;
+.champion-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    background: #f8f9fa;
+    border-radius: 3px;
+    transition: background-color 0.2s;
 }
 
-.champion-img {
+.champion-item:hover {
+    background: #e9ecef;
+}
+
+.champion-icon {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    margin-bottom: 8px;
+    object-fit: cover;
 }
 
-.graph-bar {
-    width: 100%;
-    height: 60px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    position: relative;
-    overflow: hidden;
+.champion-info {
+    flex: 1;
 }
 
-.graph-bar::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #ee5a52;
-    transition: height 0.3s ease;
+.champion-record {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1px;
 }
 
-.percentage {
-    font-size: 12px;
-    font-weight: bold;
-    color: #ee5a52;
-    margin-bottom: 4px;
-}
-
-.record {
+.champion-winrate {
     font-size: 11px;
-    color: #888;
+    font-weight: bold;
+    color: #202d37;
+}
+
+.champion-games {
+    font-size: 9px;
+    color: #666;
+}
+
+.champion-rating {
+    font-size: 9px;
+    color: #4a90e2;
+    font-weight: bold;
 }
 
 /* 포지션 섹션 */
@@ -483,6 +611,9 @@ body {
     flex-direction: column;
     align-items: center;
     flex: 1;
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px 8px;
 }
 
 .position-percent {
@@ -521,6 +652,32 @@ body {
     height: 20px;
     display: block;
     margin: 0 auto;
+}
+
+/* ===== 선호 포지션 섹션 (별도 컨테이너) ===== */
+.position-section {
+    margin: 20px 0;
+}
+
+.position-layout {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ===== 매치 리스트 섹션 ===== */
+.recent-games-list {
+    margin-top: 30px;
+}
+
+.recent-games h3 {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 20px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 /* 매치 카드 */
@@ -598,23 +755,38 @@ body {
 /* 챔피언 정보 */
 .champion-info {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
     flex: 1;
     margin-right: 6px;
 }
 
+.match-card .champion-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.items-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 16px;
+    width: 164px;
+}
+
 .champion-image {
     position: relative;
-    width: 32px;
-    height: 32px;
+    width: 48px !important;
+    height: 48px !important;
     flex-shrink: 0;
 }
 
 .champion-image img {
     width: 100%;
     height: 100%;
-    border-radius: 4px;
+    border-radius: 50% !important;
 }
 
 .champion-level {
@@ -640,9 +812,9 @@ body {
 
 .runes {
     display: flex;
-    gap: 4px;
-    width: 28px;
-    height: 28px;
+    gap: 6px;
+    width: 50px;
+    height: 46px;
     margin-right: 6px;
 }
 
@@ -650,107 +822,111 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    width: 12px;
-    height: 28px;
+    width: 22px;
+    height: 46px;
 }
 
 .runes-only {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    width: 12px;
-    height: 28px;
+    width: 22px;
+    height: 46px;
 }
 
 
 
 .runes img, .traits img {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 3px !important;
     display: block;
     object-fit: cover;
 }
 
 .spells img, .runes-only img {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 3px !important;
     display: block;
     object-fit: cover;
 }
 
-/* KDA */
-.kda {
-    text-align: center;
+/* 매치 카드 KDA */
+.match-card .kda {
+    text-align: left;
     margin-right: 6px;
     min-width: 80px;
+    margin-left: -10px;
 }
 
-.kda-score {
-    font-size: 12px;
+.match-card .kda-score {
+    font-size: 15px !important;
     font-weight: bold;
     margin-bottom: 2px;
 }
 
-.kda-score .kills,
-.kda-score .assists,
-.kda-score .separator {
-    color: #4a90e2;
+.match-card .kda-score .kills,
+.match-card .kda-score .assists,
+.match-card .kda-score .separator {
+    color: #555;
 }
 
-.kda-score .deaths {
+.match-card .kda-score .deaths {
     color: #ee5a52;
 }
 
-.kda-ratio {
-    font-size: 11px;
-    color: #4a90e2;
+.match-card .kda-ratio {
+    font-size: 12px !important;
+    color: #555;
 }
 
 /* 아이템 */
-.items {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+.match-card .items {
+    display: flex;
+    flex-direction: row;
     gap: 2px;
-    margin-right: 4px;
     flex-shrink: 0;
-    width: 54px;
-    height: 36px;
-    position: relative;
+    width: 144px;
+    height: 22px;
+    margin-right: 0;
 }
 
-.items img {
-    width: 100%;
-    height: 100%;
+.match-card .items img {
+    width: 22px !important;
+    height: 22px !important;
     border-radius: 3px;
     background: #f0f0f0;
+    object-fit: cover;
 }
 
-.empty-slot {
-    width: 100%;
-    height: 100%;
-    background: #f0f0f0;
-    border-radius: 3px;
-    border: 1px solid #e1e1e1;
+/* 빈 슬롯 통일 관리 */
+.match-card .empty-slot,
+.match-card .items .empty-slot,
+.match-card .trinket-slot .empty-slot,
+.match-summary-box .empty-slot {
+    width: 22px !important;
+    height: 22px !important;
+    background: #e8e8e8 !important;
+    border-radius: 3px !important;
+    border: none !important;
+    flex-shrink: 0 !important;
 }
 
 /* 장신구 슬롯 */
-.trinket-slot {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 16px;
-    height: 16px;
-    margin-top: 2px;
+.match-card .trinket-slot {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-left: -2px;
 }
 
-.trinket-slot img {
-    width: 100%;
-    height: 100%;
+.match-card .trinket-slot img {
+    width: 22px !important;
+    height: 22px !important;
     border-radius: 3px;
     background: #f0f0f0;
+    object-fit: cover;
 }
 
 /* 상세 통계 */
@@ -855,13 +1031,7 @@ body {
     border-radius: 3px;
 }
 
-.match-summary-box .empty-slot {
-    width: 20px;
-    height: 20px;
-    background: #f0f0f0;
-    border-radius: 3px;
-    border: 1px solid #e1e1e1;
-}
+
 
 /* 상세 전적 테이블의 아이템 아이콘 */
 .item-icon {
@@ -1018,6 +1188,8 @@ body {
 #match-load-more-button:hover {
     background: #d94a42;
 }
+
+
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
