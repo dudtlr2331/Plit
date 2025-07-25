@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.plit.FO.matchHistory.service.MatchHelper.PERK_TO_STYLE_MAP;
 import static com.plit.FO.matchHistory.service.MatchHelper.SPELL_ID_TO_FILENAME;
 
 @Service
@@ -81,6 +82,12 @@ public class ImageService {
                 .toList();
     }
 
+    public String getRuneStyleImageUrlByPerkId(int perkId) {
+        int styleId = PERK_TO_STYLE_MAP.getOrDefault(perkId, 7200);
+        return imageRepository.findByNameAndType(styleId + ".png", "rune")
+                .map(ImageEntity::getImageUrl)
+                .orElse("/images/riot_default.png");
+    }
 
 
 

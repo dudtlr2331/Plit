@@ -1071,6 +1071,10 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         int totalMyAssists = 0;
         int totalTeamKills = 0;
 
+        Map<String, Integer> champKills = new HashMap<>();
+        Map<String, Integer> champDeaths = new HashMap<>();
+        Map<String, Integer> champAssists = new HashMap<>();
+
         for (MatchHistoryDTO match : matchList) {
             List<MatchPlayerDTO> players = match.getMatchPlayers();
             if (players == null || players.isEmpty()) continue;
@@ -1091,6 +1095,11 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
             totalMyKills += me.getKills();
             totalMyAssists += me.getAssists();
             totalTeamKills += teamKills;
+
+            String champ = match.getChampionName();
+            champKills.merge(champ, match.getKills(), Integer::sum);
+            champDeaths.merge(champ, match.getDeaths(), Integer::sum);
+            champAssists.merge(champ, match.getAssists(), Integer::sum);
         }
 
         double killParticipation = MatchHelper.calculateKillParticipation(totalMyKills, totalMyAssists, totalTeamKills);
@@ -1175,6 +1184,18 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .toList();
 
+        // 선호챔피언별 kdaRatio 계산
+        Map<String, Double> championKdaRatios = new HashMap<>();
+        for (String champ : champKills.keySet()) {
+            int kills = champKills.getOrDefault(champ, 0);
+            int deaths = champDeaths.getOrDefault(champ, 0);
+            int assists = champAssists.getOrDefault(champ, 0);
+
+            double kda = deaths == 0 ? (kills + assists) : (double) (kills + assists) / deaths;
+            kda = Math.round(kda * 100.0) / 100.0;
+            championKdaRatios.put(champ, kda);
+        }
+
         return MatchOverallSummaryDTO.builder()
                 .puuid(puuid)
                 .gameName(riotId.getGameName())
@@ -1197,6 +1218,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .championTotalGames(championTotalGames)
                 .championWins(championWins)
                 .championWinRates(championWinRates)
+                .championKdaRatios(championKdaRatios)
                 .build();
     }
 

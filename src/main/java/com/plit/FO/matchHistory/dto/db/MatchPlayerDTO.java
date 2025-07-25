@@ -1,18 +1,23 @@
 package com.plit.FO.matchHistory.dto.db;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
 import com.plit.FO.matchHistory.entity.MatchPlayerEntity;
 import com.plit.FO.matchHistory.service.ImageService;
 import com.plit.FO.matchHistory.service.MatchHelper;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.plit.FO.matchHistory.service.MatchHelper.round;
 
+@Slf4j
 @Getter
 @Setter
 @NoArgsConstructor
@@ -96,6 +101,8 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     private String spell1ImageUrl;
     private String spell2ImageUrl;
 
+    private List<String> traitImageUrls;
+
     // 티어 이미지 경로
     private String tierImageUrl;
 
@@ -103,6 +110,41 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
         int cs = p.getTotalMinionsKilled() + p.getNeutralMinionsKilled();
         double csPerMin = durationSec > 0 ? ((double) cs) / (durationSec / 60.0) : 0.0;
         double kdaRatio = (double)(p.getKills() + p.getAssists()) / Math.max(p.getDeaths(), 1);
+
+        int mainRune1 = 0;
+        int mainRune2 = 0;
+
+        try {
+            if (p.getStyles() != null && !p.getStyles().isEmpty()) {
+                RiotParticipantDTO.Style primary = p.getStyles().get(0);
+                if (primary.getSelections() != null && !primary.getSelections().isEmpty()) {
+                    mainRune1 = primary.getSelections().get(0).getPerk();
+                }
+
+                if (p.getStyles().size() > 1) {
+                    RiotParticipantDTO.Style subStyle = p.getStyles().get(1);
+                    mainRune2 = subStyle.getStyle();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("룬 파싱 실패: {}", p.getPuuid(), e);
+        }
+
+
+        // traitIds 추출 (Arena 모드일 경우)
+        List<String> traitIds = null;
+        try {
+            if ("CHERRY".equalsIgnoreCase(gameMode) && p.getTraits() != null) {
+                traitIds = p.getTraits().stream()
+                        .map(trait -> String.valueOf(trait.get("id")))
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            log.warn("traitIds 추출 실패: {}", p.getPuuid(), e);
+        }
+
+        log.info("mainRune1: {}, mainRune2: {}", mainRune1, mainRune2);
+
 
         return MatchPlayerDTO.builder()
                 .puuid(p.getPuuid())
@@ -130,12 +172,13 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
                 .queueType(queueType)
                 .wardsPlaced(p.getWardsPlaced())
                 .wardsKilled(p.getWardsKilled())
-                .mainRune1(p.getPerkPrimaryStyle())
-                .mainRune2(p.getPerkSubStyle())
+                .mainRune1(mainRune1)
+                .mainRune2(mainRune2)
                 .statRune1(p.getStatRune1())
                 .statRune2(p.getStatRune2())
                 .spell1Id(p.getSummoner1Id())
                 .spell2Id(p.getSummoner2Id())
+                .traitIds(traitIds)
                 .build();
     }
 
@@ -178,6 +221,7 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
     }
 
     public static MatchPlayerDTO fromEntity(MatchPlayerEntity e) {
+
         MatchPlayerDTO dto = MatchPlayerDTO.builder()
                 .puuid(e.getPuuid())
                 .summonerName(e.getSummonerName())
@@ -218,8 +262,27 @@ public class MatchPlayerDTO { // 매치 각각 상세정보 -> 소환사 1명의
         dto.setGameName(e.getGameName());
         dto.setTagLine(e.getTagLine());
 
-        dto.setMainRune1Url(MatchHelper.getImageUrl(dto.getMainRune1() + ".png", "rune"));
-        dto.setMainRune2Url(MatchHelper.getImageUrl(dto.getMainRune2() + ".png", "rune"));
+        if ("CHERRY".equalsIgnoreCase(e.getGameMode()) && e.getTraitIds() != null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                List<Integer> traitIds = objectMapper.readValue(e.getTraitIds(), new TypeReference<>() {
+                });
+                dto.setTraitIds(traitIds.stream().map(String::valueOf).toList());
+
+                List<String> traitImageUrls = traitIds.stream()
+                        .map(id -> "/images/trait/" + id + ".png")
+                        .collect(Collectors.toList());
+
+                dto.setTraitImageUrls(traitImageUrls);
+            } catch (Exception ex) {
+                dto.setTraitImageUrls(List.of());
+            }
+        }
+        int fixedMainRune1 = MatchHelper.PERK_TO_STYLE_MAP.getOrDefault(dto.getMainRune1(), dto.getMainRune1());
+        int fixedMainRune2 = MatchHelper.PERK_TO_STYLE_MAP.getOrDefault(dto.getMainRune2(), dto.getMainRune2());
+
+        dto.setMainRune1Url(MatchHelper.getImageUrl(fixedMainRune1 + ".png", "rune"));
+        dto.setMainRune2Url(MatchHelper.getImageUrl(fixedMainRune2 + ".png", "rune"));
 
         dto.setSpell1ImageUrl(MatchHelper.getImageUrl(String.valueOf(dto.getSpell1Id()), "spell"));
         dto.setSpell2ImageUrl(MatchHelper.getImageUrl(String.valueOf(dto.getSpell2Id()), "spell"));

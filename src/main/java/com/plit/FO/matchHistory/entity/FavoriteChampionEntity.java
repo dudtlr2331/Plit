@@ -1,6 +1,7 @@
 package com.plit.FO.matchHistory.entity;
 
 import com.plit.FO.matchHistory.dto.FavoriteChampionDTO;
+import com.plit.FO.matchHistory.service.MatchHelper;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +24,7 @@ public class FavoriteChampionEntity {
 
     private String puuid;
     private String championName;
+    private String korName;
 
     private String queueType;  // overall, solo, flex
 
@@ -58,6 +60,7 @@ public class FavoriteChampionEntity {
         FavoriteChampionEntity entity = new FavoriteChampionEntity();
         entity.setPuuid(dto.getPuuid());
         entity.setChampionName(dto.getChampionName());
+        entity.setKorName(MatchHelper.getKorName(dto.getChampionName()));
         entity.setQueueType(dto.getQueueType());
         entity.setPlayCount(dto.getGameCount());
         entity.setWinCount(dto.getWinCount());

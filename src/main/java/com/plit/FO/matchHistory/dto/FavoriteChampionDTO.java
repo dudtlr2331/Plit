@@ -1,6 +1,7 @@
 package com.plit.FO.matchHistory.dto;
 
 import com.plit.FO.matchHistory.entity.FavoriteChampionEntity;
+import com.plit.FO.matchHistory.service.MatchHelper;
 import lombok.*;
 
 @Getter
@@ -44,6 +45,7 @@ public class FavoriteChampionDTO { // 선호챔피언
         return FavoriteChampionDTO.builder()
                 .puuid(entity.getPuuid())
                 .championName(entity.getChampionName())
+                .korName(entity.getKorName())
                 .queueType(entity.getQueueType())
                 .gameCount(entity.getPlayCount())
                 .winCount(entity.getWinCount())

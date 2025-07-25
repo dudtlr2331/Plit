@@ -1,5 +1,6 @@
 package com.plit.FO.matchHistory.entity;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
 import com.plit.FO.matchHistory.dto.db.MatchPlayerDTO;
 import com.plit.FO.matchHistory.dto.riot.RiotParticipantDTO;
@@ -7,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.plit.FO.matchHistory.service.MatchHelper.round;
 
@@ -61,6 +63,9 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     private int wardsPlaced;
     private int wardsKilled;
 
+    @Column(columnDefinition = "TEXT")
+    private String traitIds;
+
     private LocalDateTime gameEndTimestamp;
     private int gameDurationMinutes;
     private int gameDurationSeconds;
@@ -82,6 +87,19 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
     // dto -> entity ( db 저장 전에 가공 )
     public static MatchPlayerEntity fromDTO(MatchPlayerDTO dto) {
         System.out.println("Entity 저장 전: matchId = " + dto.getMatchId());
+
+        String traitIdsJson = null;
+        try {
+            if (dto.getTraitIds() != null) {
+                traitIdsJson = new ObjectMapper().writeValueAsString(dto.getTraitIds());
+            }
+        } catch (Exception ex) {
+            traitIdsJson = "[]";
+        }
+
+        System.out.println("Entity 저장 시 mainRune1 = " + dto.getMainRune1());
+        System.out.println("Entity 저장 시 mainRune2 = " + dto.getMainRune2());
+
         return MatchPlayerEntity.builder()
                 .matchId(dto.getMatchId())
                 .puuid(dto.getPuuid())
@@ -117,6 +135,7 @@ public class MatchPlayerEntity { // 매치 상세페이지 데이터 저장
                 .win(dto.isWin())
                 .goldEarned(dto.getGoldEarned())
                 .itemIds(String.join(",", dto.getItemIds()))
+                .traitIds(traitIdsJson)
                 .build();
 
     }

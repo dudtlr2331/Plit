@@ -325,5 +325,41 @@ public class MatchHelper { // 서브 메서드
             Map.entry("2201", "SummonerUltBookSmitePlaceholder.png")
     );
 
+    // 룬 파크 아이디 -> 스타일 아이디
+    public static final Map<Integer, Integer> PERK_TO_STYLE_MAP = Map.ofEntries(
+            // Domination (7200)
+            Map.entry(8100, 7200),
+            Map.entry(8112, 7200),
+            Map.entry(8124, 7200),
+            Map.entry(8128, 7200),
+            Map.entry(9923, 7200),
+
+            // Precision (7201)
+            Map.entry(8000, 7201),
+            Map.entry(8005, 7201),
+            Map.entry(8008, 7201),
+            Map.entry(8021, 7201),
+            Map.entry(8010, 7201),
+
+            // Sorcery (7202)
+            Map.entry(8200, 7202),
+            Map.entry(8214, 7202),
+            Map.entry(8229, 7202),
+            Map.entry(8230, 7202),
+
+            // Inspiration (7203)
+            Map.entry(8300, 7203),
+            Map.entry(8351, 7203),
+            Map.entry(8360, 7203),
+            Map.entry(8369, 7203),
+
+            // Resolve (7204)
+            Map.entry(8400, 7204),
+            Map.entry(8437, 7204),
+            Map.entry(8439, 7204),
+            Map.entry(8465, 7204)
+
+    );
+
 
 }

@@ -34,6 +34,7 @@ public class MatchOverallSummaryDTO {
     private Map<String, Integer> championTotalGames;
     private Map<String, Integer> championWins;
     private Map<String, Double> championWinRates;
+    private Map<String, Double> championKdaRatios;
     private Map<String, Double> favoritePositions;
     private LocalDateTime createdAt;
     private int loseCount;

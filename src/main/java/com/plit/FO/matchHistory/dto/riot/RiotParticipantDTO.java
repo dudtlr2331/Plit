@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -33,13 +34,15 @@ public class RiotParticipantDTO { // info 안의 participants 리스트 요소 (
     private int summoner1Id;
     private int summoner2Id;
     private List<Integer> itemIds;
-    private List<String> traits;
     private int spell1Id;
     private int spell2Id;
     private int mainRune1;
     private int mainRune2;
     private int statRune1;
     private int statRune2;
+
+    private List<Style> styles;
+    private List<Map<String, Object>> traits;
 
     @JsonProperty("profileIcon")
     private Integer profileIconId;
@@ -50,4 +53,17 @@ public class RiotParticipantDTO { // info 안의 participants 리스트 요소 (
     private int perkSubStyle;
     private String individualPosition;
 
+    @Data
+    public static class Style {
+        private int style;
+        private List<Selection> selections;
+    }
+
+    @Data
+    public static class Selection {
+        private int perk;
+        private int var1;
+        private int var2;
+        private int var3;
+    }
 }

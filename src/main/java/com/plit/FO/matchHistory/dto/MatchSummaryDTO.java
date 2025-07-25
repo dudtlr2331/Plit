@@ -2,6 +2,7 @@ package com.plit.FO.matchHistory.dto;
 
 import lombok.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class MatchSummaryDTO { //  매치 전체( 20게임 ) 요악 정보 - DB 
     private Map<String, Integer> championTotalGames;
     private Map<String, Integer> championWins;
     private Map<String, Double> championWinRates;
+    private Map<String, Double> championKdaRatios = new HashMap<>();
     private List<Map.Entry<String, Integer>> sortedChampionList;
 
     // 상위 챔피언 정보
