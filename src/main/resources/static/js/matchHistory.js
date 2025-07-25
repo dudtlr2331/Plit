@@ -181,7 +181,6 @@ function loadMatchDetail(element) {
     fetch(`/match/detail?matchId=${matchId}&puuid=${puuid}`)
         .then(res => res.json())
         .then(data => {
-            const table = detailBox.querySelector(".match-detail-table");
             const isBlueWin = data.blueTeam[0]?.win;
             const blueColorClass = isBlueWin ? 'blue-text' : 'red-text';
             const redColorClass = isBlueWin ? 'red-text' : 'blue-text';
@@ -254,11 +253,16 @@ function loadMatchDetail(element) {
             const blueRows = data.blueTeam.map(makeRow).join('');
             const redRows = data.redTeam.map(makeRow).join('');
 
-            table.innerHTML = `
+            const blueTable = detailBox.querySelector(".blue-table");
+            const redTable  = detailBox.querySelector(".red-table");
+
+            blueTable.innerHTML = `
                 ${blueHeader}
                 ${headerRow}
                 ${blueRows}
-                <tr class="vs-row"><td colspan="6" class="vs-cell">VS</td></tr>
+            `;
+
+            redTable.innerHTML = `
                 ${redHeader}
                 ${headerRow}
                 ${redRows}
