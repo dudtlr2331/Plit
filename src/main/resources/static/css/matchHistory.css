@@ -1372,6 +1372,22 @@ body {
     background: #ffebee;
 }
 
+/* match-detail 블루팀 테이블 전체 배경 */
+.match-detail .blue-table {
+    background-color: #e6f0ff; /* 연한 파란색 */
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+/* match-detail 레드팀 테이블 전체 배경 */
+.match-detail .red-table {
+    background-color: #ffe6e6; /* 연한 빨간색 */
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+
 /* 상단 요약 섹션의 큰 아이콘들 */
 .match-summary-box .champion-image {
     width: 40px;
