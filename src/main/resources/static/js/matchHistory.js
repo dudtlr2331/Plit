@@ -374,16 +374,17 @@ function loadMatchDetail(element) {
                                 <div>
                                     <img src="${player.championImageUrl}" class="champion-icon" alt="챔피언"/>
                                 </div>
-                                <div class="spell-rune-box">
-                                    <div class="spell-list">
-                                        <img src="${spellIdToImage[spell1Names[i]]}" class="spell-icon" alt="스펠1" />
-                                        <img src="${spellIdToImage[spell2Names[i]]}" class="spell-icon" alt="스펠2" />
-                                    </div>
-                                    <div class="rune-list">
-                                        <img src="${runeIdToUrl[mainRune1Ids[i]]}" class="rune-icon" alt="메인룬1">
-                                        <img src="${runeIdToUrl[mainRune2Ids[i]]}" class="rune-icon" alt="메인룬2">
-                                    </div>
-                                </div>
+                                <!-- 스펠 아이콘 2개 -->    
+      <div class="spell-icons">
+        <img src="${spellIdToImage[spell1Names[i]]}" class="spell-icon" alt="스펠1" />
+        <img src="${spellIdToImage[spell2Names[i]]}" class="spell-icon" alt="스펠2" />
+      </div>
+
+      <!-- 룬 아이콘 2개 -->
+      <div class="rune-icons">
+        <img src="${runeIdToUrl[mainRune1Ids[i]]}" class="rune-icon" alt="메인룬1">
+        <img src="${runeIdToUrl[mainRune2Ids[i]]}" class="rune-icon" alt="메인룬2">
+      </div>
                                 <!--
                                 <div class="runes">
                                     <img src="${player.mainRune1Url}" class="rune-icon" alt="메인 룬"/>
@@ -412,11 +413,11 @@ function loadMatchDetail(element) {
                         <td>
                             <div class="damage-wrapper">
                                 <div class="damage-line">
-                                    <span class="damage-value">${player.totalDamageDealtToChampions.toLocaleString()}</span>
+                                    <span class="damage-value">⚔️${player.totalDamageDealtToChampions.toLocaleString()}</span>
                                     <div class="damage-bar red"><div class="bar" style="width:${damageDealt}%"></div></div>
                                 </div>
                                 <div class="damage-line">
-                                    <span class="damage-value">${player.totalDamageTaken.toLocaleString()}</span>
+                                    <span class="damage-value">🛡️${player.totalDamageTaken.toLocaleString()}</span>
                                     <div class="damage-bar gray"><div class="bar" style="width:${damageTaken}%"></div></div>
                                 </div>
                             </div>
@@ -560,3 +561,14 @@ function selectRiotId(riotId) {
     window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
 }
 
+document.getElementById("matchSearchButton").addEventListener("click", function () {
+    const input = document.getElementById("matchSearchInput").value.trim();
+    const [gameName, tagLine] = input.split("#");
+
+    if (!gameName || !tagLine) {
+        alert("Riot ID 형식은 '닉네임#태그'입니다.");
+        return;
+    }
+
+    window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+});
