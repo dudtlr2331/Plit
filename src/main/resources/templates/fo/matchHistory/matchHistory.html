@@ -245,9 +245,9 @@
                             <div class="summary-left">
                                 <div class="donut-chart-container">
                                     <div class="donut-chart">
-                                        <div class="donut-circle" 
-                                             th:style="'--win-percent: ' + (${summary.totalCount > 0 ? summary.winCount * 100.0 / summary.totalCount : 0}) + ';'">
-                                            <div class="donut-text" 
+                                        <div class="donut-circle"
+                                             th:style="'--win-percent: ' + (${summary.totalCount > 0 ? (summary.winCount * 100.0 / summary.totalCount * 3.6) : 0}) + 'deg;'">
+                                            <div class="donut-text"
                                                  th:text="${summary.totalCount > 0 ? #numbers.formatDecimal(summary.winCount * 100.0 / summary.totalCount, 0, 0) + '%' : '0%'}">
                                                 0%
                                             </div>
