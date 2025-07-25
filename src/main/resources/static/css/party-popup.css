@@ -959,3 +959,9 @@ select {
 .recruit-popup#joinPopup {
     width: 480px;
 }
+
+/* 차단된 멤버 이름 빨간색으로 변경*/
+.blocked-name {
+    color: red;
+    font-weight: bold;
+}

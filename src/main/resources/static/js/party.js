@@ -375,64 +375,76 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
 
                 const positionOrder = {TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4};
 
-                const renderScrimVsLayout = (members) => {
+                const renderScrimVsLayout = async (members) => {
                     const teamA = members.filter(m => m.role === 'A');
                     const teamB = members.filter(m => m.role === 'B');
+                    const positionOrder = {TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4};
 
-                    const buildTable = (team) => `
-                        <table class="member-table">
+                    const buildTable = async (team) => {
+                        const rows = await Promise.all(team.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]).map(async m => {
+                            const kda = m.averageKda || 0;
+                            let kdaClass = 'kda-low';
+                            if (kda >= 5) kdaClass = 'kda-great';
+                            else if (kda >= 4) kdaClass = 'kda-good';
+                            else if (kda >= 3) kdaClass = 'kda-mid';
+
+                            // 여기에 relation-status API 호출
+                            let isBlocked = false;
+                            try {
+                                const res = await fetch(`/api/users/${encodeURIComponent(m.userId)}/relation-status`);
+                                if (res.ok) {
+                                    const relation = await res.json();
+                                    isBlocked = relation.isBlocked;
+                                }
+                            } catch (err) {
+                                console.warn("차단 여부 조회 실패", err);
+                            }
+
+                            const nicknameHtml = m.userId === createdBy
+                                ? `<span class="leader-icon">👑</span><strong class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</strong>`
+                                : `<span class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</span>`;
+
+                            return `
+                                <tr>
+                                    <td>${nicknameHtml}</td>
+                                    <td>${getPositionIconHTML(m.position, true)}</td>
+                                    <td>
+                                        ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
+                                        <span class="tier-text">${m.tier || 'Unranked'}</span>
+                                    </td>
+                                    <td>
+                                        ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24">`).join('')}
+                                    </td>
+                                    <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
+                                    <td class="${kdaClass}">${kda.toFixed(2)}</td>
+                                </tr>
+                            `;
+                                        }));
+
+                                        return `<table class="member-table">
                             <thead>
                                 <tr>
-                                    <th>닉네임</th>
-                                    <th>포지션</th>
-                                    <th>티어</th>
-                                    <th>선호 챔피언</th>
-                                    <th>승률</th>
-                                    <th>KDA</th>
+                                    <th>닉네임</th><th>포지션</th><th>티어</th>
+                                    <th>선호 챔피언</th><th>승률</th><th>KDA</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${team.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]).map(m => {
-                        const kda = m.averageKda || 0;
-                        let kdaClass = 'kda-low';
-                        if (kda >= 5) kdaClass = 'kda-great';
-                        else if (kda >= 4) kdaClass = 'kda-good';
-                        else if (kda >= 3) kdaClass = 'kda-mid';
+                            <tbody>${rows.join('')}</tbody>
+                        </table>`;
+                                    };
 
-                        return `
-                                        <tr>
-                                            <td>${
-                            m.userId === createdBy
-                                ? `<span class="leader-icon">👑</span><strong>${m.userNickname}</strong>`
-                                : m.userNickname}
-                                            </td>
-                                            <td>${getPositionIconHTML(m.position, true)}</td>
-                                            <td>
-                                                ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
-                                                <span class="tier-text">${m.tier || 'Unranked'}</span>
-                                            </td>
-                                            <td>
-                                                ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24">`).join('')}
-                                            </td>
-                                            <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
-                                            <td class="${kdaClass}">${kda.toFixed(2)}</td>
-                                        </tr>
-                                    `;
-                    }).join('')}
-                            </tbody>
-                        </table>
-                    `;
+                                    const tableA = await buildTable(teamA);
+                                    const tableB = await buildTable(teamB);
 
-                    return `
+                                    return `
                         <div class="scrim-vs-layout">
                             <div class="team-table">
                                 <h4>A 팀</h4>
-                                ${buildTable(teamA)}
+                                ${tableA}
                             </div>
                             <div class="vs-text">VS</div>
                             <div class="team-table">
                                 <h4>B 팀</h4>
-                                ${buildTable(teamB)}
+                                ${tableB}
                             </div>
                         </div>
                     `;
@@ -460,9 +472,10 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
                         const icon = getPositionIconHTML(m.position, true);
 
                         // 👑 왕관 표시
+                        const isBlocked = relation.isBlocked;
                         const nicknameHtml = m.userId === createdBy
-                            ? `<span class="leader-icon">👑</span><strong>${m.userNickname}</strong>`
-                            : m.userNickname;
+                            ? `<span class="leader-icon">👑</span><strong class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</strong>`
+                            : `<span class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</span>`;
 
                         // 버튼들 조건 분기
                         const kickBtn = (isOwner && !isCurrentUser)
@@ -523,92 +536,11 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
                 };
 
                 /* 멤버 수락 */
-                const renderPendingTable = async () => {
-                    if (pending.length === 0) {
-                        return `<p style="color: gray; text-align: center;">수락 대기 중인 팀이 없습니다.</p>`;
-                    }
-
-                    // 팀 단위로 묶기 (role 기준 B로 동일한 팀 판단)
-                    const teamMap = {};
-                    pending.forEach(m => {
-                        const key = m.teamToken || 'UNKNOWN'; // ← 백엔드에서 팀별로 teamToken 또는 id로 구분되면 그것 사용
-                        if (!teamMap[key]) teamMap[key] = [];
-                        teamMap[key].push(m);
-                    });
-
-                    const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
-
-                    const teamSections = await Promise.all(
-                        Object.entries(teamMap).map(async ([teamKey, teamMembers]) => {
-                            const rows = teamMembers
-                                .sort((a, b) => positionOrder[a.position] - positionOrder[b.position])
-                                .map(m => {
-                                    const kda = m.averageKda || 0;
-                                    let kdaClass = 'kda-low';
-                                    if (kda >= 5) kdaClass = 'kda-great';
-                                    else if (kda >= 4) kdaClass = 'kda-good';
-                                    else if (kda >= 3) kdaClass = 'kda-mid';
-
-                                    return `
-                                    <tr>
-                                      <td>${m.userNickname}</td>
-                                      <td>${getPositionIconHTML(m.position, true)}</td>
-                                      <td>
-                                        ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
-                                        <span class="tier-text">${m.tier || 'Unranked'}</span>
-                                      </td>
-                                      <td>
-                                        ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24">`).join('')}
-                                      </td>
-                                      <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
-                                      <td class="${kdaClass}">${kda.toFixed(2)}</td>
-                                      <td></td>
-                                    </tr>
-                                  `;
-                                }).join('');
-
-                            // 팀 멤버들의 memberId 배열 추출
-                            const memberIds = teamMembers.map(m => m.id);
-
-                            const controlButtons = isOwner
-                                ? `
-                              <div class="team-control-buttons">
-                                <button onclick="approveTeam(${seq}, [${memberIds.join(',')}])">팀 수락</button>
-                                <button onclick="rejectTeam(${seq}, [${memberIds.join(',')}])">팀 거절</button>
-                              </div>
-                            `
-                                                    : '';
-
-                                                return `
-                            <div class="pending-team-box">
-                              <table class="member-table">
-                                <thead>
-                                  <tr>
-                                    <th>닉네임</th>
-                                    <th>포지션</th>
-                                    <th>티어</th>
-                                    <th>선호 챔피언</th>
-                                    <th>승률</th>
-                                    <th>KDA</th>
-                                    <th></th>
-                                  </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                              </table>
-                              ${controlButtons}
-                            </div>
-                          `;
-                        })
-                    );
-
-                    return `<div class="pending-teams">${teamSections.join('')}</div>`;
-                };
+                const pendingHtml = await renderPendingTable(type, pending, seq, isOwner);
 
                 const approvedHtml = (type === 'scrim')
-                    ? renderScrimVsLayout(approved)
+                    ? await renderScrimVsLayout(approved)
                     : await renderDefaultTable();
-
-                const pendingHtml = await renderPendingTable();
 
                 const partyObj = {
                     partySeq: seq,
@@ -665,6 +597,71 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
                 popup.style.display = 'block';
             });
             });
+}
+
+async function renderPendingTable(type, pending, seq, isOwner) {
+    if (!pending.length) {
+        const label = type === 'scrim' ? '팀' : '멤버';
+        return `<p style="text-align:center;color:gray;">수락 대기 중인 ${label}이 없습니다.</p>`;
+    }
+
+    // — 내전(scrim)은 팀 단위 수락/거절 —
+    if (type === 'scrim') {
+        return await renderScrimPendingTeams(pending, seq, isOwner);
+    }
+
+    // — SOLO/TEAM: 개별 멤버 수락/거절 —
+    const rows = await Promise.all(pending.map(async m => {
+        const kda = (m.averageKda || 0).toFixed(2);
+        let cls = 'kda-low';
+        if (kda >= 5) cls = 'kda-great';
+        else if (kda >= 4) cls = 'kda-good';
+        else if (kda >= 3) cls = 'kda-mid';
+
+        // relation-status API 호출
+        let isBlocked = false;
+        try {
+            const res = await fetch(`/api/users/${encodeURIComponent(m.userId)}/relation-status`);
+            if (res.ok) {
+                const relation = await res.json();
+                isBlocked = relation.isBlocked;
+            }
+        } catch (err) {
+            console.warn("차단 여부 조회 실패", err);
+        }
+
+        const nicknameHtml = `<span class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</span>`;
+
+        return `
+            <tr>
+                <td>${nicknameHtml}</td>
+                <td>${getPositionIconHTML(m.position, true)}</td>
+                <td>
+                    ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon"/>` : ''}
+                    <span class="tier-text">${m.tier || 'Unranked'}</span>
+                </td>
+                <td>${(m.championImageUrls || []).map(u => `<img src="${u}" width="24" class="champion-icon"/>`).join('')}</td>
+                <td>${m.winRate != null ? m.winRate.toFixed(0) + '%' : '0%'}</td>
+                <td class="${cls}">${kda}</td>
+                <td>
+                    ${isOwner
+            ? `<button onclick="approveMember(${seq}, ${m.id})">수락</button>
+               <button onclick="rejectMember(${seq}, ${m.id})">거절</button>`
+            : ''}
+                </td>
+            </tr>`;
+    }));
+
+    return `
+        <table class="member-table">
+            <thead>
+                <tr>
+                    <th>닉네임</th><th>포지션</th><th>티어</th>
+                    <th>선호 챔프</th><th>승률</th><th>KDA</th><th>관리</th>
+                </tr>
+            </thead>
+            <tbody>${rows.join('')}</tbody>
+        </table>`;
 }
 
 /* 파티원 내보내기 */
@@ -1537,4 +1534,83 @@ function submitScrimCreateForm() {
             console.error(err);
             alert('서버 오류가 발생했습니다.');
         });
+}
+
+
+async function renderScrimPendingTeams(pending, partySeq, isOwner) {
+    if (!pending.length) {
+        return `<p style="text-align:center;color:gray;">수락 대기 중인 팀이 없습니다.</p>`;
+    }
+
+    const teams = pending.reduce((acc, m) => {
+        (acc[m.teamId] = acc[m.teamId] || []).push(m);
+        return acc;
+    }, {});
+
+    const teamEntries = await Promise.all(Object.entries(teams).map(async ([teamId, members]) => {
+        const memberIds = members.map(m => m.id);
+
+        const rows = await Promise.all(members.map(async m => {
+            const kda = m.averageKda?.toFixed(2) ?? '0.00';
+            let kdaClass = 'kda-low';
+            if (kda >= 5) kdaClass = 'kda-great';
+            else if (kda >= 4) kdaClass = 'kda-good';
+            else if (kda >= 3) kdaClass = 'kda-mid';
+
+            // relation-status API로 차단 여부 확인
+            let isBlocked = false;
+            try {
+                const res = await fetch(`/api/users/${encodeURIComponent(m.userId)}/relation-status`);
+                if (res.ok) {
+                    const relation = await res.json();
+                    isBlocked = relation.isBlocked;
+                }
+            } catch (err) {
+                console.warn("차단 여부 조회 실패", err);
+            }
+
+            const nicknameHtml = `<span class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</span>`;
+
+            return `
+                <tr>
+                    <td>${nicknameHtml}</td>
+                    <td>${getPositionIconHTML(m.position, true)}</td>
+                    <td>
+                        ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
+                        <span class="tier-text">${m.tier || 'Unranked'}</span>
+                    </td>
+                    <td>
+                        ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24" />`).join('')}
+                    </td>
+                    <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
+                    <td class="${kdaClass}">${kda}</td>
+                    <td></td>
+                </tr>
+            `;
+        }));
+
+        const actionButtons = isOwner
+            ? `<div style="text-align:right; margin-top:8px;">
+                    <button onclick="approveTeam(${partySeq}, [${memberIds.join(',')}])">팀 수락</button>
+                    <button onclick="rejectTeam(${partySeq}, [${memberIds.join(',')}])">팀 거절</button>
+               </div>`
+            : '';
+
+        return `
+            <div class="team-table">
+                <table class="member-table">
+                    <thead>
+                        <tr>
+                            <th>닉네임</th><th>포지션</th><th>티어</th>
+                            <th>선호 챔프</th><th>승률</th><th>KDA</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows.join('')}</tbody>
+                </table>
+                ${actionButtons}
+            </div>
+        `;
+    }));
+
+    return teamEntries.join('');
 }
