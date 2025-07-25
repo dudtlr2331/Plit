@@ -53,7 +53,7 @@ public class SchemaSql {
             party_type VARCHAR(6) NOT NULL COMMENT '타입',
             created_at DATETIME NOT NULL COMMENT '생성일자',
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일자',
-            created_by VARCHAR(255) NOT NULL COMMENT '생성자 ID',
+            created_by varchar(255) NOT NULL COMMENT '생성자 ID',
             party_end_time DATETIME NOT NULL COMMENT '파티 종료 일자',
             party_status VARCHAR(7) DEFAULT 'WAITING' COMMENT '파티 상태 (WAITING, FULL, CLOSED 등)',
             party_headcount INT NOT NULL COMMENT '파티 인원 수',
@@ -76,13 +76,13 @@ public class SchemaSql {
         CREATE TABLE party_member (
             id BIGINT AUTO_INCREMENT PRIMARY KEY,
             party_seq BIGINT NOT NULL COMMENT '파티 번호',
-            user_id VARCHAR(24) NOT NULL COMMENT '유저 ID',
+            user_seq INT NOT NULL COMMENT '유저 seq',
             join_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '가입 시간',
             role VARCHAR(10) DEFAULT 'MEMBER' COMMENT '역할',
             message TEXT,
             status VARCHAR(10) NOT NULL DEFAULT 'PENDING' COMMENT '신청 상태',
             position VARCHAR(10) NOT NULL COMMENT '신청한 포지션',
-            UNIQUE(party_seq, user_id)
+            UNIQUE(party_seq, user_seq)
         );
         """;
 

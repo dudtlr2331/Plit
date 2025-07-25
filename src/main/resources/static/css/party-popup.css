@@ -1,3 +1,10 @@
+.party-container{
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto 230px;
+    flex: 1;
+}
+
 .tab-container {
     display: flex;
     justify-content: center;
@@ -96,6 +103,7 @@ select {
     justify-content: center;
     display: flex;
     align-items: center;
+    min-width: 0;
 }
 
 .recruit-header span:first-child,
@@ -112,8 +120,13 @@ select {
     width: 280px; /* 파티이름 */
 }
 .recruit-header span:nth-child(3),
-.recruit-item span:nth-child(3) {
-    width: 160px; /* 메모 */
+.recruit-item span:nth-child(3) { /* 메모 */
+    flex: 0 0 160px;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block !important;
 }
 .recruit-header span:nth-child(4),
 .recruit-item span:nth-child(4) {
