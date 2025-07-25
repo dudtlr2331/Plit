@@ -867,9 +867,9 @@ function toggleRecruitPopup() {
             : 'solo';
 
     if (partyType === 'scrim') {
-        openScrimCreatePopup(); // 내전 전용 팝업 호출
+        openScrimCreatePopup(); // 기존 scrim 전용 팝업
     } else {
-        openPartyFormPopup();   // 기존 솔로/자유랭크 팝업 호출
+        openPartyFormPopup();
     }
 }
 
@@ -886,7 +886,7 @@ function openPartyFormPopup(party = null) {
     const getIcon = window.getPositionIconHTML;
 
     const popup = document.getElementById('recruitPopup');
-    const isEdit = party !== null;
+    const isEdit = party != null && party.partySeq != null;
 
     const activeTab = document.querySelector('.tab.active')?.id;
     const fixedType = activeTab === 'freeTab' ? 'team'
@@ -902,7 +902,7 @@ function openPartyFormPopup(party = null) {
         <div class="party-row">
           <div class="field-group">
             <label>파티 이름</label>
-            <input type="text" name="partyName" value="${party?.partyName ?? ''}" required>
+            <input type="text" name="partyName" maxlength="20" placeholder="예 : 즐겁게 게임 하실 분! (최대 20자)" value="${party?.partyName ?? ''}" required>
           </div>
           <div class="field-group">
             <label>종료일자</label>
@@ -941,15 +941,25 @@ function openPartyFormPopup(party = null) {
           <div class="main-position-selector-wrapper">
             <label>주 포지션</label>
             <div class="main-position-selector" id="mainPositionGroup">
-              ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].map(pos => {
-        const selected = party?.mainPosition === pos ? 'selected' : '';
-        return `
-                  <label class="${selected}" data-value="${pos}" style="${isReadOnly ? 'pointer-events:none;opacity:0.6;' : ''}">
-                    ${getIcon(pos, true)}
-                    <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} ${isReadOnly ? 'disabled' : ''} />
-                  </label>
-                `;
-    }).join('')}
+              ${
+                    // scrim은 무조건 ALL 하나만
+                    party?.partyType === 'scrim'
+                        ? `
+                    <label class="selected" data-value="ALL" style="pointer-events:none;opacity:0.6;">
+                      ${getIcon('ALL', true)}
+                      <input type="radio" name="mainPosition" value="ALL" style="display:none;" checked disabled />
+                    </label>
+                  `
+                        : ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].map(pos => {
+                            const selected = party?.mainPosition === pos ? 'selected' : '';
+                            return `
+                        <label class="${selected}" data-value="${pos}" style="${isReadOnly ? 'pointer-events:none;opacity:0.6;' : ''}">
+                          ${getIcon(pos, true)}
+                          <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} ${isReadOnly ? 'disabled' : ''} />
+                        </label>
+                      `;
+                        }).join('')
+                }
             </div>
           </div>
 
@@ -961,7 +971,7 @@ function openPartyFormPopup(party = null) {
 
         ${isEdit ? `<label>생성일자: <input type="datetime-local" name="partyCreateDate" value="${formatLocalDateTime(party?.partyCreateDate)}" readonly><br>` : ''}
 
-        <label>메모 (선택)<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
+        <label>메모 (선택)<br><textarea name="memo" maxlength="200" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
         
         <div class="form-buttons">
             ${isEdit
@@ -976,13 +986,20 @@ function openPartyFormPopup(party = null) {
     popup.style.display = 'block';
 
     const container = popup.querySelector('#recruitPositionGroup');
+    container.innerHTML = '';
 
-    ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].forEach(pos => {
+    // scrim 편집일 땐 ALL만, 아니면 기존 목록
+    const positionsToRender = isReadOnly
+        ? ['ALL']
+        : ['TOP','JUNGLE','MID','ADC','SUPPORT','ALL'];
+
+    positionsToRender.forEach(pos => {
         const label = document.createElement('label');
         if (isReadOnly) {
             label.style.pointerEvents = 'none';
             label.style.opacity = '0.6';
         }
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = 'positions';
@@ -990,14 +1007,14 @@ function openPartyFormPopup(party = null) {
         checkbox.style.display = 'none';
         if (isReadOnly) checkbox.disabled = true;
 
-        if (party?.positions?.includes(pos)) {
+        // scrim 편집이거나, 기존에 선택된 포지션이면 체크
+        if (isReadOnly || party?.positions?.includes(pos)) {
             checkbox.checked = true;
             label.classList.add('selected');
         }
 
-        const icon = createElementFromHTML(getIcon(pos, true));
         label.appendChild(checkbox);
-        label.appendChild(icon);
+        label.appendChild(createElementFromHTML(getIcon(pos, true)));
         container.appendChild(label);
 
         if (!isReadOnly) {
@@ -1005,7 +1022,6 @@ function openPartyFormPopup(party = null) {
                 e.preventDefault();
                 const isSelected = label.classList.contains('selected');
                 const isAll = checkbox.value === 'ALL';
-
                 const allLabels = container.querySelectorAll('label');
                 const allCheckboxes = container.querySelectorAll('input[type="checkbox"]');
 
@@ -1038,7 +1054,6 @@ function openPartyFormPopup(party = null) {
                         allLb.classList.add('selected');
                     }
                 }
-
                 updatePartyHeadcountFromSelection(popup);
             });
         }

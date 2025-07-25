@@ -598,6 +598,12 @@ public class PartyServiceImpl implements PartyService {
 
         partyRepository.save(party);
 
+        PartyFindPositionEntity allPos = PartyFindPositionEntity.builder()
+                .party(party)
+                .position(PositionEnum.ALL)
+                .build();
+        partyFindPositionRepository.save(allPos);
+
         // 5명 멤버 등록
         for (ScrimMemberDTO dto : request.getTeamMembers()) {
             String rawNickname = dto.getUserNickname();
