@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 매치 요약 5개씩 표시
     const matchCards = document.querySelectorAll('.match-block');
     const loadMoreButton = document.getElementById('match-load-more-button');
+    const closeButton = document.getElementById('match-close-button');
     let visibleCount = 5;
     const step = 5;
 
@@ -48,14 +49,27 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.display = index < visibleCount ? 'block' : 'none';
         });
 
-        if (visibleCount >= matchCards.length && loadMoreButton) {
-            loadMoreButton.style.display = 'none';
+        // 더보기 버튼 표시/숨김
+        if (loadMoreButton) {
+            loadMoreButton.style.display = visibleCount >= matchCards.length ? 'none' : 'block';
+        }
+
+        // 닫기 버튼 표시/숨김 (모든 매치가 보일 때만)
+        if (closeButton) {
+            closeButton.style.display = visibleCount >= matchCards.length ? 'block' : 'none';
         }
     }
 
     if (loadMoreButton) {
         loadMoreButton.addEventListener('click', function () {
             visibleCount += step;
+            updateVisibleMatches();
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', function () {
+            visibleCount = 5; // 처음 5개로 되돌리기
             updateVisibleMatches();
         });
     }
@@ -102,14 +116,52 @@ document.addEventListener('DOMContentLoaded', () => {
 // 더보기 버튼
 function showMoreChampions(button) {
     const parent = button.closest('.champion-tab-content');
-    const hiddenRows = parent.querySelectorAll('.hidden-champ');
+    const rows = parent.querySelectorAll('.champion-row');
+    const lessBtn = parent.querySelector('.show-less-button');
+    
+    // 현재 보이는 챔피언 수 계산
+    let visibleCount = 0;
+    rows.forEach(row => {
+        if (!row.classList.contains('hidden-champ')) {
+            visibleCount++;
+        }
+    });
+    
+    // 6개씩 추가로 보이게 하기
+    const nextCount = visibleCount + 6;
+    
+    rows.forEach((row, index) => {
+        if (index < nextCount) {
+            row.classList.remove('hidden-champ');
+        }
+    });
+    
+    // 모든 챔피언이 보이면 더보기 버튼 숨기고 닫기 버튼 표시
+    if (nextCount >= rows.length) {
+        button.style.display = 'none';
+        if (lessBtn) {
+            lessBtn.style.display = 'block';
+        }
+    }
+}
 
-    hiddenRows.forEach(row => {
-    row.classList.remove('hidden-champ');
+// 닫기 버튼
+function showLessChampions(button) {
+    const parent = button.closest('.champion-tab-content');
+    const rows = parent.querySelectorAll('.champion-row');
+    const moreBtn = parent.querySelector('.show-more-button');
+
+    rows.forEach((row, index) => {
+        if (index > 5) {
+            row.classList.add('hidden-champ');
+        }
     });
 
     button.style.display = 'none';
-
+    
+    if (moreBtn) {
+        moreBtn.style.display = 'block';
+    }
 }
 
 // 매치 요약 박스 클릭시 실행( 상세 페이지 )  (element) 는 match-summary-box
@@ -120,6 +172,8 @@ function loadMatchDetail(element) {
 
     if (detailBox.getAttribute("data-loaded") === "true") {
         detailBox.style.display = detailBox.style.display === "none" ? "block" : "none";
+        // 화살표 회전 토글
+        element.classList.toggle("expanded", detailBox.style.display === "block");
         return;
     }
 
@@ -212,11 +266,20 @@ function loadMatchDetail(element) {
 
             detailBox.style.display = "block";
             detailBox.setAttribute("data-loaded", "true");
+            // 화살표 회전
+            element.classList.add("expanded");
         })
         .catch(err => {
             console.error("상세 정보 로딩 실패", err);
             detailBox.innerHTML = "<p>데이터 로딩 실패</p>";
         });
+}
+
+function closeMatchDetail(detailBox) {
+    const matchCard = detailBox.previousElementSibling;
+    detailBox.style.display = "none";
+    // 화살표 회전 원래대로
+    matchCard.classList.remove("expanded");
 }
 
 function initMatch() {

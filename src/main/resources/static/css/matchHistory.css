@@ -1,7 +1,7 @@
 /* op.gg 완벽 복제 CSS */
 
 body {
-    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    font-family: 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', '맑은 고딕', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     margin: 0;
     padding: 0;
     background: #f2f2f2;
@@ -35,14 +35,14 @@ body {
 
 /* 프로필 헤더 */
 .profile-header {
-    background: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .profile-icon-wrapper {
@@ -74,14 +74,14 @@ body {
     border: 2px solid #fff;
 }
 
-.profile-header h2 {
-    margin: 0;
+.profile-info h2 {
+    margin: 0 0 8px 0;
     font-size: 16px;
     font-weight: bold;
     color: #202d37;
 }
 
-.profile-header button {
+.profile-info button {
     background: #f0f0f0;
     color: #202d37;
     border: none;
@@ -90,11 +90,65 @@ body {
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;
-    margin-left: auto;
 }
 
-.profile-header button:hover {
+.profile-info button:hover {
     background: #e0e0e0;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.search-section {
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-form {
+    display: flex;
+    align-items: center;
+}
+
+.search-box {
+    width: 100%;
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    padding-right: 40px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #999;
+}
+
+.search-button {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-button svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* 공통 박스 스타일 */
@@ -110,7 +164,8 @@ body {
 
 .rank-box h3,
 .champion-preference-box h3,
-.recent-games h3 {
+.recent-games-summary h3,
+.recent-games-list h3 {
     margin: 0;
     padding: 16px 20px;
     font-size: 14px;
@@ -219,8 +274,8 @@ body {
 }
 
 .champion-list .champion-row .champion-icon {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     margin-right: 12px;
     flex-shrink: 0;
@@ -244,9 +299,6 @@ body {
     font-weight: bold;
     color: #202d37;
     margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .champion-list .cs-info {
@@ -256,8 +308,13 @@ body {
 
 .champion-list .kda-info {
     text-align: center;
-    margin-right: 16px;
+    margin-right: 30px;
     min-width: 80px;
+    margin-left: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .champion-list .kda-ratio {
@@ -265,6 +322,7 @@ body {
     font-weight: bold;
     color: #202d37;
     margin-bottom: 2px;
+    text-align: center;
 }
 
 .champion-list .kda {
@@ -318,34 +376,95 @@ body {
     background: #f8f9fa;
 }
 
+.show-less-button {
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: none;
+    border-top: 1px solid #e1e1e1;
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 8px;
+}
+
+.show-less-button:hover {
+    background: #f8f9fa;
+}
+
 
 
 /* ===== 최근 게임 요약 섹션 ===== */
 .recent-games-summary {
-    margin-bottom: 30px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
 .kda-summary {
-    background: #fff;
-    border-radius: 8px;
     padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.match-summary-block {
+.title-row {
+    position: relative; /* absolute 포지셔닝을 위한 기준점 */
     display: flex;
     align-items: center;
-    justify-content: space-between;
     margin-bottom: 20px;
+    gap: 0; /* 간격 제거해서 완전히 독립적으로 움직일 수 있게 */
 }
 
-.match-record-text {
-    font-size: 14px;
+.title-left {
+    position: absolute;
+    left: 30px; /* 도넛 차트 위 정확히 중앙에 맞춤 */
+    text-align: center;
+}
+
+.title-right {
+    position: absolute;
+    left: 293px; /* 챔피언 아이콘 앞에 딱 맞게 정렬 */
+    text-align: left;
+}
+
+.title-position {
+    position: absolute;
+    left: 600px; /* 선호 포지션바 중앙 위에 정렬 */
+    text-align: center;
+}
+
+.title-left .match-record-text {
+    margin: 0;
+    font-size: 11px;
     font-weight: bold;
     color: #202d37;
-    margin: 0;
 }
+
+.title-right .section-title {
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    font-weight: bold;
+    color: #202d37;
+    background: none;
+    border-bottom: none;
+}
+
+.title-position .section-title {
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    font-weight: bold;
+    color: #202d37;
+    background: none;
+    border-bottom: none;
+}
+
+
+
+
 
 /* 도넛 차트 */
 .donut-chart-container {
@@ -355,8 +474,8 @@ body {
 }
 
 .donut-chart {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     position: relative;
 }
 
@@ -364,7 +483,7 @@ body {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: conic-gradient(#4a90e2 0deg, #4a90e2 calc(var(--win-percent, 0) * 3.6deg), #e0e0e0 calc(var(--win-percent, 0) * 3.6deg), #e0e0e0 360deg);
+    background: conic-gradient(#4a90e2 0deg, #4a90e2 126deg, #ee5a52 126deg, #ee5a52 360deg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -374,8 +493,8 @@ body {
 .donut-circle::before {
     content: '';
     position: absolute;
-    width: 60px;
-    height: 60px;
+    width: 75px;
+    height: 75px;
     background: white;
     border-radius: 50%;
 }
@@ -383,7 +502,7 @@ body {
 .donut-text {
     position: relative;
     z-index: 1;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     color: #333;
 }
@@ -398,11 +517,11 @@ body {
 /* 3단 레이아웃: 도넛 + KDA + 챔피언 */
 .summary-layout {
     display: flex;
-    gap: 30px;
+    gap: 10px; /* 30px에서 10px로 줄임 */
     align-items: center;
-    margin-top: 20px;
-    padding: 15px;
-    background: #f8f9fa;
+    /*margin-top: 20px;*/
+    /*padding: 15px;*/
+    /*background: #f8f9fa;*/
     border-radius: 8px;
 }
 
@@ -417,12 +536,280 @@ body {
 .summary-center {
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
+    padding-left: 0px;
+    padding-right: 0;
 }
 
 .summary-right {
     flex: 1.5;
+    padding-left: 0; /* 왼쪽 패딩 제거 */
+    margin-left: 0; /* 왼쪽 마진 제거 */
+}
+
+.summary-position {
+    flex: 1;
+}
+
+
+
+
+
+
+
+
+
+/* KDA 정보 */
+.match-card .kda-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    text-align: center;
+}
+
+.kda-numbers {
+    font-size: 12px;
+    font-weight: bold;
+    color: #758592;
+}
+
+.kda-numbers .kills,
+.kda-numbers .assists,
+.kda-numbers .separator {
+    color: #758592;
+}
+
+.kda-numbers .deaths {
+    color: #758592;
+}
+
+.kda-ratio {
+    font-size: 20px;
+    font-weight: bold;
+    color: #758592;
+}
+
+/* OP.GG 스타일 KDA 색상 */
+.kda-ratio.kda-low {
+    color: #758592; /* 3.0 미만: 기본 색상 */
+}
+
+.kda-ratio.kda-mid {
+    color: #2daf7f; /* 3.0-3.99: 초록색 */
+}
+
+.kda-ratio.kda-good {
+    color: #1f8ecd; /* 4.0-4.99: 파란색 */
+}
+
+.kda-ratio.kda-great {
+    color: #e19205; /* 5.0 이상: 노란색 */
+}
+
+.death-count {
+    color: #ee5a52;
+}
+
+.kill-participation {
+    color: #D31a45;
+    font-size: 12px;
+    position: relative;
+    padding-top: 4px; /* 선과 텍스트 사이 간격 */
+}
+
+.kill-participation::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80%; /* 선 길이 */
+    height: 1px;
+    background: #e1e1e1; /* 얇은 선 */
+}
+
+
+
+/* 선호 챔피언 섹션 */
+.favorite-champions-section {
+    margin-top: 20px;
+    padding-left: 10px;
+}
+
+
+
+.favorite-champions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    /*padding-left: 0;*/
+}
+
+.champion-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 0;
+    margin-left: 0;
+    /*padding: 4px;*/
+    /*background: #f8f9fa;*/
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.champion-item:hover {
+    background: #e9ecef;
+}
+
+.champion-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.champion-icon img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.champion-info {
+    flex: 1;
+}
+
+.champion-record {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.champion-winrate {
+    font-size: 11px;
+    font-weight: bold;
+    color: #202d37;
+}
+
+.champion-winrate.high-winrate {
+    color: #D31a45;
+}
+
+.champion-games {
+    font-size: 11px;
+    color: #666;
+}
+
+.champion-rating {
+    font-size: 11px;
+    color: #758592;
+    font-weight: bold;
+}
+
+/* 챔피언 평점 OP.GG 스타일 색상 */
+.champion-rating.kda-low {
+    color: #758592; /* 3.0 미만: 기본 색상 */
+}
+
+.champion-rating.kda-mid {
+    color: #2daf7f; /* 3.0-3.99: 초록색 */
+}
+
+.champion-rating.kda-good {
+    color: #1f8ecd; /* 4.0-4.99: 파란색 */
+}
+
+.champion-rating.kda-great {
+    color: #e19205; /* 5.0 이상: 노란색 */
+}
+
+/* overallSummary 챔피언 이미지들 강제 동그라미 */
+.favorite-champions img[alt="챔피언 이미지"] {
+    border-radius: 50% !important;
+    object-fit: cover;
+}
+
+/* 포지션 섹션 */
+.favorite-positions {
+    margin-top: 20px;
+}
+
+
+
+/* ===== 선호 포지션 섹션 ===== */
+.position-section {
+    margin: 20px 0;
+}
+
+/* ===== 일반 섹션 제목 스타일 ===== */
+.position-section h3 {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    margin: 0 0 15px 0;
+}
+
+.position-layout {
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.position-bar-container-vertical {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 120px;
+    gap: 16px;
+}
+
+.position-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    border-radius: 6px;
+    padding: 12px 8px;
+}
+
+.position-percent {
+    font-size: 12px;
+    font-weight: bold;
+    color: #202d37;
+    margin-bottom: 8px;
+}
+
+.position-bar-vertical {
+    width: 16px;
+    height: 80px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.position-bar-vertical .fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #ee5a52;
+    transition: height 0.3s ease;
+}
+
+.position-column img {
+    width: 24px;
+    height: 24px;
+    opacity: 0.8;
+}
+
+.position-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+    margin: 0 auto;
 }
 
 /* 압축된 포지션 스타일 */
@@ -475,236 +862,179 @@ body {
     font-weight: 500;
 }
 
-
-
-
-
-
-
-/* KDA 정보 */
-.kda-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: center;
-    text-align: center;
-}
-
-.kda-numbers {
-    font-size: 14px;
-    font-weight: bold;
-    color: #202d37;
-}
-
-.kda-numbers .kills,
-.kda-numbers .assists,
-.kda-numbers .separator {
-    color: #555;
-}
-
-.kda-numbers .deaths {
-    color: #ee5a52;
-}
-
-.kda-ratio {
-    font-size: 18px;
-    font-weight: bold;
-    color: #202d37;
-}
-
-.kill-participation {
-    font-size: 11px;
-    color: #ee5a52;
-    font-weight: bold;
-}
-
-.death-count {
-    color: #ee5a52;
-}
-
-.kill-participation {
-    color: #ee5a52;
-    font-size: 12px;
-}
-
-/* 선호 챔피언 섹션 */
-.favorite-champions-section {
-    margin-top: 20px;
-}
-
-.section-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #202d37;
-    margin-bottom: 12px;
-}
-
-.favorite-champions {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.champion-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px;
-    background: #f8f9fa;
-    border-radius: 3px;
-    transition: background-color 0.2s;
-}
-
-.champion-item:hover {
-    background: #e9ecef;
-}
-
-.champion-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.champion-info {
-    flex: 1;
-}
-
-.champion-record {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 1px;
-}
-
-.champion-winrate {
-    font-size: 11px;
-    font-weight: bold;
-    color: #202d37;
-}
-
-.champion-games {
-    font-size: 9px;
-    color: #666;
-}
-
-.champion-rating {
-    font-size: 9px;
-    color: #4a90e2;
-    font-weight: bold;
-}
-
-/* 포지션 섹션 */
-.favorite-positions {
-    margin-top: 20px;
-}
-
-.position-bar-container-vertical {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    height: 120px;
-    gap: 16px;
-}
-
-.position-column {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-    background: #f8f9fa;
-    border-radius: 6px;
-    padding: 12px 8px;
-}
-
-.position-percent {
-    font-size: 12px;
-    font-weight: bold;
-    color: #202d37;
-    margin-bottom: 8px;
-}
-
-.position-bar-vertical {
-    width: 16px;
-    height: 80px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-    margin-bottom: 8px;
-}
-
-.position-bar-vertical .fill {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    background: #ee5a52;
-    transition: height 0.3s ease;
-}
-
-.position-column img {
-    width: 24px;
-    height: 24px;
-    opacity: 0.8;
-}
-
-.position-icon {
-    width: 20px;
-    height: 20px;
-    display: block;
-    margin: 0 auto;
-}
-
-/* ===== 선호 포지션 섹션 (별도 컨테이너) ===== */
-.position-section {
-    margin: 20px 0;
-}
-
-.position-layout {
-    background: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
 /* ===== 매치 리스트 섹션 ===== */
 .recent-games-list {
-    margin-top: 30px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
-.recent-games h3 {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-    margin: 20px 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #e0e0e0;
-}
+
 
 /* 매치 카드 */
 .match-block {
-    background: #fff;
     border-radius: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     overflow: hidden;
+    width: 100%;
+}
+
+/* 승리/패배 색상 변수 */
+:root {
+    --win-bg-color: #ecf2ff;
+    --lose-bg-color: #fff1f3;
+}
+
+/* 승리/패배에 따른 배경색 */
+.match-block.win {
+    background: var(--win-bg-color) !important;
+}
+
+.match-block.lose {
+    background: var(--lose-bg-color) !important;
+}
+
+/* 하단 정보 레이아웃 */
+.bottom-info {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* 스탯 정보 */
+.placement {
+    flex-shrink: 0;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+.detail-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 14px;
+    color: #758592;
+    text-align: center;
+}
+
+.detail-stats div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 1px 0;
+}
+
+.detail-stats .tier {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+/* 킬관여, CS 텍스트 구조별 정렬 */
+.detail-stats .kp,
+.detail-stats .cs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
+.detail-stats .kp span,
+.detail-stats .cs span {
+    display: inline;
+}
+
+.detail-stats .tier img {
+    width: 16px;
+    height: 16px;
+}
+
+/* 플레이어 리스트 팀별 정렬 */
+.players {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 2px;
+    border-radius: 4px;
+}
+
+/* 승리/패배에 따른 플레이어 목록 배경색 */
+.match-block.win .players {
+    background: var(--win-bg-color) !important;
+}
+
+.match-block.lose .players {
+    background: var(--lose-bg-color) !important;
+}
+
+.team-section {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.team-players {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: 100%;
+    max-width: 120px;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    width: 100%;
+    min-height: 18px;
+}
+
+.player-champion-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.player-name {
+    font-size: 12px;
+    color: #758592;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    max-width: 60px;
 }
 
 .match-card {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 0px 12px;
     cursor: pointer;
     transition: background-color 0.2s;
     border: none;
     background: none;
-    width: 100%;
+    width: 90%;
     text-align: left;
     font-family: inherit;
 }
 
-.match-card:hover {
-    background: #f8f9fa;
-}
+
 
 .match-card.win {
     border-left: 4px solid #4a90e2;
@@ -722,14 +1052,14 @@ body {
 }
 
 .mode {
-    font-size: 11px;
-    color: #888;
+    font-size: 12px;
+    color: #758592;
     margin-bottom: 2px;
 }
 
 .time {
-    font-size: 11px;
-    color: #888;
+    font-size: 12px;
+    color: #758592;
     margin-bottom: 2px;
 }
 
@@ -737,23 +1067,35 @@ body {
     font-size: 12px;
     font-weight: bold;
     margin-bottom: 2px;
+    padding-top: 4px; /* 선과 텍스트 사이 간격 */
+    position: relative;
+}
+
+.result::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60%; /* 소환사의 협곡 글자까지 길게 */
+    height: 1px;
+    background: #e1e1e1; /* 얇은 선 */
 }
 
 .result.win {
-    color: #4a90e2;
+    color: #758592;
 }
 
 .result.lose {
-    color: #ee5a52;
+    color: #758592;
 }
 
 .duration {
-    font-size: 11px;
-    color: #888;
+    font-size: 12px;
+    color: #758592;
 }
 
 /* 챔피언 정보 */
-.champion-info {
+.match-card .champion-info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -911,6 +1253,19 @@ body {
     border-radius: 3px !important;
     border: none !important;
     flex-shrink: 0 !important;
+}
+
+/* 승리/패배에 따른 빈 슬롯 색상 */
+.match-card.win .empty-slot,
+.match-card.win .items .empty-slot,
+.match-card.win .trinket-slot .empty-slot {
+    background: #b3cdff !important;
+}
+
+.match-card.lose .empty-slot,
+.match-card.lose .items .empty-slot,
+.match-card.lose .trinket-slot .empty-slot {
+    background: #ffbac3 !important;
 }
 
 /* 장신구 슬롯 */
@@ -1170,24 +1525,45 @@ body {
 /* 더보기 버튼 */
 #match-load-more-wrapper {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 12px;
 }
 
 #match-load-more-button {
-    background: #ee5a52;
-    color: #fff;
-    border: none;
-    padding: 12px 24px;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e1e1e1;
     border-radius: 6px;
-    font-size: 14px;
+    color: #ee5a52;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
 #match-load-more-button:hover {
-    background: #d94a42;
+    background: #f8f9fa;
 }
+
+#match-close-button {
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    color: #6c757d; /* Gray text */
+    font-size: 13px;
+    font-weight: bold;
+    /*cursor: pointer;*/
+    transition: background-color 0.2s;
+    margin-top: 8px;
+}
+
+#match-close-button:hover {
+    background: #f8f9fa;
+}
+
+
 
 
 
@@ -1224,4 +1600,93 @@ body {
         text-align: left;
     }
 }
+
+/* 상세 정보 열기 버튼 */
+.detail-toggle-button {
+    position: absolute;
+    right: -1px;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0 8px 8px 0;
+    border: none;
+    z-index: 5;
+    padding-bottom: 8px;
+}
+
+.detail-toggle-button:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #202d37;
+}
+
+.detail-toggle-button svg {
+    transition: transform 0.2s ease;
+}
+
+/* 상세 정보가 열렸을 때 화살표 회전 */
+.match-summary-box.match-card.expanded .detail-toggle-button svg {
+    transform: rotate(180deg);
+}
+
+/* 매치 카드에 상대적 위치 설정 */
+.match-summary-box.match-card {
+    position: relative;
+    padding-right: 64px; /* 화살표 버튼을 위한 공간 */
+    cursor: default; /* 기본 커서로 설정 */
+}
+
+/* 상세 정보 닫기 버튼 */
+.detail-close-button {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #758592;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    z-index: 10;
+}
+
+.detail-close-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #202d37;
+}
+
+/* 상세 정보 영역에 상대적 위치 설정 */
+.match-detail {
+    position: relative;
+}
+
+/* 승리/패배에 따른 화살표 버튼 색상 */
+.match-summary-box.match-card.win .detail-toggle-button {
+    background-color: #d1e3ff;
+    color: #1f8ecd;
+}
+
+.match-summary-box.match-card.lose .detail-toggle-button {
+    background-color: #ffd6dc;
+    color: #ee5a52;
+}
+
+.match-summary-box.match-card.win .detail-toggle-button:hover {
+    background-color: #b8d4ff;
+    color: #1f8ecd;
+}
+
+.match-summary-box.match-card.lose .detail-toggle-button:hover {
+    background-color: #ffc2cc;
+    color: #ee5a52;
+}
+
+
 
