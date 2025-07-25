@@ -273,6 +273,52 @@ select {
     background-color: #4949aa;
 }
 
+/* 내전찾기 등록 */
+#scrimCreatePopup .form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+#scrimCreatePopup .form-group {
+    flex: 1;
+    margin-bottom: 16px;
+}
+
+#scrimCreatePopup input,
+#scrimCreatePopup textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+/* 팀원 입력 줄 */
+.team-member-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.team-member-row .position-icon svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.team-member-row input[type="text"] {
+    width: 200px !important;
+    padding: 8px 10px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.popup-buttons {
+    text-align: right;
+    margin-top: 20px;
+}
+
 /* 내전찾기 상세 - 멤버 */
 .scrim-vs-layout {
     display: flex;
@@ -659,7 +705,7 @@ select {
     border-radius: 6px;
     cursor: pointer;
     margin-left: 5px;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .popup-buttons button:hover,

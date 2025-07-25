@@ -123,18 +123,26 @@
 <div id="scrimCreatePopup" class="recruit-popup" style="display: none;">
   <h3>내전 팀 모집하기</h3>
 
-  <label>파티 이름</label><br>
-  <input type="text" id="scrimPartyName" placeholder="예: 5:5 팀 내전"><br><br>
+  <div class="form-row">
+    <div class="form-group">
+      <label>파티 이름</label>
+      <input type="text" id="scrimPartyName" placeholder="예: 5:5 팀 내전">
+    </div>
+    <div class="form-group">
+      <label>종료일자</label>
+      <input type="datetime-local" id="scrimPartyEndTime">
+    </div>
+  </div>
 
-  <label>종료일자</label><br>
-  <input type="datetime-local" id="scrimPartyEndTime"><br><br>
+  <div class="form-group">
+    <label>팀원 정보 (5명)</label>
+    <div id="scrimCreateTeamInputs">
+    </div>
+  </div>
 
-  <label>메모</label><br>
-  <textarea id="scrimPartyMemo" rows="3" cols="40" placeholder="설명 메모"></textarea><br><br>
-
-  <label>팀원 정보 (5명)</label>
-  <div id="scrimCreateTeamInputs">
-    <!-- JavaScript로 동적으로 생성 -->
+  <div class="form-group">
+    <label>메모</label>
+    <textarea id="scrimPartyMemo" rows="3" placeholder="설명 메모 (선택)"></textarea>
   </div>
 
   <div class="popup-buttons">

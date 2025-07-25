@@ -312,7 +312,7 @@ function addPositionCheckboxBehavior(popup) {
     updateHeadcounts();
 }
 
-function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions, createdBy) {
+async function showPartyDetail(seq, name, type, createDate, endDate, status, headcount, max, memo, mainPosition, positions, createdBy) {
     const popup = document.getElementById('partyDetailPopup');
     const currentUserId = document.querySelector('meta[name="user-id"]')?.getAttribute('content');
     const currentUserSeq = Number(document.querySelector('meta[name="login-user-seq"]')?.getAttribute('content'));
@@ -342,7 +342,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                 }
             }
 
-            fetchPartyMembers(seq).then(members => {
+            fetchPartyMembers(seq).then(async members => {
                 const approved = members.filter(m => m.status === 'ACCEPTED');
                 const pending = members.filter(m => m.status === 'PENDING');
 
@@ -373,7 +373,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     </div>
                 `;
 
-                const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
+                const positionOrder = {TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4};
 
                 const renderScrimVsLayout = (members) => {
                     const teamA = members.filter(m => m.role === 'A');
@@ -393,18 +393,18 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                             </thead>
                             <tbody>
                                 ${team.sort((a, b) => positionOrder[a.position] - positionOrder[b.position]).map(m => {
-                                            const kda = m.averageKda || 0;
-                                            let kdaClass = 'kda-low';
-                                            if (kda >= 5) kdaClass = 'kda-great';
-                                            else if (kda >= 4) kdaClass = 'kda-good';
-                                            else if (kda >= 3) kdaClass = 'kda-mid';
-                    
-                                            return `
+                        const kda = m.averageKda || 0;
+                        let kdaClass = 'kda-low';
+                        if (kda >= 5) kdaClass = 'kda-great';
+                        else if (kda >= 4) kdaClass = 'kda-good';
+                        else if (kda >= 3) kdaClass = 'kda-mid';
+
+                        return `
                                         <tr>
                                             <td>${
-                                                m.userId === createdBy
-                                                    ? `<span class="leader-icon">👑</span><strong>${m.userNickname}</strong>`
-                                                    : m.userNickname }
+                            m.userId === createdBy
+                                ? `<span class="leader-icon">👑</span><strong>${m.userNickname}</strong>`
+                                : m.userNickname}
                                             </td>
                                             <td>${getPositionIconHTML(m.position, true)}</td>
                                             <td>
@@ -418,7 +418,7 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                                             <td class="${kdaClass}">${kda.toFixed(2)}</td>
                                         </tr>
                                     `;
-                                        }).join('')}
+                    }).join('')}
                             </tbody>
                         </table>
                     `;
@@ -500,9 +500,9 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                                 <td>${kickBtn} ${leaveBtn} ${friendBtn} ${blockBtn}</td>
                             </tr>
                         `;
-                                    }));
+                    }));
 
-                                    return `
+                    return `
                         <table class="member-table">
                             <thead>
                                 <tr>
@@ -522,40 +522,110 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                     `;
                 };
 
-                (type === 'scrim' ? Promise.resolve(renderScrimVsLayout(approved)) : renderDefaultTable()).then(approvedHtml => {
-                    const pendingHtml = (type === 'scrim')
-                        ? `
-                            <ul>${pending.map(m => `<li>${m.userNickname} - ${m.message}</li>`).join('')}</ul>
-                            <div class="pending-actions">
-                              ${isOwner && pending.length === 5
-                            ? `<button onclick="approveTeam(${seq}, [${pending.map(m => m.id).join(',')}])">팀 전체 수락</button>`
-                            : `<p style="color:gray;">파티장만 수락할 수 있습니다.</p>`}
+                /* 멤버 수락 */
+                const renderPendingTable = async () => {
+                    if (pending.length === 0) {
+                        return `<p style="color: gray; text-align: center;">수락 대기 중인 팀이 없습니다.</p>`;
+                    }
+
+                    // 팀 단위로 묶기 (role 기준 B로 동일한 팀 판단)
+                    const teamMap = {};
+                    pending.forEach(m => {
+                        const key = m.teamToken || 'UNKNOWN'; // ← 백엔드에서 팀별로 teamToken 또는 id로 구분되면 그것 사용
+                        if (!teamMap[key]) teamMap[key] = [];
+                        teamMap[key].push(m);
+                    });
+
+                    const positionOrder = { TOP: 0, JUNGLE: 1, MID: 2, ADC: 3, SUPPORT: 4 };
+
+                    const teamSections = await Promise.all(
+                        Object.entries(teamMap).map(async ([teamKey, teamMembers]) => {
+                            const rows = teamMembers
+                                .sort((a, b) => positionOrder[a.position] - positionOrder[b.position])
+                                .map(m => {
+                                    const kda = m.averageKda || 0;
+                                    let kdaClass = 'kda-low';
+                                    if (kda >= 5) kdaClass = 'kda-great';
+                                    else if (kda >= 4) kdaClass = 'kda-good';
+                                    else if (kda >= 3) kdaClass = 'kda-mid';
+
+                                    return `
+                                    <tr>
+                                      <td>${m.userNickname}</td>
+                                      <td>${getPositionIconHTML(m.position, true)}</td>
+                                      <td>
+                                        ${m.tierImageUrl ? `<img src="${m.tierImageUrl}" width="20" class="tier-icon" />` : ''}
+                                        <span class="tier-text">${m.tier || 'Unranked'}</span>
+                                      </td>
+                                      <td>
+                                        ${(m.championImageUrls || []).map(url => `<img src="${url}" class="champion-icon" width="24">`).join('')}
+                                      </td>
+                                      <td>${m.winRate != null ? `${m.winRate.toFixed(0)}%` : '0%'}</td>
+                                      <td class="${kdaClass}">${kda.toFixed(2)}</td>
+                                      <td></td>
+                                    </tr>
+                                  `;
+                                }).join('');
+
+                            // 팀 멤버들의 memberId 배열 추출
+                            const memberIds = teamMembers.map(m => m.id);
+
+                            const controlButtons = isOwner
+                                ? `
+                              <div class="team-control-buttons">
+                                <button onclick="approveTeam(${seq}, [${memberIds.join(',')}])">팀 수락</button>
+                                <button onclick="rejectTeam(${seq}, [${memberIds.join(',')}])">팀 거절</button>
+                              </div>
+                            `
+                                                    : '';
+
+                                                return `
+                            <div class="pending-team-box">
+                              <table class="member-table">
+                                <thead>
+                                  <tr>
+                                    <th>닉네임</th>
+                                    <th>포지션</th>
+                                    <th>티어</th>
+                                    <th>선호 챔피언</th>
+                                    <th>승률</th>
+                                    <th>KDA</th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                              </table>
+                              ${controlButtons}
                             </div>
-                          `
-                        : `<ul>${pending.map(m => `
-                            <li>${m.userNickname} - ${m.message}
-                                ${isOwner
-                            ? `<button onclick="approveMember(${seq}, ${m.id})">수락</button>
-                                       <button onclick="rejectMember(${seq}, ${m.id})">거절</button>` : ''}
-                            </li>
-                        `).join('')}</ul>`;
+                          `;
+                        })
+                    );
 
-                    const partyObj = {
-                        partySeq: seq,
-                        partyName: name,
-                        partyType: type,
-                        partyCreateDate: createDate,
-                        partyEndTime: endDate,
-                        partyStatus: status,
-                        partyHeadcount: headcount,
-                        partyMax: max,
-                        memo,
-                        mainPosition,
-                        positions: positions.split(',').map(p => p.trim())
-                    };
-                    const encodedPartyJson = encodeURIComponent(JSON.stringify(partyObj));
+                    return `<div class="pending-teams">${teamSections.join('')}</div>`;
+                };
 
-                    popup.innerHTML = `
+                const approvedHtml = (type === 'scrim')
+                    ? renderScrimVsLayout(approved)
+                    : await renderDefaultTable();
+
+                const pendingHtml = await renderPendingTable();
+
+                const partyObj = {
+                    partySeq: seq,
+                    partyName: name,
+                    partyType: type,
+                    partyCreateDate: createDate,
+                    partyEndTime: endDate,
+                    partyStatus: status,
+                    partyHeadcount: headcount,
+                    partyMax: max,
+                    memo,
+                    mainPosition,
+                    positions: positions.split(',').map(p => p.trim())
+                };
+                const encodedPartyJson = encodeURIComponent(JSON.stringify(partyObj));
+
+                popup.innerHTML = `
                         <h3>파티 상세 정보</h3>
                         <div class="tabs">
                             <button class="tab-btn active" onclick="switchDetailTab('detail')">상세</button>
@@ -577,25 +647,24 @@ function showPartyDetail(seq, name, type, createDate, endDate, status, headcount
                         </div>
                     `;
 
-                    setTimeout(() => {
-                        document.querySelectorAll('.edit-btn').forEach(btn => {
-                            btn.addEventListener('click', () => {
-                                const raw = btn.dataset.party;
-                                try {
-                                    const partyObj = JSON.parse(decodeURIComponent(raw));
-                                    handleEditFromDetail(JSON.stringify(partyObj));
-                                } catch (e) {
-                                    console.error("파티 JSON 파싱 오류", e);
-                                    alert("파티 정보 처리 중 오류 발생");
-                                }
-                            });
+                setTimeout(() => {
+                    document.querySelectorAll('.edit-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const raw = btn.dataset.party;
+                            try {
+                                const partyObj = JSON.parse(decodeURIComponent(raw));
+                                handleEditFromDetail(JSON.stringify(partyObj));
+                            } catch (e) {
+                                console.error("파티 JSON 파싱 오류", e);
+                                alert("파티 정보 처리 중 오류 발생");
+                            }
                         });
-                    }, 0);
+                    });
+                }, 0);
 
-                    popup.style.display = 'block';
-                });
+                popup.style.display = 'block';
             });
-        });
+            });
 }
 
 /* 파티원 내보내기 */
@@ -811,6 +880,7 @@ function handleEditFromDetail(partyJson) {
 }
 
 function openPartyFormPopup(party = null) {
+    const isReadOnly = party?.partyType === 'scrim';
     const csrfParam = document.querySelector('meta[name="_csrf_parameter"]').getAttribute('content');
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const getIcon = window.getPositionIconHTML;
@@ -821,7 +891,7 @@ function openPartyFormPopup(party = null) {
     const activeTab = document.querySelector('.tab.active')?.id;
     const fixedType = activeTab === 'freeTab' ? 'team'
         : activeTab === 'scrimTab' ? 'scrim'
-            : 'solo'; // 기본값: solo
+            : 'solo';
 
     popup.innerHTML = `
       <h3>${isEdit ? '파티 수정하기' : '새 파티 등록하기'}</h3>
@@ -843,10 +913,10 @@ function openPartyFormPopup(party = null) {
               <label>상태</label>
               <select name="partyStatus" required>
                 ${[
-                { value: 'WAITING', label: '모집 중' },
-                { value: 'FULL', label: '인원 꽉참' },
-                { value: 'CLOSED', label: '모집 마감' }
-            ].map(opt => `
+        { value: 'WAITING', label: '모집 중' },
+        { value: 'FULL', label: '인원 꽉참' },
+        { value: 'CLOSED', label: '모집 마감' }
+    ].map(opt => `
                   <option value="${opt.value}" ${party?.partyStatus === opt.value ? 'selected' : ''}>${opt.label}</option>
                 `).join('')}
               </select>
@@ -859,31 +929,31 @@ function openPartyFormPopup(party = null) {
             <label>타입</label>
             <div class="fixed-party-type" style="margin-top: 6px; font-weight: bold; color: black;">
               ${party?.partyType === 'team' ? '자유랭크'
-                    : party?.partyType === 'scrim' ? '내전찾기'
-                        : party?.partyType === 'solo' ? '솔로랭크'
-                            : fixedType === 'team' ? '자유랭크'
-                                : fixedType === 'scrim' ? '내전찾기'
-                                    : '솔로랭크'}
+        : party?.partyType === 'scrim' ? '내전찾기'
+            : party?.partyType === 'solo' ? '솔로랭크'
+                : fixedType === 'team' ? '자유랭크'
+                    : fixedType === 'scrim' ? '내전찾기'
+                        : '솔로랭크'}
             </div>
             <input type="hidden" name="partyType" value="${party?.partyType ?? fixedType}">
           </div>
-        
+
           <div class="main-position-selector-wrapper">
             <label>주 포지션</label>
             <div class="main-position-selector" id="mainPositionGroup">
               ${['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'].map(pos => {
-                const selected = party?.mainPosition === pos ? 'selected' : '';
-                return `
-                  <label class="${selected}" data-value="${pos}">
+        const selected = party?.mainPosition === pos ? 'selected' : '';
+        return `
+                  <label class="${selected}" data-value="${pos}" style="${isReadOnly ? 'pointer-events:none;opacity:0.6;' : ''}">
                     ${getIcon(pos, true)}
-                    <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} />
+                    <input type="radio" name="mainPosition" value="${pos}" style="display:none;" ${selected ? 'checked' : ''} ${isReadOnly ? 'disabled' : ''} />
                   </label>
                 `;
-            }).join('')}
+    }).join('')}
             </div>
           </div>
-        
-        <div class="position-group-wrapper">
+
+          <div class="position-group-wrapper">
             <label>모집 포지션</label>
             <div class="position-group" id="recruitPositionGroup"></div>
           </div>
@@ -894,8 +964,11 @@ function openPartyFormPopup(party = null) {
         <label>메모 (선택)<br><textarea name="memo" rows="3" cols="40">${party?.memo ?? ''}</textarea></label><br>
         
         <div class="form-buttons">
-          <button type="button" onclick="submitPartyForm()">${isEdit ? '수정 완료' : '모집 시작'}</button>
-          <button type="button" onclick="closePartyPopup()">닫기</button>
+            ${isEdit
+                ? `<button type="button" onclick="submitPartyForm()">수정</button>`
+                : `<button type="button" onclick="submitPartyForm()">모집 시작</button>`
+            }
+            <button type="button" onclick="closePartyPopup()">닫기</button>
         </div>
       </div>
     `;
@@ -903,15 +976,19 @@ function openPartyFormPopup(party = null) {
     popup.style.display = 'block';
 
     const container = popup.querySelector('#recruitPositionGroup');
-    const mainGroup = popup.querySelector('#mainPositionGroup');
 
     ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT', 'ALL'].forEach(pos => {
         const label = document.createElement('label');
+        if (isReadOnly) {
+            label.style.pointerEvents = 'none';
+            label.style.opacity = '0.6';
+        }
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = 'positions';
         checkbox.value = pos;
         checkbox.style.display = 'none';
+        if (isReadOnly) checkbox.disabled = true;
 
         if (party?.positions?.includes(pos)) {
             checkbox.checked = true;
@@ -923,107 +1000,91 @@ function openPartyFormPopup(party = null) {
         label.appendChild(icon);
         container.appendChild(label);
 
-        label.addEventListener('click', (e) => {
-            e.preventDefault();
-            const isSelected = label.classList.contains('selected');
-            const isAll = checkbox.value === 'ALL';
+        if (!isReadOnly) {
+            label.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isSelected = label.classList.contains('selected');
+                const isAll = checkbox.value === 'ALL';
 
-            const allLabels = container.querySelectorAll('label');
-            const allCheckboxes = container.querySelectorAll('input[type="checkbox"]');
+                const allLabels = container.querySelectorAll('label');
+                const allCheckboxes = container.querySelectorAll('input[type="checkbox"]');
 
-            if (isAll) {
-                allLabels.forEach(l => l.classList.remove('selected'));
-                allCheckboxes.forEach(c => c.checked = false);
-                checkbox.checked = true;
-                label.classList.add('selected');
-            } else {
-                const allCheckbox = container.querySelector('input[value="ALL"]');
-                const allLabel = allCheckbox?.closest('label');
-
-                if (allCheckbox?.checked) {
-                    allCheckbox.checked = false;
-                    allLabel?.classList.remove('selected');
-                }
-
-                checkbox.checked = !isSelected;
-                label.classList.toggle('selected', checkbox.checked);
-
-                const selected = Array.from(container.querySelectorAll('label.selected input'))
-                    .map(cb => cb.value).filter(v => v !== 'ALL');
-
-                if (selected.length === 5) {
+                if (isAll) {
                     allLabels.forEach(l => l.classList.remove('selected'));
-                    allCheckboxes.forEach(cb => cb.checked = false);
-                    const allCb = container.querySelector('input[value="ALL"]');
-                    const allLb = allCb.closest('label');
-                    allCb.checked = true;
-                    allLb.classList.add('selected');
-                }
-            }
-
-            updatePartyHeadcountFromSelection(popup);
-        });
-    });
-
-    mainGroup.querySelectorAll('label').forEach(label => {
-        label.addEventListener('click', (e) => {
-            e.preventDefault(); // ← 이걸 꼭 넣어줘야 label 클릭 시 폼 submit 등 부작용 방지됨
-
-            const radio = label.querySelector('input');
-            const isSelected = label.classList.contains('selected');
-
-            // 다시 누르면 해제
-            if (isSelected) {
-                label.classList.remove('selected');
-                radio.checked = false;
-            } else {
-                // 다른 선택은 모두 해제 후 선택
-                mainGroup.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
-                mainGroup.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-                label.classList.add('selected');
-                radio.checked = true;
-            }
-
-            // 주 포지션이 바뀌었을 경우 → 모집 포지션 중복 제거
-            const selected = radio.value;
-
-            popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
-                if (chk.value === selected) {
-                    chk.checked = false;
-                    chk.disabled = true;
-                    chk.closest('label')?.classList.remove('selected');
+                    allCheckboxes.forEach(c => c.checked = false);
+                    checkbox.checked = true;
+                    label.classList.add('selected');
                 } else {
-                    chk.disabled = false;
+                    const allCheckbox = container.querySelector('input[value="ALL"]');
+                    const allLabel = allCheckbox?.closest('label');
+
+                    if (allCheckbox?.checked) {
+                        allCheckbox.checked = false;
+                        allLabel?.classList.remove('selected');
+                    }
+
+                    checkbox.checked = !isSelected;
+                    label.classList.toggle('selected', checkbox.checked);
+
+                    const selected = Array.from(container.querySelectorAll('label.selected input'))
+                        .map(cb => cb.value).filter(v => v !== 'ALL');
+
+                    if (selected.length === 5) {
+                        allLabels.forEach(l => l.classList.remove('selected'));
+                        allCheckboxes.forEach(cb => cb.checked = false);
+                        const allCb = container.querySelector('input[value="ALL"]');
+                        const allLb = allCb.closest('label');
+                        allCb.checked = true;
+                        allLb.classList.add('selected');
+                    }
                 }
+
+                updatePartyHeadcountFromSelection(popup);
             });
-
-            updatePartyHeadcountFromSelection(popup);
-        });
-    });
-
- // 모집 포지션 체크 시, 주 포지션과 동일하면 막기
-    popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
-        chk.addEventListener('change', () => {
-            const selectedMain = popup.querySelector('.main-position-selector label.selected input')?.value;
-            if (chk.checked && chk.value === selectedMain) {
-                alert("주 포지션과 같은 포지션은 모집할 수 없습니다.");
-                chk.checked = false;
-            }
-        });
-    });
-
-    const mainSelected = popup.querySelector('.main-position-selector label.selected input')?.value;
-    popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
-        if (chk.value === mainSelected) {
-            chk.checked = false;
-            chk.disabled = true;
-            chk.closest('label')?.classList.remove('selected');
         }
     });
 
     setMinEndTime();
     updatePartyHeadcountFromSelection(popup);
+
+    const mainGroup = popup.querySelector('#mainPositionGroup');
+    if (!isReadOnly) {
+        mainGroup.querySelectorAll('label').forEach(label => {
+            label.addEventListener('click', (e) => {
+                e.preventDefault(); // 기본 동작 방지
+
+                const radio = label.querySelector('input');
+                const isSelected = label.classList.contains('selected');
+
+                if (isSelected) {
+                    label.classList.remove('selected');
+                    radio.checked = false;
+                } else {
+                    mainGroup.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+                    mainGroup.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+                    label.classList.add('selected');
+                    radio.checked = true;
+                }
+
+                const selected = radio.value;
+
+                // 주 포지션이 선택되면 동일한 모집 포지션은 비활성화
+                popup.querySelectorAll('.position-group input[type="checkbox"]').forEach(chk => {
+                    if (chk.value === selected) {
+                        chk.checked = false;
+                        chk.disabled = true;
+                        chk.closest('label')?.classList.remove('selected');
+                    } else {
+                        chk.disabled = false;
+                    }
+                });
+
+                updatePartyHeadcountFromSelection(popup);
+            });
+        });
+    }
 }
+
 
 /* 시간포맷팅*/
 function formatLocalDateTime(datetimeString) {
@@ -1063,38 +1124,64 @@ function submitPartyForm() {
     const partyEndTime = popup.querySelector('input[name="partyEndTime"]').value;
     const partyStatus = popup.querySelector('[name="partyStatus"]')?.value ?? 'WAITING';
     const memo = popup.querySelector('textarea[name="memo"]').value.trim();
-    const mainPosition = popup.querySelector('.main-position-selector label.selected input')?.value;
 
-    // === 유효성 검사 ===
-    if (!partyName) {
-        alert("파티 이름을 입력해주세요.");
-        return;
-    }
-    if (!partyEndTime) {
-        alert("종료일자를 입력해주세요.");
-        return;
-    }
-    if (!mainPosition) {
-        alert("주 포지션을 선택해주세요.");
-        return;
-    }
+    // scrim일 경우 고정 처리
+    let mainPosition, positions;
 
-    const positions = Array.from(popup.querySelectorAll('.position-group label.selected input'))
-        .map(input => input.value);
+    if (partyType === 'scrim') {
+        mainPosition = 'ALL';
+        positions = ['ALL'];
+    } else {
+        mainPosition = popup.querySelector('.main-position-selector label.selected input')?.value;
 
-    if (positions.length === 0) {
-        alert("모집 포지션을 하나 이상 선택해주세요.");
-        return;
-    }
+        if (!mainPosition) {
+            alert("주 포지션을 선택해주세요.");
+            return;
+        }
 
-    // 주 포지션과 모집 포지션이 겹치면 막기
-    if (positions.includes(mainPosition)) {
-        alert("주 포지션과 같은 포지션은 모집할 수 없습니다.");
-        return;
+        positions = Array.from(popup.querySelectorAll('.position-group label.selected input'))
+            .map(input => input.value);
+
+        if (positions.length === 0) {
+            alert("모집 포지션을 하나 이상 선택해주세요.");
+            return;
+        }
+
+        if (positions.includes(mainPosition)) {
+            alert("주 포지션과 같은 포지션은 모집할 수 없습니다.");
+            return;
+        }
     }
 
     const partyHeadcount = 1;
-    const partyMax = positions.includes("ALL") ? 5 : Math.min(positions.length + 1, 5);
+    let partyMax;
+    if (partyType === 'scrim') {
+        mainPosition = 'ALL';
+        positions = ['ALL'];
+        partyMax = 10; // 내전 최대 인원은 10명
+    } else {
+        mainPosition = popup.querySelector('.main-position-selector label.selected input')?.value;
+
+        if (!mainPosition) {
+            alert("주 포지션을 선택해주세요.");
+            return;
+        }
+
+        positions = Array.from(popup.querySelectorAll('.position-group label.selected input'))
+            .map(input => input.value);
+
+        if (positions.length === 0) {
+            alert("모집 포지션을 하나 이상 선택해주세요.");
+            return;
+        }
+
+        if (positions.includes(mainPosition)) {
+            alert("주 포지션과 같은 포지션은 모집할 수 없습니다.");
+            return;
+        }
+
+        partyMax = positions.includes("ALL") ? 5 : Math.min(positions.length + 1, 5);
+    }
 
     const data = {
         partyName,
@@ -1124,7 +1211,9 @@ function submitPartyForm() {
                 alert(isEdit ? '수정 완료!' : '등록 완료!');
                 closePartyPopup();
                 const activeTab = document.querySelector('.tab.active').id;
-                const type = activeTab === 'freeTab' ? 'team' : 'solo';
+                const type = activeTab === 'freeTab' ? 'team'
+                    : activeTab === 'scrimTab' ? 'scrim'
+                        : 'solo';
                 loadParties(type);
             } else {
                 return res.text().then(msg => {
@@ -1271,13 +1360,17 @@ function openScrimJoinPopup(partyId) {
     container.innerHTML = '';
 
     const positions = ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'];
+
     for (let i = 0; i < 5; i++) {
+        const pos = positions[i];
+
         const div = document.createElement('div');
+        div.classList.add('team-member-row'); // flex 스타일 클래스
+
         div.innerHTML = `
+            <div class="position-icon">${getPositionIconHTML(pos, true)}</div>
             <input type="text" name="nickname" placeholder="닉네임 ${i + 1}" required>
-            <select name="position">
-                ${positions.map(pos => `<option value="${pos}">${pos}</option>`).join('')}
-            </select><br><br>
+            <input type="hidden" name="position" value="${pos}">
         `;
         container.appendChild(div);
     }
@@ -1294,7 +1387,7 @@ function closeScrimJoinPopup() {
 function submitScrimJoinRequest() {
     const form = document.getElementById('scrimJoinForm');
     const nicknames = form.querySelectorAll('input[name="nickname"]');
-    const positions = form.querySelectorAll('select[name="position"]');
+    const positions = form.querySelectorAll('input[name="position"]');
     const message = form.querySelector('textarea[name="message"]').value.trim();
 
     const teamMembers = [];
@@ -1354,12 +1447,14 @@ function openScrimCreatePopup() {
     const positions = ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'];
 
     for (let i = 0; i < 5; i++) {
+        const pos = positions[i];
+
         const div = document.createElement('div');
+        div.classList.add('team-member-row');
         div.innerHTML = `
+            <div class="position-icon">${getPositionIconHTML(pos, true)}</div>
             <input type="text" name="nickname" placeholder="닉네임 ${i + 1}" required>
-            <select name="position">
-                ${positions.map(pos => `<option value="${pos}">${pos}</option>`).join('')}
-            </select><br><br>
+            <input type="hidden" name="position" value="${pos}">
         `;
         container.appendChild(div);
     }
@@ -1377,7 +1472,7 @@ function submitScrimCreateForm() {
     const memo = document.getElementById('scrimPartyMemo').value.trim();
 
     const nicknames = document.querySelectorAll('#scrimCreateTeamInputs input[name="nickname"]');
-    const positions = document.querySelectorAll('#scrimCreateTeamInputs select[name="position"]');
+    const positionInputs = document.querySelectorAll('#scrimCreateTeamInputs input[name="position"]');
 
     if (!name) return alert("파티 이름을 입력해주세요.");
     if (!endTime) return alert("종료일자를 입력해주세요.");
@@ -1386,9 +1481,10 @@ function submitScrimCreateForm() {
 
     for (let i = 0; i < 5; i++) {
         const userId = nicknames[i].value.trim();
-        const position = positions[i].value;
+        const position = positionInputs[i].value;
 
         if (!userId) return alert(`${i + 1}번 팀원의 닉네임을 입력해주세요.`);
+        if (!position) return alert(`${i + 1}번 팀원의 포지션 값이 비어있습니다.`);
 
         teamMembers.push({ userNickname: userId, position });
     }
