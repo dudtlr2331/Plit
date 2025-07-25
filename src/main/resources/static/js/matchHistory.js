@@ -331,3 +331,39 @@ function updateObjectiveBar(redValue, blueValue, redBarId, blueBarId, redTextId,
     document.getElementById(redTextId).innerText = redValue.toLocaleString();
     document.getElementById(blueTextId).innerText = blueValue.toLocaleString();
 }
+
+const searchInput = document.getElementById("searchInput");
+const autocompleteList = document.getElementById("autocompleteList");
+const searchButton = document.getElementById("searchButton");
+searchInput.addEventListener("input", async function () {
+    const keyword = searchInput.value.trim();
+    if (keyword.length < 2) {
+        autocompleteList.innerHTML = "";
+        return;
+    }
+    const res = await fetch(`/match/autocomplete?keyword=${encodeURIComponent(keyword)}`);
+    const suggestions = await res.json();
+    autocompleteList.innerHTML = suggestions.map(s => `
+        <div class="autocomplete-item" onclick="selectRiotId('${s}')">${s}</div>
+    `).join("");
+});
+searchInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        executeSearch();
+    }
+});
+searchButton.addEventListener("click", executeSearch);
+function executeSearch() {
+    const inputValue = searchInput.value.trim();
+    const [gameName, tagLine] = inputValue.split("#");
+    if (!gameName || !tagLine) {
+        alert("Riot ID 형식은 '닉네임#태그'입니다.");
+        return;
+    }
+    window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+}
+function selectRiotId(riotId) {
+    const [gameName, tagLine] = riotId.split("#");
+    window.location.href = `/match?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`;
+}
+

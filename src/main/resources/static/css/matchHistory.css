@@ -1554,7 +1554,7 @@ body {
     color: #6c757d; /* Gray text */
     font-size: 13px;
     font-weight: bold;
-    /*cursor: pointer;*/
+    cursor: pointer;
     transition: background-color 0.2s;
     margin-top: 8px;
 }
@@ -1604,7 +1604,7 @@ body {
 /* 상세 정보 열기 버튼 */
 .detail-toggle-button {
     position: absolute;
-    right: -1px;
+    right: -5px;
     top: 0;
     bottom: 0;
     width: 48px;
