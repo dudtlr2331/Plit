@@ -375,8 +375,12 @@
                                             <img th:if="${match.spell2ImageUrl != null}" th:src="${match.spell2ImageUrl}" alt="스펠2" />
                                             </div>
                                             <div class="runes-only">
-                                            <img th:if="${match.mainRune1Url != null}" th:src="${match.mainRune1Url}" alt="메인 룬" />
-                                            <img th:if="${match.mainRune2Url != null}" th:src="${match.mainRune2Url}" alt="서브 룬" />
+<!--                                            <img th:if="${match.mainRune1Url != null}" th:src="${match.mainRune1Url}" alt="메인 룬" />-->
+<!--                                            <img th:if="${match.mainRune2Url != null}" th:src="${match.mainRune2Url}" alt="서브 룬" />-->
+
+                                                <img th:src="@{https://d23maxd9bm8c6o.cloudfront.net/img/rune/7201.png}" alt="정복자" />
+                                                <img th:src="@{https://d23maxd9bm8c6o.cloudfront.net/img/rune/7203.png}" alt="강타" />
+
                                             </div>
                                         </div>
 
