@@ -526,21 +526,21 @@ function updateObjectiveBar(redValue, blueValue, redBarId, blueBarId, redTextId,
     document.getElementById(blueTextId).innerText = blueValue.toLocaleString();
 }
 
-const searchInput = document.getElementById("searchInput");
-const autocompleteList = document.getElementById("autocompleteList");
-const searchButton = document.getElementById("searchButton");
-searchInput.addEventListener("input", async function () {
-    const keyword = searchInput.value.trim();
-    if (keyword.length < 2) {
-        autocompleteList.innerHTML = "";
-        return;
-    }
-    const res = await fetch(`/match/autocomplete?keyword=${encodeURIComponent(keyword)}`);
-    const suggestions = await res.json();
-    autocompleteList.innerHTML = suggestions.map(s => `
-        <div class="autocomplete-item" onclick="selectRiotId('${s}')">${s}</div>
-    `).join("");
-});
+const searchInput = document.getElementById("matchSearchInput");
+const searchButton = document.getElementById("matchSearchButton");
+// const autocompleteList = document.getElementById("autocompleteList");
+// searchInput.addEventListener("input", async function () {
+//     const keyword = searchInput.value.trim();
+//     if (keyword.length < 2) {
+//         autocompleteList.innerHTML = "";
+//         return;
+//     }
+//     const res = await fetch(`/match/autocomplete?keyword=${encodeURIComponent(keyword)}`);
+//     const suggestions = await res.json();
+//     autocompleteList.innerHTML = suggestions.map(s => `
+//         <div class="autocomplete-item" onclick="selectRiotId('${s}')">${s}</div>
+//     `).join("");
+// });
 searchInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
         executeSearch();
