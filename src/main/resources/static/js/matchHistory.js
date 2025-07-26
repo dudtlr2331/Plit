@@ -193,36 +193,38 @@ function loadMatchDetail(element) {
             //     <div><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${obj.riftKills}</div>
             // `;
 
-            const buildTeamObjectiveIcons = (team, colorClass) => {
-                const values = team === 'blue' ? {
-                    tower: 1,
-                    dragon: 1,
-                    baron: 1,
-                    herald: 1,
-                    rift: 1
-                } : {
-                    tower: 8,
-                    dragon: 1,
-                    baron: 1,
-                    herald: 1,
-                    rift: 3
+            const buildTeamObjectiveIcons = (objectives, colorClass) => {
+                // 실제 데이터가 없으면 기본값 사용
+                const values = objectives || {
+                    baron: 0,
+                    dragon: 0,
+                    herald: 0,
+                    atakhan: 0,
+                    rift: 0,
+                    tower: 0,
+                    inhibitor: 0
                 };
 
                 return `
-                    <div><img src="/images/objective/tower.svg" class="objective-icon ${colorClass}" alt="타워"> ${values.tower}</div>
-                    <div><img src="/images/objective/dragon.svg" class="objective-icon ${colorClass}" alt="드래곤"> ${values.dragon}</div>
-                    <div><img src="/images/objective/baron.svg" class="objective-icon ${colorClass}" alt="바론"> ${values.baron}</div>
-                    <div><img src="/images/objective/herald.svg" class="objective-icon ${colorClass}" alt="전령"> ${values.herald}</div>
-                    <div><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${values.rift}</div>
+                    <div class="objective-row">
+                        <div class="objective-item"><img src="/images/objective/baron.svg" class="objective-icon ${colorClass}" alt="바론"> ${values.baron || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/dragon.svg" class="objective-icon ${colorClass}" alt="드래곤"> ${values.dragon || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/herald.svg" class="objective-icon ${colorClass}" alt="전령"> ${values.herald || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/atakhan.svg" class="objective-icon ${colorClass}" alt="아타칸"> ${values.atakhan || 0}</div>
+                    </div>
+                    <div class="objective-row second-row">
+                        <div class="objective-item"><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${values.rift || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/tower.svg" class="objective-icon ${colorClass}" alt="타워"> ${values.tower || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/inhibitor.svg" class="objective-icon ${colorClass}" alt="억제기"> ${values.inhibitor || 0}</div>
+                    </div>
                 `;
             };
 
-            // 블루 = 왼쪽, 레드 = 오른쪽 (위치 고정)
-            // detailBox.querySelector('.left-objectives').innerHTML = buildTeamObjectiveIcons(data.blueObjectives, blueColorClass);
-            // detailBox.querySelector('.right-objectives').innerHTML = buildTeamObjectiveIcons(data.redObjectives, redColorClass);
-
-            detailBox.querySelector('.left-objectives').innerHTML = buildTeamObjectiveIcons('red', redColorClass);
-            detailBox.querySelector('.right-objectives').innerHTML = buildTeamObjectiveIcons('blue', blueColorClass);
+            // 실제 데이터 사용
+            console.log('Blue Objectives:', data.blueObjectives);
+            console.log('Red Objectives:', data.redObjectives);
+            detailBox.querySelector('.left-objectives').innerHTML = buildTeamObjectiveIcons(data.blueObjectives, blueColorClass);
+            detailBox.querySelector('.right-objectives').innerHTML = buildTeamObjectiveIcons(data.redObjectives, redColorClass);
 
             // 킬/골드는 그대로 유지
             updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, 'red-kill-bar', 'blue-kill-bar', 'red-kill-count', 'blue-kill-count');
@@ -515,15 +517,20 @@ function cancelInit() {
 }
 
 function updateObjectiveBar(redValue, blueValue, redBarId, blueBarId, redTextId, blueTextId) {
-    const total = redValue + blueValue || 1;
-    const redPercent = (redValue / total) * 100;
-    const bluePercent = (blueValue / total) * 100;
+    // 값이 없거나 0인 경우 기본값 설정
+    const safeRedValue = redValue || 0;
+    const safeBlueValue = blueValue || 0;
+    const total = safeRedValue + safeBlueValue || 1;
+    
+    const redPercent = (safeRedValue / total) * 100;
+    const bluePercent = (safeBlueValue / total) * 100;
 
     document.getElementById(redBarId).style.width = `${redPercent}%`;
     document.getElementById(blueBarId).style.width = `${bluePercent}%`;
 
-    document.getElementById(redTextId).innerText = redValue.toLocaleString();
-    document.getElementById(blueTextId).innerText = blueValue.toLocaleString();
+    // 기존 bar-count 요소들에 숫자 표시
+    document.getElementById(redTextId).innerText = safeRedValue.toLocaleString();
+    document.getElementById(blueTextId).innerText = safeBlueValue.toLocaleString();
 }
 
 const searchInput = document.getElementById("matchSearchInput");

@@ -354,7 +354,7 @@
                                     <div class="mode" th:text="${modeMap[match.gameMode] != null ? modeMap[match.gameMode] : '이벤트 모드'}">모드</div>
                                     <div class="time" th:text="${match.timeAgo}"></div>
                                     <div class="result" th:text="${match.win} ? '승리' : '패배'">승/패</div>
-                                    <div class="duration" th:text="${match.gameDurationMinutes} + '분 ' + ${match.gameDurationSeconds} + '초'">플레이시간</div>
+                                    <div class="duration" th:text="${match.gameDurationMinutes} + '분 ' + ${match.gameDurationRemainSeconds} + '초'">플레이시간</div>
                                 </div>
 
                                 <!-- 챔피언 및 전투 관련 정보 -->
@@ -495,11 +495,6 @@
                             <!-- 상세 전적 표시 영역 -->
                             <div class="match-detail" style="display: none;" data-loaded="false">
                                 <!-- 상세 정보 닫기 버튼 -->
-                                <div class="detail-close-button" onclick="closeMatchDetail(this.parentElement)">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M7 15L12 10L17 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </div>
                                 <table class="match-detail-table blue-table"></table>
 
                                 <!-- Objective 요약 전체 박스 -->
