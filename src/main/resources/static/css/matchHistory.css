@@ -421,28 +421,28 @@ body {
 }
 
 .title-row {
-    position: relative; /* absolute 포지셔닝을 위한 기준점 */
+    position: relative;
     display: flex;
     align-items: center;
     margin-bottom: 20px;
-    gap: 0; /* 간격 제거해서 완전히 독립적으로 움직일 수 있게 */
+    gap: 0;
 }
 
 .title-left {
     position: absolute;
-    left: 30px; /* 도넛 차트 위 정확히 중앙에 맞춤 */
+    left: 30px;
     text-align: center;
 }
 
 .title-right {
     position: absolute;
-    left: 293px; /* 챔피언 아이콘 앞에 딱 맞게 정렬 */
+    left: 293px;
     text-align: left;
 }
 
 .title-position {
     position: absolute;
-    left: 600px; /* 선호 포지션바 중앙 위에 정렬 */
+    left: 600px;
     text-align: center;
 }
 
@@ -533,7 +533,7 @@ body {
 /* 3단 레이아웃: 도넛 + KDA + 챔피언 */
 .summary-layout {
     display: flex;
-    gap: 10px; /* 30px에서 10px로 줄임 */
+    gap: 10px;
     align-items: center;
     /*margin-top: 20px;*/
     /*padding: 15px;*/
@@ -560,8 +560,8 @@ body {
 
 .summary-right {
     flex: 1.5;
-    padding-left: 0; /* 왼쪽 패딩 제거 */
-    margin-left: 0; /* 왼쪽 마진 제거 */
+    padding-left: 0;
+    margin-left: 0;
 }
 
 .summary-position {
@@ -609,19 +609,19 @@ body {
 
 /* OP.GG 스타일 KDA 색상 */
 .kda-ratio.kda-low {
-    color: #758592; /* 3.0 미만: 기본 색상 */
+    color: #758592;
 }
 
 .kda-ratio.kda-mid {
-    color: #2daf7f; /* 3.0-3.99: 초록색 */
+    color: #2daf7f;
 }
 
 .kda-ratio.kda-good {
-    color: #1f8ecd; /* 4.0-4.99: 파란색 */
+    color: #1f8ecd;
 }
 
 .kda-ratio.kda-great {
-    color: #e19205; /* 5.0 이상: 노란색 */
+    color: #e19205;
 }
 
 .death-count {
@@ -632,7 +632,7 @@ body {
     color: #D31a45;
     font-size: 12px;
     position: relative;
-    padding-top: 4px; /* 선과 텍스트 사이 간격 */
+    padding-top: 4px;
 }
 
 .kill-participation::before {
@@ -640,9 +640,9 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 80%; /* 선 길이 */
+    width: 80%;
     height: 1px;
-    background: #e1e1e1; /* 얇은 선 */
+    background: #e1e1e1;
 }
 
 
@@ -726,19 +726,19 @@ body {
 
 /* 챔피언 평점 OP.GG 스타일 색상 */
 .champion-rating.kda-low {
-    color: #758592; /* 3.0 미만: 기본 색상 */
+    color: #758592;
 }
 
 .champion-rating.kda-mid {
-    color: #2daf7f; /* 3.0-3.99: 초록색 */
+    color: #2daf7f;
 }
 
 .champion-rating.kda-good {
-    color: #1f8ecd; /* 4.0-4.99: 파란색 */
+    color: #1f8ecd;
 }
 
 .champion-rating.kda-great {
-    color: #e19205; /* 5.0 이상: 노란색 */
+    color: #e19205;
 }
 
 /* overallSummary 챔피언 이미지들 강제 동그라미 */
@@ -1083,7 +1083,7 @@ body {
     font-size: 12px;
     font-weight: bold;
     margin-bottom: 2px;
-    padding-top: 4px; /* 선과 텍스트 사이 간격 */
+    padding-top: 4px;
     position: relative;
 }
 
@@ -1092,9 +1092,9 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 60%; /* 소환사의 협곡 글자까지 길게 */
+    width: 60%;
     height: 1px;
-    background: #e1e1e1; /* 얇은 선 */
+    background: #e1e1e1;
 }
 
 .result.win {
@@ -1378,7 +1378,7 @@ body {
 
 /* match-detail 블루팀 테이블 전체 배경 */
 .match-detail .blue-table {
-    background-color: #e6f0ff; /* 연한 파란색 */
+    background-color: #e6f0ff;
     border-radius: 6px;
     overflow: hidden;
     margin-bottom: 16px;
@@ -1386,10 +1386,26 @@ body {
 
 /* match-detail 레드팀 테이블 전체 배경 */
 .match-detail .red-table {
-    background-color: #ffe6e6; /* 연한 빨간색 */
+    background-color: #ffe6e6;
     border-radius: 6px;
     overflow: hidden;
 }
+
+.item-icon.empty-slot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    background-color: #b3cdff;
+    margin-right: 2px;
+    vertical-align: top;
+}
+
+.red-table .item-icon.empty-slot {
+    background-color: #ffbac3 !important;
+}
+
+
 
 
 

@@ -42,7 +42,7 @@ public class MatchHistoryDTO { // 최근 전적 리스트 한 줄씩 요약
     private int damageTaken;
     private List<MatchPlayerDTO> matchPlayers;
 
-    private int gameDurationSeconds;
+    private int gameDurationSeconds; // 게임 지속시간 전체 초단위
     private LocalDateTime gameEndTimestamp; // 사용자에게 보여주는 용도라
     private String timeAgo;
 

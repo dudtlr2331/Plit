@@ -218,7 +218,7 @@ public class MatchHistoryController {
 //        matchDbService.saveMatchSummaryAndPlayers("죽기장인", "KR1", "GRANDMASTER");
 //        matchDbService.saveMatchSummaryAndPlayers("kiin", "KR1", "DIAMOND1");
 //        matchDbService.saveMatchSummaryAndPlayers("귀찮게하지마", "KR3", "MASTER");
-//        matchDbService.saveMatchSummaryAndPlayers("파피몬", "1111", "DIAMOND3");
+        matchDbService.saveMatchSummaryAndPlayers("파피몬", "1111", "DIAMOND3");
 //        matchDbService.saveMatchSummaryAndPlayers("파이리", "1217", "MASTER");
 
 //        matchDbService.saveOnlyOverallSummary("어리고싶다", "KR1", "MASTER");
@@ -231,7 +231,7 @@ public class MatchHistoryController {
 //        matchDbService.saveOnlyOverallSummary("kiin", "KR1", "DIAMOND1");
 //        matchDbService.saveOnlyOverallSummary("귀찮게하지마", "KR3", "MASTER");
 //        matchDbService.saveOnlyOverallSummary("파피몬", "1111", "DIAMOND3");
-        matchDbService.saveOnlyOverallSummary("파이리", "1217", "MASTER");
+//        matchDbService.saveOnlyOverallSummary("파이리", "1217", "MASTER");
 
 //        matchDbService.saveFavoriteChampionOnly("어리고싶다", "KR1");
 //        matchDbService.saveFavoriteChampionOnly("96년생 티모장인", "9202");
@@ -243,7 +243,7 @@ public class MatchHistoryController {
 //        matchDbService.saveFavoriteChampionOnly("kiin", "KR1");
 //        matchDbService.saveFavoriteChampionOnly("귀찮게하지마", "KR3");
 //        matchDbService.saveFavoriteChampionOnly("파피몬", "1111");
-        matchDbService.saveFavoriteChampionOnly("파이리", "1217");
+//        matchDbService.saveFavoriteChampionOnly("파이리", "1217");
 
         return "전적 저장 완료";
     }

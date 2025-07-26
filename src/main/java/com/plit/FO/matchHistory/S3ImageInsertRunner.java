@@ -14,7 +14,7 @@ import java.util.List;
 
 //@Component
 @RequiredArgsConstructor
-public class S3ImageInsertRunner implements CommandLineRunner {
+public class S3ImageInsertRunner implements CommandLineRunner { // 이미지 url 테이블에 받기
 
     private final ImageRepository imageRepository;
 

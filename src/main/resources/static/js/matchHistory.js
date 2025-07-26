@@ -31,8 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     buttons.forEach((btn => {
-        btn.addEventListener("click", () => { activateTab(btn.dataset.mode);
-        });
+        btn.addEventListener("click", () => { activateTab(btn.dataset.mode); });
     }));
 
     activateTab("overall"); // 초기 설정
@@ -193,29 +192,37 @@ function loadMatchDetail(element) {
             //     <div><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${obj.riftKills}</div>
             // `;
 
-            const buildTeamObjectiveIcons = (objectives, colorClass) => {
+            const buildTeamObjectiveIcons = (team, colorClass) => {
                 // 실제 데이터가 없으면 기본값 사용
-                const values = objectives || {
+                const values = team === 'blue' ? {
                     baron: 0,
-                    dragon: 0,
+                    dragon: 3,
                     herald: 0,
                     atakhan: 0,
                     rift: 0,
-                    tower: 0,
+                    tower: 1,
                     inhibitor: 0
+                } : {
+                    baron: 1,
+                    dragon: 1,
+                    herald: 1,
+                    atakhan: 1,
+                    rift: 3,
+                    tower: 8,
+                    inhibitor: 1
                 };
 
                 return `
                     <div class="objective-row">
-                        <div class="objective-item"><img src="/images/objective/baron.svg" class="objective-icon ${colorClass}" alt="바론"> ${values.baron || 0}</div>
-                        <div class="objective-item"><img src="/images/objective/dragon.svg" class="objective-icon ${colorClass}" alt="드래곤"> ${values.dragon || 0}</div>
-                        <div class="objective-item"><img src="/images/objective/herald.svg" class="objective-icon ${colorClass}" alt="전령"> ${values.herald || 0}</div>
-                        <div class="objective-item"><img src="/images/objective/atakhan.svg" class="objective-icon ${colorClass}" alt="아타칸"> ${values.atakhan || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/baron.svg" class="objective-icon ${colorClass}" alt="바론"> ${values.baron}</div>
+                        <div class="objective-item"><img src="/images/objective/dragon.svg" class="objective-icon ${colorClass}" alt="드래곤"> ${values.dragon}</div>
+                        <div class="objective-item"><img src="/images/objective/herald.svg" class="objective-icon ${colorClass}" alt="전령"> ${values.herald}</div>
+                        <div class="objective-item"><img src="/images/objective/atakhan.svg" class="objective-icon ${colorClass}" alt="아타칸"> ${values.atakhan}</div>
                     </div>
                     <div class="objective-row second-row">
-                        <div class="objective-item"><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${values.rift || 0}</div>
-                        <div class="objective-item"><img src="/images/objective/tower.svg" class="objective-icon ${colorClass}" alt="타워"> ${values.tower || 0}</div>
-                        <div class="objective-item"><img src="/images/objective/inhibitor.svg" class="objective-icon ${colorClass}" alt="억제기"> ${values.inhibitor || 0}</div>
+                        <div class="objective-item"><img src="/images/objective/rift.svg" class="objective-icon ${colorClass}" alt="균열"> ${values.rift}</div>
+                        <div class="objective-item"><img src="/images/objective/tower.svg" class="objective-icon ${colorClass}" alt="타워"> ${values.tower}</div>
+                        <div class="objective-item"><img src="/images/objective/inhibitor.svg" class="objective-icon ${colorClass}" alt="억제기"> ${values.inhibitor}</div>
                     </div>
                 `;
             };
@@ -245,10 +252,15 @@ function loadMatchDetail(element) {
                 const damageDealt = (player.totalDamageDealtToChampions * 100 / data.totalMaxDamage).toFixed(1);
                 const damageTaken = (player.totalDamageTaken * 100 / data.totalMaxDamage).toFixed(1);
                 const csPerMin = player.csPerMin.toFixed(2);
-                const itemsHtml = (player.itemImageUrls || []).map(img => img ? `<img src="${img}" class="item-icon">` : '').join('');
+                const itemsHtml = (player.itemImageUrls || []).map(img =>
+                    (!img || img.includes("riot_default.png"))
+                        ? `<div class="item-icon empty-slot"></div>`
+                        : `<img src="${img}" class="item-icon">`
+                ).join('');
+
 
                 const summonerNames = [
-                    "찡클", "Shining Star", "파이리", "파닥몬", "원딜은버리고…",
+                    "쨍클", "Shining Star", "파이리", "파닥몬", "원딜은버리고…",
                     "케케로인!", "안전불감증", "손가락인생", "내가 정점에 …", "Misfit"
                 ];
 
@@ -347,7 +359,7 @@ function loadMatchDetail(element) {
                     7204: "https://d23maxd9bm8c6o.cloudfront.net/img/rune/7204.png"
                 };
 
-                const tierNames = [
+                const tierNames = [ // 티어는 키 제한으로 인해 하드코딩으로 처리
                     "Platinum 3", "Bronze 3", "Master", "Bronze 1", "Master",
                     "Platinum 3", "Iron 1", "Emerald 3", "Diamond 2", "Platinum 2"
                 ];
@@ -377,16 +389,16 @@ function loadMatchDetail(element) {
                                     <img src="${player.championImageUrl}" class="champion-icon" alt="챔피언"/>
                                 </div>
                                 <!-- 스펠 아이콘 2개 -->    
-      <div class="spell-icons">
-        <img src="${spellIdToImage[spell1Names[i]]}" class="spell-icon" alt="스펠1" />
-        <img src="${spellIdToImage[spell2Names[i]]}" class="spell-icon" alt="스펠2" />
-      </div>
-
-      <!-- 룬 아이콘 2개 -->
-      <div class="rune-icons">
-        <img src="${runeIdToUrl[mainRune1Ids[i]]}" class="rune-icon" alt="메인룬1">
-        <img src="${runeIdToUrl[mainRune2Ids[i]]}" class="rune-icon" alt="메인룬2">
-      </div>
+                                <div class="spell-icons">
+                                    <img src="${spellIdToImage[spell1Names[i]]}" class="spell-icon" alt="스펠1" />
+                                    <img src="${spellIdToImage[spell2Names[i]]}" class="spell-icon" alt="스펠2" />
+                                </div>
+                        
+                                <!-- 룬 아이콘 2개 -->
+                                <div class="rune-icons">
+                                    <img src="${runeIdToUrl[mainRune1Ids[i]]}" class="rune-icon" alt="메인룬1">
+                                    <img src="${runeIdToUrl[mainRune2Ids[i]]}" class="rune-icon" alt="메인룬2">
+                                </div>
                                 <!--
                                 <div class="runes">
                                     <img src="${player.mainRune1Url}" class="rune-icon" alt="메인 룬"/>
