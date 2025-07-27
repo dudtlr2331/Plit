@@ -1139,6 +1139,16 @@ function submitPartyForm() {
     const partyStatus = popup.querySelector('[name="partyStatus"]')?.value ?? 'WAITING';
     const memo = popup.querySelector('textarea[name="memo"]').value.trim();
 
+    if (!partyName) {
+        alert("파티 이름을 입력해주세요.");
+        return;
+    }
+
+    if (!partyEndTime) {
+        alert("종료일자를 입력해주세요.");
+        return;
+    }
+
     // scrim일 경우 고정 처리
     let mainPosition, positions;
 
@@ -1366,6 +1376,34 @@ function approveTeam(partyId, memberIds) {
         });
 }
 
+/* 내전찾기 팀 거절 */
+function rejectTeam(partyId, memberIds) {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    fetch(`/api/parties/${partyId}/members/reject-team`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({ memberIds })
+    })
+        .then(res => {
+            if (res.ok) {
+                alert('팀 거절 완료');
+                closePartyDetail();
+                loadParties('scrim');
+            } else {
+                res.text().then(msg => alert('거절 실패: ' + msg));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('서버 오류로 거절 처리에 실패했습니다.');
+        });
+}
+
 /* 내전 팀 찾기 */
 function openScrimJoinPopup(partyId) {
     selectedPartyId = partyId;
@@ -1545,11 +1583,12 @@ async function renderScrimPendingTeams(pending, partySeq, isOwner) {
     }
 
     const teams = pending.reduce((acc, m) => {
-        (acc[m.teamId] = acc[m.teamId] || []).push(m);
+        const key = m.joinTime; // 예: "2025-07-25T15:37:24"
+        (acc[key] = acc[key] || []).push(m);
         return acc;
     }, {});
 
-    const teamEntries = await Promise.all(Object.entries(teams).map(async ([teamId, members]) => {
+    const teamEntries = await Promise.all(Object.entries(teams).map(async ([teamId, members], index) => {
         const memberIds = members.map(m => m.id);
 
         const rows = await Promise.all(members.map(async m => {
@@ -1600,19 +1639,20 @@ async function renderScrimPendingTeams(pending, partySeq, isOwner) {
 
         return `
             <div class="team-table">
-                <table class="member-table">
-                    <thead>
-                        <tr>
-                            <th>닉네임</th><th>포지션</th><th>티어</th>
-                            <th>선호 챔프</th><th>승률</th><th>KDA</th><th></th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows.join('')}</tbody>
-                </table>
+                <h4>팀 ${index + 1}</h4>
+                    <table class="member-table">
+                        <thead>
+                            <tr>
+                                <th>닉네임</th><th>포지션</th><th>티어</th>
+                                <th>선호 챔프</th><th>승률</th><th>KDA</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows.join('')}</tbody>
+                    </table>
                 ${actionButtons}
             </div>
         `;
     }));
 
-    return teamEntries.join('');
+    return `<div class="scrim-team-group">${teamEntries.join('')}</div>`;
 }

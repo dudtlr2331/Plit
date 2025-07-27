@@ -976,3 +976,18 @@ select {
     color: red;
     font-weight: bold;
 }
+
+/* 내전찾기 - 수락 대기 */
+.scrim-team-group {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.scrim-team-group .team-table {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: #fefefe;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
