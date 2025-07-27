@@ -27,7 +27,7 @@
         <thead>
         <tr>
             <th>소환사이름</th>
-            <th>티어</th>
+<!--            <th>티어</th>-->
             <th>신고횟수</th>
             <th>메모</th>
             <th>지난 시간</th>
@@ -44,7 +44,7 @@
                     </div>
                 </div>
             </td>
-            <td> <!-- 티어 비워둠 --> </td>
+<!--            <td> 티어 들어갈 자리 </td>-->
             <td th:text="${report.reportedCount + '회'}">0회</td>
             <td><input type="text" class="memo-input" th:value="${report.reason}" readonly></td>
             <td><span class="time-ago" th:text="${report.timeAgo}">2초 전</span></td>

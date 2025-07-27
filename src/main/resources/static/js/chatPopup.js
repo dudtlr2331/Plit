@@ -255,7 +255,7 @@
             if (!badge) {
                 badge = document.createElement('span');
                 badge.className = 'chat-icon-badge';
-                badge.textContent = 'N'; // ✅ 항상 N
+                badge.textContent = 'N'; // 항상 N
                 document.querySelector('.chat-icon-wrapper').appendChild(badge);
             } else {
                 badge.textContent = 'N'; // 혹시 다른 값이 있으면 N으로

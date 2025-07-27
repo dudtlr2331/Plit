@@ -89,7 +89,7 @@
                         </form>
                     </div>
                 </div>
-                <!-- ✅ 항상 렌더링하고 인증 상태에 따라 숨김 -->
+                <!-- 항상 렌더링하고 인증 상태에 따라 숨김 -->
                 <!-- 항상 렌더링하고 인증 상태에 따라 숨김 -->
                 <form th:action="@{/mypage/verify-summoner}" method="post" id="summonerForm"
                       th:style="${loginUser != null and loginUser.riotGameName != null} ? 'display:none;' : 'display:flex;'"
@@ -207,15 +207,15 @@
 
         // 소환사 인증: tagLine에서 '#' 제거만 수행
         if (summonerForm) {
-            console.log("🧪 summonerForm DOM 연결됨");
+            console.log("summonerForm DOM 연결됨");
             summonerForm.addEventListener("submit", function () {
                 const tagInput = this.querySelector("input[name='tagLine']");
                 tagInput.value = tagInput.value.replace("#", "").trim(); // '#' 제거
-                console.log("🔧 정리된 tagLine:", tagInput.value);
+                console.log("정리된 tagLine:", tagInput.value);
                 // 기본 제출 동작 사용 (e.preventDefault, this.submit 제거)
             });
         } else {
-            console.log("❌ summonerForm DOM 연결 안 됨");
+            console.log("summonerForm DOM 연결 안 됨");
         }
     });
 

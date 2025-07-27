@@ -1,6 +1,4 @@
-/* ===============================
-   친구 목록 (공통)
-=============================== */
+/* 친구 목록 (공통) */
 .friend-item {
     display: flex;
     justify-content: space-between;
@@ -58,9 +56,7 @@
     margin-bottom: 0;    /* 필요하다면 조정 */
 }
 
-/* ===============================
-   친구 목록 액션 버튼
-=============================== */
+/* 친구 목록 액션 버튼 */
 .friend-actions button {
     border: none;
     border-radius: 6px;
@@ -97,9 +93,7 @@
     background-color: #6a3f8a;
 }
 
-/* ===============================
-   친구 요청 팝업
-=============================== */
+/* 친구 요청 팝업 */
 .request-btn-wrap {
     position: relative; /* 부모 기준으로 팝업 위치를 잡도록 지정 */
     display: flex;            /* flex로 배치 */
@@ -180,9 +174,7 @@
     cursor: pointer;
 }
 
-/* ===============================
-   채팅 팝업
-=============================== */
+/* 채팅 팝업 */
 .chat-popup {
     display: none;
     flex-direction: column;

@@ -42,8 +42,8 @@ public class MyPageController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
 
-        System.out.println("📦 summonerMessage in model: " + model.asMap().get("summonerMessage"));
-        System.out.println("📦 summonerError in model: " + model.asMap().get("summonerError"));
+        System.out.println("summonerMessage in model: " + model.asMap().get("summonerMessage"));
+        System.out.println("summonerError in model: " + model.asMap().get("summonerError"));
 
 
         if (principal == null) {
@@ -69,7 +69,6 @@ public class MyPageController {
         model.addAttribute("loginUser", loginUser);
         model.addAttribute("viewSection", "account");
 
-        // 🔥 FlashAttribute는 이미 Model에 복원되어 있으므로 별도 처리 불필요
         return "fo/mypage/mypage";
     }
 

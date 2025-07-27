@@ -1,6 +1,4 @@
-/* ================================
-   기본 설정
-================================ */
+/* 기본 설정 */
 html, body {
     height: 100%;
     margin: 0;
@@ -14,9 +12,7 @@ body {
     background: #fff;
 }
 
-/* ================================
-   컨테이너
-================================ */
+/* 컨테이너 */
 .container {
     width: 100%;
     max-width: 1200px;
@@ -25,9 +21,7 @@ body {
     flex: 1;
 }
 
-/* ================================
-   검색바
-================================ */
+/* 검색바 */
 .search-bar {
     display: flex;
     align-items: center;
@@ -71,12 +65,10 @@ body {
     background: #7c4798;
 }
 
-/* ================================
-   테이블
-================================ */
+/* 테이블 */
 table {
     width: 100%;
-    border-collapse: separate; /* collapse 말고 separate */
+    border-collapse: separate;
     border-spacing: 0;         /* 셀 간격 없애기 */
     border-radius: 12px;       /* 모서리 둥글게 */
     overflow: hidden;          /* 둥근 모서리 밖으로 나오는 선 숨기기 */
@@ -99,9 +91,7 @@ tr:hover {
     background: #f9f9f9;
 }
 
-/* ================================
-   소환사 정보
-================================ */
+/* 소환사 정보 */
 .summoner-info {
     display: flex;
     align-items: center;
@@ -140,9 +130,7 @@ tr:hover {
     color: #666;
 }
 
-/* ================================
-   신고 버튼
-================================ */
+/* 신고 버튼 */
 .report-btn {
     background: #6570b4;
     color: white;
@@ -158,9 +146,7 @@ tr:hover {
     background: #7c4798;
 }
 
-/* ================================
-   신고 팝업
-================================ */
+/* 신고 팝업 */
 #reportPopup {
     display: none;
     position: fixed;
@@ -216,9 +202,7 @@ tr:hover {
     background: #7c4798;
 }
 
-/* ================================
-   채팅 리스트 팝업
-================================ */
+/* 채팅 리스트 팝업 */
 #chatList {
     position: fixed;
     top: 60px;
@@ -237,9 +221,7 @@ tr:hover {
     font-weight: bold;
 }
 
-/* ================================
-   채팅 팝업
-================================ */
+/* 채팅 팝업 */
 .chat-popup {
     position: fixed;
     bottom: 20px;
@@ -275,9 +257,7 @@ tr:hover {
     border-radius: 6px;
 }
 
-/* ================================
-   footer
-================================ */
+/* footer */
 footer {
     background: #222;
     color: white;

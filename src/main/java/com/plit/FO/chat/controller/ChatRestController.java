@@ -83,7 +83,7 @@ public class ChatRestController {
                     : userB + "_" + userA;
 
             Map<String, Object> map = new HashMap<>();
-            map.put("roomId", calculatedRoomId); // 👈 문자열로 변경
+            map.put("roomId", calculatedRoomId); // 문자열로 변경
             map.put("unreadCount", unread);
             result.add(map);
         }
