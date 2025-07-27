@@ -148,12 +148,6 @@
     </div>
 
     <script th:inline="javascript">
-        const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
-        if (userAuth !== "ADMIN" && userAuth !== "MASTER") {
-            alert("접근 권한이 없습니다.");
-            location.href = "/main";
-        }
-
         function handleReport(blacklistNo, action) {
             const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
