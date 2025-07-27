@@ -44,12 +44,6 @@
 
         <script th:inline="javascript">
             /*<![CDATA[*/
-            const userAuth = /*[[${loginUser.userAuth}]]*/ "guest";
-            if (userAuth !== "ADMIN" && userAuth !== "MASTER") {
-                alert("접근 권한이 없습니다.");
-                location.href = "/main";
-            }
-
             function submitEdit(userSeq) {
                 const nickname = document.getElementById(`nickname-${userSeq}`).value;
                 const auth = document.getElementById(`auth-select-${userSeq}`).value;
