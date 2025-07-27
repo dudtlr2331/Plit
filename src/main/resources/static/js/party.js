@@ -634,6 +634,9 @@ async function renderPendingTable(type, pending, seq, isOwner) {
         }
 
         const nicknameHtml = `<span class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</span>`;
+        const memoIcon = m.message
+            ? `<span class="memo-icon" onclick="showMemo('${m.message.replaceAll("'", "\\'")}')">📝</span>`
+            : '';
 
         return `
             <tr>
@@ -646,6 +649,7 @@ async function renderPendingTable(type, pending, seq, isOwner) {
                 <td>${(m.championImageUrls || []).map(u => `<img src="${u}" width="24" class="champion-icon"/>`).join('')}</td>
                 <td>${m.winRate != null ? m.winRate.toFixed(0) + '%' : '0%'}</td>
                 <td class="${cls}">${kda}</td>
+                <td>${memoIcon}</td>
                 <td>
                     ${isOwner
             ? `<button onclick="approveMember(${seq}, ${m.id})">수락</button>
@@ -660,7 +664,7 @@ async function renderPendingTable(type, pending, seq, isOwner) {
             <thead>
                 <tr>
                     <th>닉네임</th><th>포지션</th><th>티어</th>
-                    <th>선호 챔프</th><th>승률</th><th>KDA</th><th>관리</th>
+                    <th>선호 챔프</th><th>승률</th><th>KDA</th><th>메모</th><th>관리</th>
                 </tr>
             </thead>
             <tbody>${rows.join('')}</tbody>
@@ -1637,9 +1641,17 @@ async function renderScrimPendingTeams(pending, partySeq, isOwner) {
                </div>`
             : '';
 
+        const message = members[0]?.message;
+        const teamMemoIcon = message
+            ? `<span class="memo-icon" onclick="showMemo('${message.replaceAll("'", "\\'")}')" title="팀 메모">📝</span>`
+            : '';
+
         return `
             <div class="team-table">
-                <h4>팀 ${index + 1}</h4>
+                <div class="team-header">
+                    <h4 class="team-title">팀 1</h4>
+                    <span class="memo-icon-right">메모 : ${teamMemoIcon}</span>
+                </div>
                     <table class="member-table">
                         <thead>
                             <tr>
@@ -1655,4 +1667,20 @@ async function renderScrimPendingTeams(pending, partySeq, isOwner) {
     }));
 
     return `<div class="scrim-team-group">${teamEntries.join('')}</div>`;
+}
+
+function showMemo(message) {
+    const popup = document.createElement('div');
+    popup.className = 'memo-popup';
+    popup.innerText = message;
+
+    document.body.appendChild(popup);
+
+    // 클릭 시 제거
+    popup.addEventListener('click', () => {
+        popup.remove();
+    });
+
+    // 자동 사라짐 (3초 후)
+    setTimeout(() => popup.remove(), 3000);
 }

@@ -991,3 +991,44 @@ select {
     background-color: #fefefe;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
+
+/* 수락대기에서 메모 */
+.memo-icon {
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.memo-popup {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff7cc;
+    color: #333;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    padding: 12px 20px;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    font-weight: 500;
+    white-space: pre-wrap;
+}
+
+.team-header {
+    position: relative;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.team-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.memo-icon-right {
+    position: absolute;
+    right: 120px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
