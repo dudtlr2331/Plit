@@ -317,7 +317,10 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
     const currentUserId = document.querySelector('meta[name="user-id"]')?.getAttribute('content');
     const currentUserSeq = Number(document.querySelector('meta[name="login-user-seq"]')?.getAttribute('content'));
     const currentUserNickname = document.querySelector('meta[name="login-user-nickname"]')?.getAttribute('content');
+    const currentUserAuth = document.querySelector('meta[name="login-user-auth"]')?.getAttribute('content');
     const isOwner = currentUserId && currentUserId === createdBy;
+    const isMaster = currentUserAuth === 'MASTER';
+    const showEditDelete = isOwner || isMaster;
 
     fetch(`/api/parties/${seq}/join-status`)
         .then(res => res.text())
@@ -325,7 +328,9 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
             let joinBtnHtml = '';
 
             if (status === 'WAITING') {
-                if (currentUserId === createdBy) {
+                if (currentUserAuth === 'MASTER') {
+                    joinBtnHtml = `<p style="color: gray;"><strong>운영자 계정은 참가할 수 없습니다.</strong></p>`;
+                } else if (currentUserId === createdBy) {
                     joinBtnHtml = `<p style="color: gray;"><strong>파티장은 참가 신청할 수 없습니다.</strong></p>`;
                 } else if ((type === 'scrim' && headcount >= 10) || (type !== 'scrim' && headcount >= max)) {
                     joinBtnHtml = `<p style="color: red;"><strong>파티 인원이 모두 찼습니다.</strong></p>`;
@@ -471,7 +476,6 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
 
                         const icon = getPositionIconHTML(m.position, true);
 
-                        // 👑 왕관 표시
                         const isBlocked = relation.isBlocked;
                         const nicknameHtml = m.userId === createdBy
                             ? `<span class="leader-icon">👑</span><strong class="${isBlocked ? 'blocked-name' : ''}">${m.userNickname}</strong>`
@@ -570,9 +574,9 @@ async function showPartyDetail(seq, name, type, createDate, endDate, status, hea
                         <div id="tab-pending" class="tab-content" style="display:none;">${pendingHtml}</div>
                         
                         <div class="popup-buttons">
-                            ${isOwner ? `
-                            <button class="edit-btn" data-party='${encodedPartyJson}'>수정</button>
-                            <button onclick="deleteParty(${seq})">삭제</button>
+                            ${showEditDelete ? `
+                              <button class="edit-btn" data-party='${encodedPartyJson}'>수정</button>
+                              <button onclick="deleteParty(${seq})">삭제</button>
                             ` : ''}
                             <button onclick="closePartyDetail()">닫기</button>
                             ${joinBtnHtml}
@@ -605,7 +609,7 @@ async function renderPendingTable(type, pending, seq, isOwner) {
         return `<p style="text-align:center;color:gray;">수락 대기 중인 ${label}이 없습니다.</p>`;
     }
 
-    // — 내전(scrim)은 팀 단위 수락/거절 —
+    // — 내전 팀 단위 수락/거절 —
     if (type === 'scrim') {
         return await renderScrimPendingTeams(pending, seq, isOwner);
     }
@@ -618,7 +622,6 @@ async function renderPendingTable(type, pending, seq, isOwner) {
         else if (kda >= 4) cls = 'kda-good';
         else if (kda >= 3) cls = 'kda-mid';
 
-        // relation-status API 호출
         let isBlocked = false;
         try {
             const res = await fetch(`/api/users/${encodeURIComponent(m.userId)}/relation-status`);
@@ -754,7 +757,6 @@ function approveMember(partyId, memberId) {
                 closePartyDetail();
                 loadParties('team');
             } else {
-                // 서버에서 메시지를 전달했다면 그것도 함께 알림
                 return res.text().then(text => {
                     alert(`수락 실패: ${text || '알 수 없는 오류'}`);
                 });
@@ -793,7 +795,7 @@ const fetchPartyMembers = async (partyId) => {
     try {
         const res = await fetch(`/api/parties/${partyId}/members`);
         if (!res.ok) throw new Error('멤버 조회 실패');
-        return await res.json(); // [{ id, userId, message, status, ... }]
+        return await res.json();
     } catch (e) {
         console.error(e);
         return [];
@@ -811,13 +813,13 @@ const checkJoined = async (partyId) => {
 
         if (!response.ok) {
             console.warn('참가 여부 확인 실패');
-            return false; // 기본값
+            return false;
         }
 
         return await response.json(); // true or false
     } catch (err) {
         console.error(err);
-        return false; // 오류 시 기본값
+        return false;
     }
 };
 

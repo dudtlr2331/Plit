@@ -69,15 +69,17 @@ public class PartyRestController {
     // 파티 수정
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateParty(@PathVariable Long id,
-                                            @RequestBody PartyDTO dto) {
-        partyService.updateParty(id, dto);
+                                            @RequestBody PartyDTO dto,
+                                            @AuthenticationPrincipal UserDetails user) {
+        partyService.updateParty(id, dto, user.getUsername());
         return ResponseEntity.ok().build();
     }
 
     // 파티 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteParty(@PathVariable Long id) {
-        partyService.deleteParty(id);
+    public ResponseEntity<Void> deleteParty(@PathVariable Long id,
+                                            @AuthenticationPrincipal UserDetails user) {
+        partyService.deleteParty(id, user.getUsername());
         return ResponseEntity.noContent().build();
     }
 

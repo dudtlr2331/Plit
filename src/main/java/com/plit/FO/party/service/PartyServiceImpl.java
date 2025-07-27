@@ -154,13 +154,20 @@ public class PartyServiceImpl implements PartyService {
 
     @Override
     @Transactional
-    public void updateParty(Long id, PartyDTO dto) {
+    public void updateParty(Long id, PartyDTO dto, String requesterId) {
         // 종료일이 지난 파티는 재모집이 안되도록 설정
         if (dto.getPartyEndTime().isBefore(LocalDateTime.now()) && PartyStatus.valueOf(dto.getPartyStatus()) == PartyStatus.WAITING) {
             throw new IllegalArgumentException("종료된 파티는 다시 모집할 수 없습니다.");
         }
 
         PartyEntity party = partyRepository.findById(id).orElseThrow();
+
+        UserEntity user = userRepository.findByUserId(requesterId)
+                .orElseThrow(() -> new NoSuchElementException("유저 없음"));
+
+        if (!party.getCreatedBy().equals(requesterId) && !"MASTER".equals(user.getUserAuth())) {
+            throw new AccessDeniedException("수정 권한이 없습니다.");
+        }
 
         party.setPartyName(dto.getPartyName());
         party.setPartyType(dto.getPartyType());
@@ -177,8 +184,16 @@ public class PartyServiceImpl implements PartyService {
 
     @Override
     @Transactional
-    public void deleteParty(Long id) {
+    public void deleteParty(Long id, String requesterId) {
         PartyEntity party = partyRepository.findById(id).orElseThrow();
+
+        UserEntity user = userRepository.findByUserId(requesterId)
+                .orElseThrow(() -> new NoSuchElementException("유저 없음"));
+
+        if (!party.getCreatedBy().equals(requesterId) && !"MASTER".equals(user.getUserAuth())) {
+            throw new AccessDeniedException("삭제 권한이 없습니다.");
+        }
+
         positionRepository.deleteByParty(party);
         partyRepository.delete(party);
     }
@@ -417,7 +432,7 @@ public class PartyServiceImpl implements PartyService {
                     // 티어 이미지 처리
                     String tier = summary.getTier();
                     if (tier != null && !tier.isBlank()) {
-                        String baseTier = tier.replaceAll("[^A-Za-z]", "").toUpperCase(); // 예: GOLD4 → GOLD
+                        String baseTier = tier.replaceAll("[^A-Za-z]", "").toUpperCase();
 
                         // 티어 이미지 URL (정적 경로 기준)
                         String tierImageUrl = "/images/tier/" + baseTier + ".png";
@@ -438,7 +453,7 @@ public class PartyServiceImpl implements PartyService {
     public MemberStatus getJoinStatus(Long partyId, String userId) {
         return partyMemberRepository.findByParty_PartySeqAndUser_UserId(partyId, userId)
                 .map(PartyMemberEntity::getStatus)
-                .orElse(null); // 또는 Optional<MemberStatus>로 감싸도 OK
+                .orElse(null);
     }
 
     @Override
@@ -468,7 +483,6 @@ public class PartyServiceImpl implements PartyService {
 
         partyMemberRepository.delete(member);
 
-        // 인원수 업데이트 (필요시)
         party.setPartyHeadcount(party.getPartyHeadcount() - 1);
         partyRepository.save(party);
     }
@@ -668,7 +682,7 @@ public class PartyServiceImpl implements PartyService {
         ChatRoomEntity room = chatRoomRepository.findByPartyId(partyId)
                 .orElseThrow(() -> new NoSuchElementException("채팅방 없음"));
 
-        // 1. 현재 수락된 멤버들의 포지션별 인원 수 계산
+        // 현재 수락된 멤버들의 포지션별 인원 수 계산
         Map<String, Long> positionCounts = partyMemberRepository.findByParty_PartySeqAndStatus(partyId, MemberStatus.ACCEPTED)
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -687,7 +701,7 @@ public class PartyServiceImpl implements PartyService {
             String position = member.getPosition().toUpperCase();
             long currentCount = positionCounts.getOrDefault(position, 0L);
 
-            // "ALL" 포지션 제외하고 각 포지션 최대 2명까지 허용
+            // ALL 포지션 제외하고 각 포지션 최대 2명까지 허용
             if (!"ALL".equals(position) && currentCount >= 2) {
                 throw new IllegalStateException("포지션 '" + position + "'은 이미 2명이 수락되었습니다.");
             }
@@ -737,7 +751,7 @@ public class PartyServiceImpl implements PartyService {
         }
 
         for (Long id : memberIds) {
-            rejectMember(partyId, id); // 기존 거절 메서드 호출
+            rejectMember(partyId, id);
         }
     }
 }

@@ -34,14 +34,14 @@ public class PartyController {
     // 파티 수정
     @PostMapping("/edit/{id}")
     public String update(@PathVariable Long id, PartyDTO dto) {
-        partyService.updateParty(id, dto);
+//        partyService.updateParty(id, dto);
         return "redirect:/party";
     }
 
     // 파티 삭제
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
-        partyService.deleteParty(id);
+//        partyService.deleteParty(id);
         return "redirect:/party";
     }
 }

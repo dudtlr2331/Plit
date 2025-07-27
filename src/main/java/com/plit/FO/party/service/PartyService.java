@@ -12,8 +12,8 @@ public interface PartyService {
     List<PartyDTO> findByPartyType(String partyType);
     PartyDTO getParty(Long id);
     void saveParty(PartyDTO dto, String userId);
-    void updateParty(Long id, PartyDTO dto);
-    void deleteParty(Long id);
+    void updateParty(Long id, PartyDTO dto, String requesterId);
+    void deleteParty(Long id, String requesterId);
 
     String tryJoinParty(Long partySeq, String username);
     List<String> getPartyMembers(Long partySeq);
