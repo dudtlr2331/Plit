@@ -31,11 +31,6 @@ import static com.plit.FO.matchHistory.service.MatchHelper.*;
 @RequiredArgsConstructor
 public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB 저장, 조회
 
-    @Override
-    public void fetchAndSaveAllIfNotExists(String puuid, String tagLine) {
-
-    }
-
     private final MatchSummaryRepository matchSummaryRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final RiotApiService riotApiService;
@@ -60,6 +55,23 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
     @Override
     public void saveRiotIdCache(String gameName, String tagLine, String normalizedGameName, String normalizedTagLine, String puuid) {
+        // 중복 검사
+        Optional<RiotIdCacheEntity> existing = riotIdCacheRepository
+                .findByNormalizedGameNameAndNormalizedTagLine(normalizedGameName, normalizedTagLine);
+
+        if (existing.isPresent()) {
+            RiotIdCacheEntity cache = existing.get();
+            // puuid만 업데이트 (기존 값이 없을 경우)
+            if (cache.getPuuid() == null && puuid != null) {
+                cache.setPuuid(puuid);
+                riotIdCacheRepository.save(cache); // 이건 update
+            }
+            return; // 중복이면 저장 안 하고 종료
+        }
+
+        log.info("saveRiotIdCache: checking for {}#{}", normalizedGameName, normalizedTagLine);
+
+        // 새로 저장
         RiotIdCacheEntity entity = RiotIdCacheEntity.builder()
                 .gameName(gameName.trim())
                 .tagLine(tagLine.trim())
@@ -67,9 +79,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .normalizedTagLine(normalizedTagLine)
                 .puuid(puuid)
                 .build();
+
         riotIdCacheRepository.save(entity);
     }
-
 
     // puuid -> 최근 match ID 조회 [ match/v5 ]
     public List<String> getRecentMatchIds(String puuid, int count) {
@@ -266,9 +278,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                     .puuid(puuid)
                     .championName(engName)
                     .korName(korName)
-                    .kills(sumKills / total)
-                    .deaths(sumDeaths / total)
-                    .assists(sumAssists / total)
+                    .kills(round(sumKills / total, 1))
+                    .deaths(round(sumDeaths / total, 1))
+                    .assists(round(sumAssists / total, 1))
                     .kdaRatio(round(kdaRatio, 1))
                     .averageCs((int) (sumCs / total))
                     .csPerMin(round(sumCsPerMin / total, 1))
@@ -291,7 +303,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         System.out.println("[calculateFavoriteChampions] mode: " + mode + ", result size: " + result.size());
         result.forEach(dto -> System.out.println(" - " + dto.getChampionName() + " (" + dto.getGameCount() + " games)"));
 
-        result.sort(Comparator.comparingInt(FavoriteChampionDTO::getFlexGames).reversed());
+//        result.sort(Comparator.comparingInt(FavoriteChampionDTO::getFlexGames).reversed());
+        result.sort(Comparator.comparingInt(FavoriteChampionDTO::getGameCount).reversed());
+
         return result;
     }
 
@@ -396,6 +410,181 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     }
 
 
+
+    // 20게임 매치의 전체 요약 계산
+    @Override
+    public MatchOverallSummaryDTO calculateOverallSummary(List<MatchHistoryDTO> matchList, String puuid) {
+        if (matchList == null || matchList.isEmpty()) return null;
+
+        int totalMatches = matchList.size();
+        int totalWins = (int) matchList.stream().filter(MatchHistoryDTO::isWin).count();
+        double winRate = round((double) totalWins / totalMatches * 100.0, 0);
+        double averageKills = matchList.stream().mapToInt(MatchHistoryDTO::getKills).average().orElse(0);
+        double averageDeaths = matchList.stream().mapToInt(MatchHistoryDTO::getDeaths).average().orElse(0);
+        double averageAssists = matchList.stream().mapToInt(MatchHistoryDTO::getAssists).average().orElse(0);
+        double averageKDA = matchList.stream().mapToDouble(MatchHistoryDTO::getKdaRatio).average().orElse(0);
+        double averageCs = matchList.stream().mapToInt(MatchHistoryDTO::getCs).average().orElse(0);
+
+        int totalMyKills = 0;
+        int totalMyAssists = 0;
+        int totalTeamKills = 0;
+
+        Map<String, Integer> champKills = new HashMap<>();
+        Map<String, Integer> champDeaths = new HashMap<>();
+        Map<String, Integer> champAssists = new HashMap<>();
+
+        for (MatchHistoryDTO match : matchList) {
+            List<MatchPlayerDTO> players = match.getMatchPlayers();
+            if (players == null || players.isEmpty()) continue;
+
+            MatchPlayerDTO me = players.stream()
+                    .filter(p -> p.getPuuid().equals(puuid))
+                    .findFirst()
+                    .orElse(null);
+            if (me == null) continue;
+
+            int myTeamId = me.getTeamId();
+
+            int teamKills = players.stream()
+                    .filter(p -> p.getTeamId() == myTeamId)
+                    .mapToInt(MatchPlayerDTO::getKills)
+                    .sum();
+
+            totalMyKills += me.getKills();
+            totalMyAssists += me.getAssists();
+            totalTeamKills += teamKills;
+
+            String champ = match.getChampionName();
+            champKills.merge(champ, match.getKills(), Integer::sum);
+            champDeaths.merge(champ, match.getDeaths(), Integer::sum);
+            champAssists.merge(champ, match.getAssists(), Integer::sum);
+        }
+
+        double killParticipation = MatchHelper.calculateKillParticipation(totalMyKills, totalMyAssists, totalTeamKills);
+
+        List<MatchHistoryDTO> validMatches = matchList.stream()
+                .filter(m -> {
+                    String pos = MatchHelper.normalizePosition(m.getTeamPosition());
+                    return pos != null && !pos.equals("unknown");
+                })
+                .toList();
+
+        Map<String, Long> positionCounts = validMatches.stream()
+                .map(m -> MatchHelper.normalizePosition(m.getTeamPosition()))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+
+        int totalPositions = positionCounts.values().stream().mapToInt(Long::intValue).sum();
+
+        Map<String, Double> favoritePositions = positionCounts.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> round((double) e.getValue() * 100.0 / totalPositions, 1)
+                ));
+        // 모든 포지션 기본값 세팅
+        List<String> allPositions = List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY");
+
+        for (String pos : allPositions) {
+            favoritePositions.putIfAbsent(pos, 0.0);
+        }
+
+        // 포지션 순서 고정: 탑, 정글, 미드, 원딜, 서폿
+        List<String> sortedPositionList = allPositions;
+
+        // 포지션 선호도
+        String preferredPosition = positionCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("UNKNOWN");
+
+        log.info("favoritePositions = {}", favoritePositions);
+
+        // 챔피언별 경기 수
+        Map<String, Integer> championTotalGames = matchList.stream()
+                .collect(Collectors.toMap(
+                        MatchHistoryDTO::getChampionName,
+                        m -> 1,
+                        Integer::sum // 중복 키 처리
+                ));
+
+        // 챔피언 선호도 (이름: 사용횟수 JSON)
+        Map<String, Long> championUsage = matchList.stream()
+                .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName, Collectors.counting()));
+
+        List<String> top3Champions = championUsage.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(3)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        // 챔피언별 승리 횟수
+        Map<String, Integer> championWins = matchList.stream()
+                .filter(MatchHistoryDTO::isWin)
+                .collect(Collectors.groupingBy(
+                        MatchHistoryDTO::getChampionName,
+                        Collectors.reducing(0, e -> 1, Integer::sum)
+                ));
+
+        // 챔피언별 승률
+        Map<String, List<MatchHistoryDTO>> groupedByChampion = matchList.stream()
+                .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
+
+        Map<String, Double> championWinRates = groupedByChampion.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> {
+                            List<MatchHistoryDTO> games = e.getValue();
+                            long wins = games.stream().filter(MatchHistoryDTO::isWin).count();
+                            return round((double) wins / games.size() * 100.0, 1);
+                        }
+                ));
+
+        // 게임네임/태그 가져오기 (캐시에서)
+        RiotIdCacheEntity riotId = riotIdCacheRepository.findByPuuid(puuid)
+                .orElse(RiotIdCacheEntity.ofDummy(puuid));
+
+        List<Map.Entry<String, Long>> sortedChampionList = championUsage.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .toList();
+
+        // 선호챔피언별 kdaRatio 계산
+        Map<String, Double> championKdaRatios = new HashMap<>();
+        for (String champ : champKills.keySet()) {
+            int kills = champKills.getOrDefault(champ, 0);
+            int deaths = champDeaths.getOrDefault(champ, 0);
+            int assists = champAssists.getOrDefault(champ, 0);
+
+            double kda = deaths == 0 ? (kills + assists) : (double) (kills + assists) / deaths;
+            kda = Math.round(kda * 100.0) / 100.0;
+            championKdaRatios.put(champ, kda);
+        }
+
+        return MatchOverallSummaryDTO.builder()
+                .puuid(puuid)
+                .gameName(riotId.getGameName())
+                .tagLine(riotId.getTagLine())
+                .totalMatches(totalMatches)
+                .totalWins(totalWins)
+                .winRate(round(winRate,0))
+                .averageKills(round(averageKills, 1))
+                .averageDeaths(round(averageDeaths, 1))
+                .averageAssists(round(averageAssists, 1))
+                .averageKda(round(averageKDA, 2))
+                .averageCs(round(averageCs, 1))
+                .killParticipation(round(killParticipation, 1))
+                .preferredPosition(preferredPosition)
+                .preferredChampions(top3Champions)
+                .positionCounts(positionCounts)
+                .favoritePositions(favoritePositions)
+                .sortedPositionList(sortedPositionList)
+                .sortedChampionList(sortedChampionList)
+                .championTotalGames(championTotalGames)
+                .championWins(championWins)
+                .championWinRates(championWinRates)
+                .championKdaRatios(championKdaRatios)
+                .build();
+    }
+
     // 매치 전체 요약페이지 저장
     @Override
     public void saveOverallSummary(MatchOverallSummaryDTO dto) {
@@ -411,6 +600,25 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
     // 최신순으로 사용자의 요약 전적 20개 불러오기
     public List<MatchHistoryDTO> getMatchSummaryFromDB(String puuid) {
         List<MatchSummaryEntity> entities = matchSummaryRepository.findTop20ByPuuidOrderByGameEndTimestampDesc(puuid);
+
+        return entities.stream()
+                .map(summary -> {
+                    // matchId에 해당하는 전체 player 리스트 조회
+                    List<MatchPlayerEntity> playerEntities = matchPlayerRepository.findByMatchId(summary.getMatchId());
+                    List<MatchPlayerDTO> playerDTOs = playerEntities.stream()
+                            .map(MatchPlayerDTO::fromEntity)
+                            .collect(Collectors.toList());
+
+                    return MatchHistoryDTO.fromEntities(summary, playerDTOs, imageService);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public List<MatchHistoryDTO> getAllMatchSummaryFromDB(String puuid) {
+        List<MatchSummaryEntity> entities = matchSummaryRepository.findByPuuidOrderByGameEndTimestampDesc(puuid);
 
         return entities.stream()
                 .map(summary -> {
@@ -480,11 +688,15 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
             }
         }
 
+        int blueTotalKills = blueTeam.stream().mapToInt(MatchPlayerDTO::getKills).sum();
+        int redTotalKills = redTeam.stream().mapToInt(MatchPlayerDTO::getKills).sum();
+
         MatchObjectiveDTO blueObjectives = MatchObjectiveDTO.builder()
+                .totalKills(blueTotalKills)
                 .totalGold(blueGold)
                 .build();
-
         MatchObjectiveDTO redObjectives = MatchObjectiveDTO.builder()
+                .totalKills(redTotalKills)
                 .totalGold(redGold)
                 .build();
 
@@ -704,19 +916,6 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 .collect(Collectors.toList());
     }
 
-
-//    public void saveOnlyOverallSummary(String gameName, String tagLine, String tier) {
-//        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
-//
-//        Optional<RiotIdCacheEntity> riotIdOpt = riotIdCacheRepository.findByPuuid(puuid);
-//        if (riotIdOpt.isPresent()) {
-//            RiotIdCacheEntity riotId = riotIdOpt.get();
-//            updateOverallSummary(puuid, riotId.getGameName(), riotId.getTagLine());
-//        } else {
-//            log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
-//        }
-//    }
-
     // 각 매치 요약과 플레이어 상세정보
     public void saveMatchSummaryAndPlayers(String gameName, String tagLine, String tier) {
         String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
@@ -765,7 +964,9 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
 
                         // DB 저장
                         MatchPlayerEntity entity = MatchPlayerEntity.fromDTO(player);
-                        matchPlayerRepository.save(entity);
+                        if (!matchPlayerRepository.existsByMatchIdAndPuuid(entity.getMatchId(), entity.getPuuid())) {
+                            matchPlayerRepository.save(entity);
+                        }
 
                     } catch (Exception e) {
                         log.warn("플레이어 저장 중 오류: {}", player.getPuuid(), e);
@@ -865,7 +1066,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                 String gameMode = matchDetail.getGameMode();
                 String queueType = matchDetail.getQueueType();
 
-                List<MatchPlayerDTO> playerList = MatchPlayerDTO.fromRiotParticipantList(matchDetail.getParticipants(), matchId,durationSec,
+                List<MatchPlayerDTO> playerList = MatchPlayerDTO.fromRiotParticipantList(matchDetail.getParticipants(), matchId, durationSec,
                         endTime, gameMode, queueType, tier);
 
                 for (MatchPlayerDTO player : playerList) {
@@ -916,7 +1117,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
                         .deaths(participant.getDeaths())
                         .assists(participant.getAssists())
                         .cs(cs)
-                        .csPerMin(round(csPerMin,1))
+                        .csPerMin(round(csPerMin, 1))
                         .win(participant.isWin())
                         .queueType(matchInfo.getQueueId())
                         .gameEndTimestamp(
@@ -960,54 +1161,6 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         } else {
             log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
         }
-//        Optional<RiotIdCacheEntity> riotIdOpt = riotIdCacheRepository.findByPuuid(puuid);
-//        if (riotIdOpt.isPresent()) {
-//            RiotIdCacheEntity riotId = riotIdOpt.get();
-//            List<MatchSummaryEntity> summaries = matchSummaryRepository.findByPuuid(puuid);
-//
-//            int wins = 0;
-//            double kills = 0, deaths = 0, assists = 0;
-//            Map<String, Integer> positionMap = new HashMap<>();
-//
-//            for (MatchSummaryEntity summary : summaries) {
-//                if (summary.isWin()) wins++;
-//
-//                kills += summary.getKills();
-//                deaths += summary.getDeaths();
-//                assists += summary.getAssists();
-//
-//                String pos = summary.getTeamPosition();
-//                if (pos != null) {
-//                    positionMap.put(pos, positionMap.getOrDefault(pos, 0) + 1);
-//                }
-//            }
-//
-//            double winRate = summaries.isEmpty() ? 0.0 : wins * 100.0 / summaries.size();
-//            double kda = deaths == 0 ? kills + assists : (kills + assists) / deaths;
-//
-//            String preferredPosition = positionMap.entrySet().stream()
-//                    .max(Map.Entry.comparingByValue())
-//                    .map(Map.Entry::getKey)
-//                    .orElse("UNKNOWN");
-//
-//            MatchOverallSummaryEntity entity = MatchOverallSummaryEntity.builder()
-//                    .puuid(puuid)
-//                    .gameName(riotId.getGameName())
-//                    .tagLine(riotId.getTagLine())
-//                    .tier(tier)
-//                    .totalMatches(summaries.size())
-//                    .totalWins(wins)
-//                    .winRate(winRate)
-//                    .averageKda(kda)
-//                    .preferredPosition(preferredPosition)
-//                    .createdAt(LocalDateTime.now())
-//                    .build();
-//
-//            matchOverallSummaryRepository.save(entity);
-//
-//        } else {
-//            log.warn("RiotIdCacheEntity not found for puuid: {}", puuid);
-//        }
     }
 
     private void fillMissingTier(List<MatchPlayerDTO> playerList) {
@@ -1033,194 +1186,7 @@ public class MatchDbServiceImpl implements MatchDbService{ // 전적 검색 DB �
         }
 
     }
-//
-//    @Override
-//    public void saveOnlyOverallSummary(String gameName, String tagLine, String tier) {
-//        // puuid 조회
-//        String puuid = riotApiService.requestPuuidFromRiot(gameName, tagLine);
-//
-//        updateOverallSummary(puuid, gameName, tagLine);
-//
-//        // RiotIdCacheEntity 조회
-//        Optional<MatchOverallSummaryEntity> optional = matchOverallSummaryRepository.findByPuuid(puuid);
-//        if (optional.isPresent()) {
-//            MatchOverallSummaryEntity entity = optional.get();
-//            entity.setTier(tier);
-//            matchOverallSummaryRepository.save(entity);
-//            log.info("match_overall_summary 저장 후 티어 수동 덮어쓰기 완료: {}#{} [{}]", gameName, tagLine, tier);
-//        } else {
-//            log.warn("match_overall_summary not found for puuid: {}", puuid);
-//        }
-//    }
 
-
-    @Override
-    public MatchOverallSummaryDTO calculateOverallSummary(List<MatchHistoryDTO> matchList, String puuid) {
-        if (matchList == null || matchList.isEmpty()) return null;
-
-        int totalMatches = matchList.size();
-        int totalWins = (int) matchList.stream().filter(MatchHistoryDTO::isWin).count();
-        double winRate = round((double) totalWins / totalMatches * 100.0, 0);
-        double averageKills = matchList.stream().mapToInt(MatchHistoryDTO::getKills).average().orElse(0);
-        double averageDeaths = matchList.stream().mapToInt(MatchHistoryDTO::getDeaths).average().orElse(0);
-        double averageAssists = matchList.stream().mapToInt(MatchHistoryDTO::getAssists).average().orElse(0);
-        double averageKDA = matchList.stream().mapToDouble(MatchHistoryDTO::getKdaRatio).average().orElse(0);
-        double averageCs = matchList.stream().mapToInt(MatchHistoryDTO::getCs).average().orElse(0);
-
-        int totalMyKills = 0;
-        int totalMyAssists = 0;
-        int totalTeamKills = 0;
-
-        Map<String, Integer> champKills = new HashMap<>();
-        Map<String, Integer> champDeaths = new HashMap<>();
-        Map<String, Integer> champAssists = new HashMap<>();
-
-        for (MatchHistoryDTO match : matchList) {
-            List<MatchPlayerDTO> players = match.getMatchPlayers();
-            if (players == null || players.isEmpty()) continue;
-
-            MatchPlayerDTO me = players.stream()
-                    .filter(p -> p.getPuuid().equals(puuid))
-                    .findFirst()
-                    .orElse(null);
-            if (me == null) continue;
-
-            int myTeamId = me.getTeamId();
-
-            int teamKills = players.stream()
-                    .filter(p -> p.getTeamId() == myTeamId)
-                    .mapToInt(MatchPlayerDTO::getKills)
-                    .sum();
-
-            totalMyKills += me.getKills();
-            totalMyAssists += me.getAssists();
-            totalTeamKills += teamKills;
-
-            String champ = match.getChampionName();
-            champKills.merge(champ, match.getKills(), Integer::sum);
-            champDeaths.merge(champ, match.getDeaths(), Integer::sum);
-            champAssists.merge(champ, match.getAssists(), Integer::sum);
-        }
-
-        double killParticipation = MatchHelper.calculateKillParticipation(totalMyKills, totalMyAssists, totalTeamKills);
-
-        Map<String, Long> positionCounts = matchList.stream()
-                .map(match -> MatchHelper.normalizePosition(match.getTeamPosition()))
-                .filter(pos -> pos != null && !pos.equals("unknown"))
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-
-        int totalPositions = positionCounts.values().stream().mapToInt(Long::intValue).sum();
-
-        Map<String, Double> favoritePositions = positionCounts.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> round((double) e.getValue() * 100.0 / totalPositions, 1)
-                ));
-        // 모든 포지션 기본값 세팅
-        List<String> allPositions = List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY");
-
-        for (String pos : allPositions) {
-            favoritePositions.putIfAbsent(pos, 0.0);
-        }
-
-        List<String> sortedPositionList = allPositions.stream()
-                .sorted(Comparator.comparingDouble((String pos) ->
-                        -favoritePositions.getOrDefault(pos, 0.0)))
-                .toList();
-
-        // 포지션 선호도
-        String preferredPosition = positionCounts.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse("UNKNOWN");
-
-        log.info("favoritePositions = {}", favoritePositions);
-
-        // 챔피언별 경기 수
-        Map<String, Integer> championTotalGames = matchList.stream()
-                .collect(Collectors.toMap(
-                        MatchHistoryDTO::getChampionName,
-                        m -> 1,
-                        Integer::sum // 중복 키 처리
-                ));
-
-        // 챔피언 선호도 (이름: 사용횟수 JSON)
-        Map<String, Long> championUsage = matchList.stream()
-                .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName, Collectors.counting()));
-
-        List<String> top3Champions = championUsage.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(3)
-                .map(Map.Entry::getKey)
-                .toList();
-
-        // 챔피언별 승리 횟수
-        Map<String, Integer> championWins = matchList.stream()
-                .filter(MatchHistoryDTO::isWin)
-                .collect(Collectors.groupingBy(
-                        MatchHistoryDTO::getChampionName,
-                        Collectors.reducing(0, e -> 1, Integer::sum)
-                ));
-
-        // 챔피언별 승률
-        Map<String, List<MatchHistoryDTO>> groupedByChampion = matchList.stream()
-                .collect(Collectors.groupingBy(MatchHistoryDTO::getChampionName));
-
-        Map<String, Double> championWinRates = groupedByChampion.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> {
-                            List<MatchHistoryDTO> games = e.getValue();
-                            long wins = games.stream().filter(MatchHistoryDTO::isWin).count();
-                            return round((double) wins / games.size() * 100.0, 1);
-                        }
-                ));
-
-        // 게임네임/태그 가져오기 (캐시에서)
-        RiotIdCacheEntity riotId = riotIdCacheRepository.findByPuuid(puuid)
-                .orElse(RiotIdCacheEntity.ofDummy(puuid));
-
-        List<Map.Entry<String, Long>> sortedChampionList = championUsage.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .toList();
-
-        // 선호챔피언별 kdaRatio 계산
-        Map<String, Double> championKdaRatios = new HashMap<>();
-        for (String champ : champKills.keySet()) {
-            int kills = champKills.getOrDefault(champ, 0);
-            int deaths = champDeaths.getOrDefault(champ, 0);
-            int assists = champAssists.getOrDefault(champ, 0);
-
-            double kda = deaths == 0 ? (kills + assists) : (double) (kills + assists) / deaths;
-            kda = Math.round(kda * 100.0) / 100.0;
-            championKdaRatios.put(champ, kda);
-        }
-
-        return MatchOverallSummaryDTO.builder()
-                .puuid(puuid)
-                .gameName(riotId.getGameName())
-                .tagLine(riotId.getTagLine())
-                .totalMatches(totalMatches)
-                .totalWins(totalWins)
-                .winRate(round(winRate,0))
-                .averageKills(round(averageKills, 1))
-                .averageDeaths(round(averageDeaths, 1))
-                .averageAssists(round(averageAssists, 1))
-                .averageKda(round(averageKDA, 2))
-                .averageCs(round(averageCs, 1))
-                .killParticipation(round(killParticipation, 1))
-                .preferredPosition(preferredPosition)
-                .preferredChampions(top3Champions)
-                .positionCounts(positionCounts)
-                .favoritePositions(favoritePositions)
-                .sortedPositionList(sortedPositionList)
-                .sortedChampionList(sortedChampionList)
-                .championTotalGames(championTotalGames)
-                .championWins(championWins)
-                .championWinRates(championWinRates)
-                .championKdaRatios(championKdaRatios)
-                .build();
-    }
 
     // favorite_champion 테이블 -> dto로 map 리턴
     @Override

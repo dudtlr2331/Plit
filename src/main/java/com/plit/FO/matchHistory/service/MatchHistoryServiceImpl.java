@@ -426,7 +426,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
                     .positionWins(new HashMap<>())
                     .positionWinRates(new HashMap<>())
                     .favoritePositions(new LinkedHashMap<>())
-                    .sortedPositionList(List.of("TOP", "JUNGLE", "MID", "BOTTOM", "UTILITY"))
+                    .sortedPositionList(List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"))
                     .build();
         }
 
@@ -511,10 +511,7 @@ public class MatchHistoryServiceImpl implements MatchHistoryService { // 매치 
 
         int lose = total - wins;
 
-        List<String> sortedPositionList = favoritePositions.entrySet().stream()
-                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        List<String> sortedPositionList = List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY");
 
         System.out.println("[정렬된 챔피언 리스트] = " + sortedChampionList);
 

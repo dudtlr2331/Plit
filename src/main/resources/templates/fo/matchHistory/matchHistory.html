@@ -32,10 +32,10 @@
                 <span th:text="${summoner.gameName}">닉네임</span>
                 <span th:text="'#' + ${summoner.tagLine}">#</span>
             </h2>
-            <button onclick="updateMatch()">전적 갱신</button>
+            <button id="update-btn" class="update-btn" onclick="updateMatch()">전적 갱신</button>
             <input type="hidden" id="puuid" th:value="${summoner.puuid}" />
         </div>
-        
+
         <!-- 전적 검색창 -->
         <div class="search-section">
             <div class="search-box">
@@ -115,7 +115,7 @@
 
                     <!-- 전체 (현재 시즌) -->
                     <div class="champion-tab-content" data-mode="overall" style="display: block;">
-                        <div th:if="${overallChampions != null}">
+                        <div th:if="${overallChampions != null and !overallChampions.isEmpty()}">
                             <div class="champion-row"
                                  th:each="champ, iterStat : ${overallChampions}"
                                  th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
@@ -133,68 +133,82 @@
                                 </div>
                                 <div class="usage-info">
                                     <div class="usage-percent" th:text="|승률 ${champ.winRate}%|" style="color:#5b8ef4;"></div>
+                                    <div class="game-count" th:text="|${champ.gameCount}게임|">게임</div>
                                 </div>
                             </div>
                         </div>
+                        <div th:if="${overallChampions == null or overallChampions.isEmpty()}" style="text-align: center; padding: 20px; color: #888;">
+                            <p>전체 전적 데이터가 없습니다.</p>
+                        </div>
 
                         <!-- 더보기/닫기 버튼 -->
-                        <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
+                        <button class="show-more-button" onclick="showMoreChampions(this)" th:if="${overallChampions != null and overallChampions.size() > 6}">더보기</button>
                         <button class="show-less-button" onclick="showLessChampions(this)" style="display:none;">닫기</button>
                     </div>
 
                     <!-- 개인/2인 랭크 -->
                     <div class="champion-tab-content" data-mode="solo">
-                        <div class="champion-row"
-                             th:each="champ, iterStat : ${soloChampions}"
-                             th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
+                        <div th:if="${soloChampions != null and !soloChampions.isEmpty()}">
+                            <div class="champion-row"
+                                 th:each="champ, iterStat : ${soloChampions}"
+                                 th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
-                            <div class="champion-icon">
-                                <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
+                                <div class="champion-icon">
+                                    <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
+                                </div>
+                                <div class="champion-info">
+                                    <div class="champ-name" th:text="${champ.korName}"></div>
+                                    <div class="cs-info" th:text="|CS ${champ.averageCs} (${champ.csPerMin})|">CS</div>
+                                </div>
+                                <div class="kda-info">
+                                    <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 1, 1)} + ':1 평점'">평점</div>
+                                    <div class="kda" th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}"></div>
+                                </div>
+                                <div class="usage-info">
+                                    <div class="usage-percent" th:text="|승률 ${champ.winRate}%|" style="color:#5b8ef4;"></div>
+                                    <div class="game-count" th:text="|${champ.gameCount}게임|">게임</div>
+                                </div>
                             </div>
-                            <div class="champion-info">
-                                <div class="champ-name" th:text="${champ.korName}"></div>
-                                <div class="cs-info" th:text="|CS ${champ.averageCs} (${champ.csPerMin})|">CS</div>
-                            </div>
-                            <div class="kda-info">
-                                <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2)} + ':1 평점'">평점</div>
-                                <div class="kda" th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}"></div>
-                            </div>
-                            <div class="usage-info">
-                                <div class="usage-percent" th:text="|승률 ${champ.winRate}%|" style="color:#5b8ef4;"></div>
-                                <div class="game-count" th:text="|${champ.gameCount}게임|">게임</div>
-                            </div>
+                        </div>
+                        <div th:if="${soloChampions == null or soloChampions.isEmpty()}" style="text-align: center; padding: 20px; color: #888;">
+                            <p>개인/2인 랭크 전적 데이터가 없습니다.</p>
                         </div>
 
                         <!-- 더보기/닫기 버튼 -->
-                        <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
+                        <button class="show-more-button" onclick="showMoreChampions(this)" th:if="${soloChampions != null and soloChampions.size() > 6}">더보기</button>
                         <button class="show-less-button" onclick="showLessChampions(this)" style="display:none;">닫기</button>
 
                     </div>
 
                     <!-- 자유 랭크 -->
                     <div class="champion-tab-content" data-mode="flex">
-                        <div class="champion-row"
-                             th:each="champ, iterStat : ${flexChampions}"
-                             th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
+                        <div th:if="${flexChampions != null and !flexChampions.isEmpty()}">
+                            <div class="champion-row"
+                                 th:each="champ, iterStat : ${flexChampions}"
+                                 th:classappend="${iterStat.index > 5} ? 'hidden-champ'">
 
-                            <div class="champion-icon">
-                                <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
+                                <div class="champion-icon">
+                                    <img th:src="${champ.championImageUrl}" alt="챔피언 이미지">
+                                </div>
+                                <div class="champion-info">
+                                    <div class="champ-name" th:text="${champ.korName}"></div>
+                                    <div class="cs-info" th:text="|CS ${champ.averageCs} (${champ.csPerMin})|">CS</div>
+                                </div>
+                                <div class="kda-info">
+                                    <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 1, 1)} + ':1 평점'">평점</div>
+                                    <div class="kda" th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}"></div>
+                                </div>
+                                <div class="usage-info">
+                                    <div class="usage-percent" th:text="|승률 ${champ.winRate}%|" style="color:#5b8ef4;"></div>
+                                </div>
                             </div>
-                            <div class="champion-info">
-                                <div class="champ-name" th:text="${champ.korName}"></div>
-                                <div class="cs-info" th:text="|CS ${champ.averageCs} (${champ.csPerMin})|">CS</div>
-                            </div>
-                            <div class="kda-info">
-                                <div class="kda-ratio" th:text="${#numbers.formatDecimal(champ.kdaRatio, 2, 2)} + ':1 평점'">평점</div>
-                                <div class="kda" th:text="${champ.kills + ' / ' + champ.deaths + ' / ' + champ.assists}"></div>
-                            </div>
-                            <div class="usage-info">
-                                <div class="usage-percent" th:text="|승률 ${champ.winRate}%|" style="color:#5b8ef4;"></div>
-                            </div>
+                        </div>
+                        <div th:if="${flexChampions == null or flexChampions.isEmpty()}" style="text-align: center; padding: 20px; color: #888;">
+                            <p>자유 랭크 전적 데이터가 없습니다.</p>
                         </div>
 
                         <!-- 더보기/닫기 버튼 -->
-                        <button class="show-more-button" onclick="showMoreChampions(this)">더보기</button>
+                        <button class="show-more-button" onclick="showMoreChampions(this)" th:if="${flexChampions != null and flexChampions.size() > 6}">더보기</button>
                         <button class="show-less-button" onclick="showLessChampions(this)" style="display:none;">닫기</button>
 
                     </div>
@@ -204,7 +218,7 @@
 
         <!-- 오른쪽 파넬 -->
         <div class="right-panel">
-                
+
             <!-- ===== 최근 게임 요약 섹션 ===== -->
             <section class="recent-games-summary">
 
@@ -292,12 +306,13 @@
                                                         (0승 / 0패)
                                                     </span>
                                                     <span class="champion-rating"
-                                                         th:classappend="${summary.averageKda >= 5} ? 'kda-great' :
-                                                                        (${summary.averageKda >= 4} ? 'kda-good' :
-                                                                        (${summary.averageKda >= 3} ? 'kda-mid' : 'kda-low'))"
-                                                         th:text="${#numbers.formatDecimal(summary.averageKda, 1, 2)} + ':1 평점'">
-                                                        0.00:1 평점
+                                                          th:classappend="${entry.value >= 5} ? 'kda-great' :
+                                                              (${entry.value >= 4} ? 'kda-good' :
+                                                              (${entry.value >= 3} ? 'kda-mid' : 'kda-low'))"
+                                                          th:text="${#numbers.formatDecimal(entry.value, 1, 1)} + ':1 평점'">
+                                                        0.0:1 평점
                                                     </span>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -320,6 +335,19 @@
                                 </div>
                             </div>
                         </div>
+<!--                        <div class="summary-position"-->
+<!--                             th:if="${overallSummary != null and overallSummary.sortedPositionList != null and !overallSummary.sortedPositionList.isEmpty()}">-->
+<!--                            <div class="position-bar-container-vertical">-->
+<!--                                <div class="position-column" th:each="positionStr : ${overallSummary.rankedSortedPositionList}">-->
+<!--                                    <div class="position-bar-vertical">-->
+<!--                                        <div class="fill"-->
+<!--                                             th:style="|height: ${#numbers.formatDecimal(overallSummary.rankedFavoritePositions.get(positionStr), 0, 1)}%;|">-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                    <img th:src="@{'/images/position/' + ${positionStr} + '.svg'}" alt="position icon" class="position-icon" />-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
                     </div>
                 </div>
             </section>
@@ -478,20 +506,20 @@
                                 <div class="bar-row">
                                     <div class="bar-label red-text">Total Kill</div>
                                     <div class="bar-wrapper">
-                                        <div class="bar red" id="red-kill-bar"></div>
-                                        <div class="bar blue" id="blue-kill-bar"></div>
+                                        <div class="bar red" th:id="|red-kill-bar-${match.matchId}|"></div>
+                                        <div class="bar blue" th:id="|blue-kill-bar-${match.matchId}|"></div>
                                     </div>
-                                    <div class="bar-count red-text" id="red-kill-count">0</div>
-                                    <div class="bar-count blue-text" id="blue-kill-count">0</div>
+                                    <div class="bar-count red-text" th:id="|red-kill-count-${match.matchId}|">0</div>
+                                    <div class="bar-count blue-text" th:id="|blue-kill-count-${match.matchId}|">0</div>
                                 </div>
                                 <div class="bar-row">
                                     <div class="bar-label red-text">Total Gold</div>
                                     <div class="bar-wrapper">
-                                        <div class="bar red" id="red-gold-bar"></div>
-                                        <div class="bar blue" id="blue-gold-bar"></div>
+                                        <div class="bar red" th:id="|red-gold-bar-${match.matchId}|"></div>
+                                        <div class="bar blue" th:id="|blue-gold-bar-${match.matchId}|"></div>
                                     </div>
-                                    <div class="bar-count red-text" id="red-gold-count">0</div>
-                                    <div class="bar-count blue-text" id="blue-gold-count">0</div>
+                                    <div class="bar-count red-text" th:id="|red-gold-count-${match.matchId}|">0</div>
+                                    <div class="bar-count blue-text" th:id="|blue-gold-count-${match.matchId}|">0</div>
                                 </div>
                             </div>
 
@@ -513,7 +541,7 @@
             <div th:if="${#lists.isEmpty(matchList)}">
                 <p>불러온 전적이 없습니다.</p>
             </div>
-            
+
         </div>
     </div>
 

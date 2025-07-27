@@ -1,6 +1,7 @@
 package com.plit.FO.matchHistory.controller;
 
 import com.plit.FO.matchHistory.dto.*;
+import com.plit.FO.matchHistory.dto.db.MatchHistoryDTO;
 import com.plit.FO.matchHistory.dto.db.MatchDetailDTO;
 import com.plit.FO.matchHistory.dto.db.MatchOverallSummaryDTO;
 import com.plit.FO.matchHistory.entity.RiotIdCacheEntity;
@@ -86,15 +87,47 @@ public class MatchHistoryController {
         MatchOverallSummaryDTO overallSummary = matchDbService.getOverallSummary(puuid);
         model.addAttribute("overallSummary", overallSummary);
 
-        // 선호 챔피언
-        Map<String, List<FavoriteChampionDTO>> favoriteChampionsMap = matchDbService.getFavoriteChampionsAll(puuid);
-        model.addAttribute("favoriteChampionsByMode", favoriteChampionsMap);
+//        // 선호 챔피언
+//        Map<String, List<FavoriteChampionDTO>> favoriteChampionsMap = matchDbService.getFavoriteChampionsAll(puuid);
+//        model.addAttribute("favoriteChampionsByMode", favoriteChampionsMap);
 
-        List<FavoriteChampionDTO> overall = matchDbService.getFavoriteChampions(puuid, "overall");
-        model.addAttribute("overallChampions", overall);
-        model.addAttribute("soloChampions", favoriteChampionsMap.get("solo"));
-        model.addAttribute("flexChampions", favoriteChampionsMap.get("flex"));
+//        List<FavoriteChampionDTO> overall = matchDbService.getFavoriteChampions(puuid, "overall");
+//        model.addAttribute("overallChampions", overall);
+//        model.addAttribute("soloChampions", favoriteChampionsMap.get("solo"));
+//        model.addAttribute("flexChampions", favoriteChampionsMap.get("flex"));
 
+        // 선호 챔피언 - 전체 매치 데이터 기반으로 큐타입별 계산
+        List<MatchHistoryDTO> allMatches = matchDbService.getAllMatchSummaryFromDB(puuid);
+
+        // 전체 (모든 랭크 게임)
+        List<MatchHistoryDTO> overallMatches = allMatches.stream()
+                .filter(match -> "420".equals(match.getQueueType()) || "440".equals(match.getQueueType()))
+                .collect(Collectors.toList());
+        System.out.println("[DEBUG] 전체 탭 매치 수: " + overallMatches.size());
+        List<FavoriteChampionDTO> overallChampions = matchDbService.calculateFavoriteChampions(overallMatches, "overall", puuid);
+        System.out.println("[DEBUG] 전체 탭 챔피언 수: " + (overallChampions != null ? overallChampions.size() : 0));
+
+        // 솔로랭크 (420)
+        List<MatchHistoryDTO> soloMatches = allMatches.stream()
+                .filter(match -> "420".equals(match.getQueueType()))
+                .collect(Collectors.toList());
+        System.out.println("[DEBUG] 솔로랭크 매치 수: " + soloMatches.size());
+        List<FavoriteChampionDTO> soloChampions = matchDbService.calculateFavoriteChampions(soloMatches, "solo", puuid);
+        System.out.println("[DEBUG] 솔로랭크 챔피언 수: " + (soloChampions != null ? soloChampions.size() : 0));
+
+        // 자유랭크 (440)
+        List<MatchHistoryDTO> flexMatches = allMatches.stream()
+                .filter(match -> "440".equals(match.getQueueType()))
+                .collect(Collectors.toList());
+        System.out.println("[DEBUG] 자유랭크 매치 수: " + flexMatches.size());
+        List<FavoriteChampionDTO> flexChampions = matchDbService.calculateFavoriteChampions(flexMatches, "flex", puuid);
+        System.out.println("[DEBUG] 자유랭크 챔피언 수: " + (flexChampions != null ? flexChampions.size() : 0));
+        System.out.println("=== DEBUG END ===");
+
+        // null 체크 및 빈 리스트 처리
+        model.addAttribute("overallChampions", overallChampions != null ? overallChampions : new ArrayList<>());
+        model.addAttribute("soloChampions", soloChampions != null ? soloChampions : new ArrayList<>());
+        model.addAttribute("flexChampions", flexChampions != null ? flexChampions : new ArrayList<>());
 
         // 챔피언별 전적 비율 계산
         int totalChampionGames = dto.getSummary().getTotalCount();
@@ -206,7 +239,7 @@ public class MatchHistoryController {
     // 테스트 - 테이블에 정보 넣기
     @GetMapping("/test-init")
     @ResponseBody
-    public String testInit() {
+    public String testInit() { // 한꺼번에 초기화 시키면 키 제한 걸림
         log.info("testInit() 실행됨");
 
 //        matchDbService.saveMatchSummaryAndPlayers("어리고싶다", "KR1", "MASTER");
@@ -218,7 +251,7 @@ public class MatchHistoryController {
 //        matchDbService.saveMatchSummaryAndPlayers("죽기장인", "KR1", "GRANDMASTER");
 //        matchDbService.saveMatchSummaryAndPlayers("kiin", "KR1", "DIAMOND1");
 //        matchDbService.saveMatchSummaryAndPlayers("귀찮게하지마", "KR3", "MASTER");
-        matchDbService.saveMatchSummaryAndPlayers("파피몬", "1111", "DIAMOND3");
+//        matchDbService.saveMatchSummaryAndPlayers("파피몬", "1111", "DIAMOND3");
 //        matchDbService.saveMatchSummaryAndPlayers("파이리", "1217", "MASTER");
 
 //        matchDbService.saveOnlyOverallSummary("어리고싶다", "KR1", "MASTER");

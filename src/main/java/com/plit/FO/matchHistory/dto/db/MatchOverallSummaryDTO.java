@@ -1,7 +1,7 @@
 package com.plit.FO.matchHistory.dto.db;
 
-import com.plit.FO.matchHistory.entity.MatchOverallSummaryEntity;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +43,9 @@ public class MatchOverallSummaryDTO {
     private List<String> sortedPositionList;
     private String preferredPositionImageUrl;
     private List<String> favoriteChampionImageUrls;
+
+    private Map<String, Double> rankedFavoritePositions;
+    private List<String> rankedSortedPositionList;
 
 
     public int getLoseCount() {

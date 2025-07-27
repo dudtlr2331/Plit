@@ -305,11 +305,23 @@ body {
     min-width: 0;
 }
 
+/*.champion-list .champ-name {*/
+/*    font-size: 13px;*/
+/*    font-weight: bold;*/
+/*    color: #202d37;*/
+/*    margin-bottom: 2px;*/
+/*}*/
+
 .champion-list .champ-name {
     font-size: 13px;
     font-weight: bold;
-    color: #202d37;
+    color: #202D37;
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
 }
 
 .champion-list .cs-info {
@@ -360,6 +372,16 @@ body {
 
 .champion-tab-content {
     display: none;
+}
+
+.champion-tab-content {
+    transition: opacity 0.3s ease;
+}
+.champion-tab-content[style*="display: none"] {
+    opacity: 0;
+}
+.champion-tab-content[style*="display: block"] {
+    opacity: 1;
 }
 
 .champion-tab-content[data-mode="overall"] {
@@ -1895,3 +1917,27 @@ body {
     height: 20px;
 }
 
+.update-btn {
+    background: #6570b4 !important;
+    color: white !important;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s ease-in-out;
+}
+
+.update-btn.loading {
+    background: linear-gradient(270deg, #8e44ad, #9b59b6, #8e44ad) !important;
+    background-size: 400% 400%;
+    animation: gradientFlow 2s ease infinite;
+}
+
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}

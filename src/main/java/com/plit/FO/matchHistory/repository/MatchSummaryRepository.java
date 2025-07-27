@@ -21,4 +21,7 @@ public interface MatchSummaryRepository extends JpaRepository<MatchSummaryEntity
     List<String> findMatchIdsByPuuid(@Param("puuid") String puuid);
 
     List<MatchSummaryEntity> findByPuuid(String puuid);
+
+    // 해당 유저의 전체 매치 데이터를 gameEndTimestamp 기준으로 내림차순 정렬해서 가져옴
+    List<MatchSummaryEntity> findByPuuidOrderByGameEndTimestampDesc(String puuid);
 }

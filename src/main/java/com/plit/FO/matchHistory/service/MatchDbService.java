@@ -28,6 +28,9 @@ public interface MatchDbService {
 
     List<MatchHistoryDTO> getRecentMatchHistories(String puuid);
 
+    // 전체 매치 데이터 조회 (선호 챔피언 계산용)
+    List<MatchHistoryDTO> getAllMatchSummaryFromDB(String puuid);
+
     String findPuuidInCache(String normalizedGameName, String normalizedTagLine);
     void saveRiotIdCache(String gameName, String tagLine, String normalizedGameName, String normalizedTagLine, String puuid);
 
@@ -50,8 +53,9 @@ public interface MatchDbService {
 
     Map<String, List<FavoriteChampionDTO>> getFavoriteChampionsAll(String puuid);
 
-    // 존재하지 않은 경우 전체 최초 저장
-    void fetchAndSaveAllIfNotExists(String puuid, String tagLine);
+//    // 존재하지 않은 경우 전체 최초 저장
+//    void fetchAndSaveAllIfNotExists(String puuid, String tagLine);
+
     // 기존 전적 최신화용
     void updateMatchHistory(String puuid);
 
@@ -60,7 +64,6 @@ public interface MatchDbService {
     // 어리고싶다#kr1 저장 샘플
     void testSave(String gameName, String tagLine, String tier);
 
-//    UserMatchSummaryDTO getUserMatchSummary(String puuid);
     void saveOnlyOverallSummary(String gameName, String tagLine, String tier);
 
     MatchOverallSummaryDTO getOverallSummary(String puuid);

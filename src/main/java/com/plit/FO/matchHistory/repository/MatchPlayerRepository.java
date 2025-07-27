@@ -9,4 +9,6 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayerEntity, 
 
     // 매치 ( 하나의 matchId ) 안의 플레이어 정보 전부
     List<MatchPlayerEntity> findByMatchId(String matchId);
+
+    boolean existsByMatchIdAndPuuid(String matchId, String puuid);
 }

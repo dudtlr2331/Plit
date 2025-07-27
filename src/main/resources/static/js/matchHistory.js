@@ -9,23 +9,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // 왼쪽 파넬 - 랭크 모드별 선호챔피언 정보
     const buttons = document.querySelectorAll(".tab-button");
 
+    // function activateTab(mode) {
+    //     const tabContents = document.querySelectorAll(".champion-tab-content");
+    //     // 버튼 클래스 갱신
+    //     buttons.forEach(btn => btn.classList.toggle("active", btn.dataset.mode === mode));
+    //     tabContents.forEach(tab => {
+    //         const isActive = tab.dataset.mode === mode;
+    //         tab.style.display = isActive ? "block" : "none";
+    //
+    //         const rows = tab.querySelectorAll(".champion-row");
+    //         const moreBtn = tab.querySelector(".show-more-button");
+    //
+    //         rows.forEach((row, i) => {
+    //             row.classList.toggle("hidden-champ", i >= 6);
+    //         });
+    //
+    //         if (moreBtn) {
+    //             moreBtn.style.display = rows.length > 6 ? "block" : "none";
+    //         }
+    //     });
+    // }
+
     function activateTab(mode) {
         const tabContents = document.querySelectorAll(".champion-tab-content");
-        // 버튼 클래스 갱신
         buttons.forEach(btn => btn.classList.toggle("active", btn.dataset.mode === mode));
         tabContents.forEach(tab => {
             const isActive = tab.dataset.mode === mode;
             tab.style.display = isActive ? "block" : "none";
-
-            const rows = tab.querySelectorAll(".champion-row");
-            const moreBtn = tab.querySelector(".show-more-button");
-
-            rows.forEach((row, i) => {
-                row.classList.toggle("hidden-champ", i >= 6);
-            });
-
-            if (moreBtn) {
-                moreBtn.style.display = rows.length > 6 ? "block" : "none";
+            if (isActive) {
+                const rows = tab.querySelectorAll(".champion-row");
+                const moreBtn = tab.querySelector(".show-more-button");
+                const lessBtn = tab.querySelector(".show-less-button");
+                // 탭 전환 시 더보기/닫기 상태 초기화
+                rows.forEach((row, i) => {
+                    row.classList.toggle("hidden-champ", i >= 6);
+                });
+                if (moreBtn) {
+                    moreBtn.style.display = rows.length > 6 ? "block" : "none";
+                }
+                if (lessBtn) {
+                    lessBtn.style.display = "none";
+                }
             }
         });
     }
@@ -117,7 +141,7 @@ function showMoreChampions(button) {
     const parent = button.closest('.champion-tab-content');
     const rows = parent.querySelectorAll('.champion-row');
     const lessBtn = parent.querySelector('.show-less-button');
-    
+
     // 현재 보이는 챔피언 수 계산
     let visibleCount = 0;
     rows.forEach(row => {
@@ -125,16 +149,16 @@ function showMoreChampions(button) {
             visibleCount++;
         }
     });
-    
+
     // 6개씩 추가로 보이게 하기
     const nextCount = visibleCount + 6;
-    
+
     rows.forEach((row, index) => {
         if (index < nextCount) {
             row.classList.remove('hidden-champ');
         }
     });
-    
+
     // 모든 챔피언이 보이면 더보기 버튼 숨기고 닫기 버튼 표시
     if (nextCount >= rows.length) {
         button.style.display = 'none';
@@ -157,7 +181,7 @@ function showLessChampions(button) {
     });
 
     button.style.display = 'none';
-    
+
     if (moreBtn) {
         moreBtn.style.display = 'block';
     }
@@ -196,16 +220,16 @@ function loadMatchDetail(element) {
                 // 실제 데이터가 없으면 기본값 사용
                 const values = team === 'blue' ? {
                     baron: 0,
-                    dragon: 3,
-                    herald: 0,
+                    dragon: 0,
+                    herald: 1,
                     atakhan: 0,
                     rift: 0,
                     tower: 1,
                     inhibitor: 0
                 } : {
-                    baron: 1,
-                    dragon: 1,
-                    herald: 1,
+                    baron: 0,
+                    dragon: 2,
+                    herald: 0,
                     atakhan: 1,
                     rift: 3,
                     tower: 8,
@@ -230,22 +254,27 @@ function loadMatchDetail(element) {
             // 실제 데이터 사용
             console.log('Blue Objectives:', data.blueObjectives);
             console.log('Red Objectives:', data.redObjectives);
-            detailBox.querySelector('.left-objectives').innerHTML = buildTeamObjectiveIcons(data.blueObjectives, blueColorClass);
-            detailBox.querySelector('.right-objectives').innerHTML = buildTeamObjectiveIcons(data.redObjectives, redColorClass);
+            detailBox.querySelector('.left-objectives').innerHTML = buildTeamObjectiveIcons('blue', blueColorClass);
+            detailBox.querySelector('.right-objectives').innerHTML = buildTeamObjectiveIcons('red', redColorClass);
 
             // 킬/골드는 그대로 유지
-            updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, 'red-kill-bar', 'blue-kill-bar', 'red-kill-count', 'blue-kill-count');
-            updateObjectiveBar(data.redObjectives.totalGold, data.blueObjectives.totalGold, 'red-gold-bar', 'blue-gold-bar', 'red-gold-count', 'blue-gold-count');
+            // updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, 'red-kill-bar', 'blue-kill-bar', 'red-kill-count', 'blue-kill-count');
+            // updateObjectiveBar(data.redObjectives.totalGold, data.blueObjectives.totalGold, 'red-gold-bar', 'blue-gold-bar', 'red-gold-count', 'blue-gold-count');
 
+            updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, `red-kill-bar-${matchId}`, `blue-kill-bar-${matchId}`, `red-kill-count-${matchId}`, `blue-kill-count-${matchId}`);
+            updateObjectiveBar(data.redObjectives.totalGold, data.blueObjectives.totalGold, `red-gold-bar-${matchId}`, `blue-gold-bar-${matchId}`, `red-gold-count-${matchId}`, `blue-gold-count-${matchId}`);
 
 
             // bar 업데이트
-            updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, 'red-kill-bar', 'blue-kill-bar', 'red-kill-count', 'blue-kill-count');
-            updateObjectiveBar(data.redObjectives.totalGold, data.blueObjectives.totalGold, 'red-gold-bar', 'blue-gold-bar', 'red-gold-count', 'blue-gold-count');
+            // updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, 'red-kill-bar', 'blue-kill-bar', 'red-kill-count', 'blue-kill-count');
+            // updateObjectiveBar(data.redObjectives.totalGold, data.blueObjectives.totalGold, 'red-gold-bar', 'blue-gold-bar', 'red-gold-count', 'blue-gold-count');
 
-            const controlWards = [4, 2, 1, 3, 9, 3, 11, 0, 1, 2];
-            const wardsPlaced  = [11, 7, 1, 14, 46, 5, 29, 7, 7, 6];
-            const wardsKilled  = [2, 1, 5, 3, 12, 3, 14, 9, 4, 2];
+            updateObjectiveBar(data.redObjectives.totalKills, data.blueObjectives.totalKills, `red-kill-bar-${matchId}`, `blue-kill-bar-${matchId}`, `red-kill-count-${matchId}`, `blue-kill-count-${matchId}`);
+            updateObjectiveBar(data.redObjectives.totalGold, data.blueObjectives.totalGold, `red-gold-bar-${matchId}`, `blue-gold-bar-${matchId}`, `red-gold-count-${matchId}`, `blue-gold-count-${matchId}`);
+
+            const controlWards = [4, 4, 5, 1, 3, 1, 3, 3, 2, 3];
+            const wardsPlaced  = [9, 6, 13, 7, 18, 3, 11, 4, 8, 21];
+            const wardsKilled  = [1, 1, 0, 3, 7, 2, 2, 3, 4, 8];
 
             // 나머지 makeRow, 테이블 구성도 동일하게 유지
             const makeRow = (player, i) => {
@@ -260,8 +289,8 @@ function loadMatchDetail(element) {
 
 
                 const summonerNames = [
-                    "쨍클", "Shining Star", "파이리", "파닥몬", "원딜은버리고…",
-                    "케케로인!", "안전불감증", "손가락인생", "내가 정점에 …", "Misfit"
+                    "전민혁", "수댕이", "Sama", "귀찮게하지마", "yizong777",
+                    "착한척하지마", "명치에팔콘펀치꽂는이도윤", "홍 시", "黑夜问白天", "액체괴물 자크"
                 ];
 
                 const spellIdToImage = {
@@ -280,14 +309,13 @@ function loadMatchDetail(element) {
 
                 const spell1Names = [
                     "Flash", "Flash", "Flash", "Flash", "Flash",
-                    "Flash", "Flash", "Flash", "Flash", "Flash"
+                    "Flash", "Flash", "Teleport", "Boost", "Barrier"
                 ];
 
                 const spell2Names = [
-                    "Smite", "Ignite", "Ignite", "Teleport", "Ignite",
-                    "Smite", "Ignite", "Ignite", "Heal", "Teleport"
+                    "Teleport", "Smite", "Teleport", "Barrier", "Ignite",
+                    "Teleport", "Smite", "Flash", "Flash", "Flash"
                 ];
-
 
 
                 const runeIdToUrl = {
@@ -360,21 +388,21 @@ function loadMatchDetail(element) {
                 };
 
                 const tierNames = [ // 티어는 키 제한으로 인해 하드코딩으로 처리
-                    "Platinum 3", "Bronze 3", "Master", "Bronze 1", "Master",
-                    "Platinum 3", "Iron 1", "Emerald 3", "Diamond 2", "Platinum 2"
+                    "Grandmaster", "Grandmaster", "Grandmaster", "Challenger", "Grandmaster",
+                    "Grandmaster", "Grandmaster", "Challenger", "Grandmaster", "Grandmaster"
                 ];
 
                 const tierImageUrls = [
-                    "/images/tier/PLATINUM.png",
-                    "/images/tier/BRONZE.png",
-                    "/images/tier/MASTER.png",
-                    "/images/tier/BRONZE.png",
-                    "/images/tier/MASTER.png",
-                    "/images/tier/PLATINUM.png",
-                    "/images/tier/IRON.png",
-                    "/images/tier/EMERALD.png",
-                    "/images/tier/DIAMOND.png",
-                    "/images/tier/PLATINUM.png"
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/CHALLENGER.png",
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/CHALLENGER.png",
+                    "/images/tier/GRANDMASTER.png",
+                    "/images/tier/GRANDMASTER.png"
                 ];
 
                 const mainRune1Ids = [8005, 8005, 8005, 8005, 8005, 8005, 8005, 8005, 8005, 8005];
@@ -498,26 +526,34 @@ function initMatch() {
         .then(msg => alert(msg))
         .catch(err => alert("초기화 실패: " + err));
 }
-
 function updateMatch() {
     const puuid = document.getElementById("puuid").value;
+    const updateBtn = document.getElementById("update-btn");
 
     if (!puuid) {
         alert("소환사 정보가 없습니다.");
         return;
     }
 
-    if (!confirm("전적을 최신 상태로 갱신하시겠습니까?")) return;
+    if (updateBtn) {
+        updateBtn.disabled = true;
+        updateBtn.innerText = "갱신 중...";
+        updateBtn.classList.add("loading");
+    }
 
     fetch(`/match/update?puuid=${puuid}`)
         .then(res => res.text())
         .then(msg => {
-            alert(msg || "전적 갱신 완료!");
             location.reload();
         })
         .catch(err => {
             alert("갱신 중 오류가 발생했습니다.");
             console.error(err);
+            if (updateBtn) {
+                updateBtn.disabled = false;
+                updateBtn.innerText = "전적 갱신";
+                updateBtn.classList.remove("loading");
+            }
         });
 }
 
@@ -533,7 +569,7 @@ function updateObjectiveBar(redValue, blueValue, redBarId, blueBarId, redTextId,
     const safeRedValue = redValue || 0;
     const safeBlueValue = blueValue || 0;
     const total = safeRedValue + safeBlueValue || 1;
-    
+
     const redPercent = (safeRedValue / total) * 100;
     const bluePercent = (safeBlueValue / total) * 100;
 
