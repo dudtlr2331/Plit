@@ -164,9 +164,8 @@ public class ClanServiceImpl implements ClanService {
             ClanEntity clan = clanRepository.findById(clanId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 클랜입니다."));
 
-            if (!clan.getLeaderId().equals(userId)) {
-                throw new AccessDeniedException("내가 만든 클랜만 삭제할 수 있어요!");
-            }
+            // 권한 체크는 Controller에서 처리하므로 Service에서는 제거
+            // Controller의 isLeaderOrAdmin 메서드에서 리더 또는 관리자 권한을 체크함
 
             clan.setUseYn("N");
             clanRepository.save(clan);
