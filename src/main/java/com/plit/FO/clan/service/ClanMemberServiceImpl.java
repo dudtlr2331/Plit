@@ -280,6 +280,9 @@ public class ClanMemberServiceImpl implements ClanMemberService {
         leader.setRole("MEMBER");
         target.setRole("LEADER");
         clan.setLeaderId(toUserSeq);
+        
+        // 데이터베이스에 변경사항 저장
+        clanRepository.save(clan);
     }
 
     @Override

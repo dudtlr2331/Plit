@@ -192,18 +192,15 @@ public class ClanController {
                 }
             }
 
+            // 리더 정보 처리 - 멤버 리스트에서 리더를 찾아서 역할 설정
             if (clan.getLeaderId() != null) {
-                clanMemberService.findByClanIdAndUserId(id, clan.getLeaderId()).ifPresent(leaderDto -> {
-                    leaderDto.setRole("LEADER");
-                    leaderDto.setIntro(leaderDto.getIntro() != null ? leaderDto.getIntro() : "리더입니다");
-
-                    boolean alreadyInList = members.stream()
-                            .anyMatch(m -> m.getUserId() != null && m.getUserId().equals(leaderDto.getUserId()));
-
-                    if (!alreadyInList) {
-                        members.add(leaderDto);
-                    }
-                });
+                members.stream()
+                        .filter(member -> member.getUserId() != null && member.getUserId().equals(clan.getLeaderId()))
+                        .findFirst()
+                        .ifPresent(leaderMember -> {
+                            leaderMember.setRole("LEADER");
+                            leaderMember.setIntro(leaderMember.getIntro() != null ? leaderMember.getIntro() : "리더입니다");
+                        });
             }
 
             Long leaderId = clan.getLeaderId();
