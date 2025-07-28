@@ -123,7 +123,7 @@ public class MatchOverallSummaryEntity {
                 .sortedPositionList(List.of("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"))
                 .positionCounts(positionMap)
                 .preferredChampions(championList)
-                .killParticipation(round(this.killParticipation, 1))
+                .killParticipation(this.killParticipation != null ? round(this.killParticipation, 1) : 0.0)
                 .createdAt(this.createdAt)
                 .build();
     }

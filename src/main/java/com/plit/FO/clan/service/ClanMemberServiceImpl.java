@@ -109,11 +109,16 @@ public class ClanMemberServiceImpl implements ClanMemberService {
                             dto.setPreferredChampions(String.join(", ", summaryDto.getPreferredChampions()));
                             dto.setWinRate(summaryDto.getWinRate());
 
-                            List<String> championImageUrls = summaryDto.getPreferredChampions().stream()
-                                    .map(String::trim)
-                                    .map(name -> imageService.getImageUrl(name + ".png", "champion"))
-                                    .toList();
-                            dto.setChampionImageUrls(championImageUrls);
+                            try {
+                                List<String> championImageUrls = summaryDto.getPreferredChampions().stream()
+                                        .map(String::trim)
+                                        .map(name -> imageService.getImageUrl(name + ".png", "champion"))
+                                        .toList();
+                                dto.setChampionImageUrls(championImageUrls);
+                            } catch (Exception e) {
+                                System.err.println("챔피언 이미지 처리 중 오류: " + e.getMessage());
+                                dto.setChampionImageUrls(null);
+                            }
 
                             dto.setTotalWins(summaryDto.getTotalWins());
                             dto.setTotalLosses(summaryDto.getTotalMatches() - summaryDto.getTotalWins());
@@ -144,10 +149,16 @@ public class ClanMemberServiceImpl implements ClanMemberService {
                                 dto.setTierShort("Unranked");
                             }
 
-                            RiotSummonerResponse response = riotApiService.getSummonerByPuuid(user.getPuuid());
-                            if (response != null) {
-                                String profileIconUrl = imageService.getProfileIconUrl(response.getProfileIconId());
-                                dto.setProfileIconUrl(profileIconUrl);
+                            try {
+                                RiotSummonerResponse response = riotApiService.getSummonerByPuuid(user.getPuuid());
+                                if (response != null) {
+                                    String profileIconUrl = imageService.getProfileIconUrl(response.getProfileIconId());
+                                    dto.setProfileIconUrl(profileIconUrl);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("소환사 정보 처리 중 오류: " + e.getMessage());
+                                // 기본값 설정
+                                dto.setProfileIconUrl("/images/clan/clan_default.png");
                             }
                         } catch (Exception e) {
                             System.err.println("요약 정보 처리 중 오류: " + e.getMessage());
