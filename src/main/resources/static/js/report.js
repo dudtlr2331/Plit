@@ -149,4 +149,35 @@ document.addEventListener("DOMContentLoaded", function () {
         const nickname = button.getAttribute("data-nickname");
         openReportPopupWith(nickname);
     }
+
+    const searchInput = document.querySelector('.search-bar input[type="text"]');
+    const searchBtn = document.querySelector('.search-bar button');
+
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', handleSearch);
+        // 엔터 입력 시에도 검색
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+    }
+
+    function handleSearch() {
+        const keyword = searchInput.value.trim().toLowerCase(); // 입력한 검색어
+        const rows = document.querySelectorAll('table tbody tr');
+
+        rows.forEach(row => {
+            const nameCell = row.querySelector('.summoner-name');
+            if (!nameCell) return;
+
+            const nameText = nameCell.textContent.trim().toLowerCase();
+            // 포함되어 있으면 보이기, 아니면 숨기기
+            if (keyword === '' || nameText.includes(keyword)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
 });
